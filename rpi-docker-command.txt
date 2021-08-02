@@ -1,0 +1,8 @@
+docker run -d \
+  --name homeassistant \
+  --privileged \
+  --restart=unless-stopped \
+  -e TZ=MY_TIME_ZONE \
+  -v ~/opt/homeassist:/config \
+  --network=host \
+  ghcr.io/home-assistant/raspberrypi4-homeassistant:stable
