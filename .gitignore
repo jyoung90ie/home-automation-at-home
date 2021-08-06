@@ -218,3 +218,6 @@ cython_debug/
 # Cython debug symbols
 
 # End of https://www.toptal.com/developers/gitignore/api/django,python
+smarthub/mqtt_subscriber.py
+smarthub/network_listener.py
+smarthub/rpi-docker-command.txt
