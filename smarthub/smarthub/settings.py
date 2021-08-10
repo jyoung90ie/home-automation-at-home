@@ -47,11 +47,12 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     # user added apps
-    # "devices",
+    "devices",
     "pages",
     "users",
     # "zigbee",
     # "api",
+    "debug_toolbar",
 ]
 
 MIDDLEWARE = [
@@ -61,6 +62,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -193,3 +195,6 @@ SOCIALACCOUNT_PROVIDERS = {
 
 ACCOUNT_ADATPER = "users.adapter.CustomAccountAdapter"
 SOCIALACCOUNT_ADAPTER = "users.adapter.CustomSocialAccountAdapter"
+
+# django debug
+INTERNAL_IPS = ["127.0.0.1"]

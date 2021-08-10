@@ -42,6 +42,8 @@ class CustomUser(AbstractUser):
         geography=True,
         default=Point(defines.DEFAULT_LONGTITUDE, defines.DEFAULT_LATITUDE),
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -54,4 +56,4 @@ class CustomUser(AbstractUser):
     def get_absolute_url(self):
         from django.urls import reverse
 
-        return reverse("account_profile")
+        return reverse("users:account_profile")

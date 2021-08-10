@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Device Locations</h1>
+
+<div>
+    <a href="{% url 'devices:locations:add' %}" class="btn btn-primary btn-sm">Add Location</a>
+</div>
+
+{% if device_locations %}
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Location</th>
+                <th scope="col">Number of Devices</th>
+                <th scope="col">Devices</th>
+                <th scope="col">Created On</th>
+                <th scope="col">Options</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for location in device_locations %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ location.location }}</td>
+                <td> {{ location.device_set.count }}</td>
+                <td>
+                    <ul>
+                    {% for device in location.device_set.all %}
+                        <li><a href="{% url 'devices:device:detail' uuid=device.uuid %}">{{ device }}</a></li>
+                    {% empty %}
+                        <li>None</li>
+                    {% endfor %}
+                    </ul>
+                </td>
+                <td>{{ location.created_at|date:"d M Y" }}</td>
+                <td>
+                    <a class="btn btn-secondary" href="{% url 'devices:locations:update' uuid=location.uuid %}">Update</a>
+                    <a class="btn btn-danger" href="{% url 'devices:locations:delete' uuid=location.uuid %}">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <p>You have not added any locations for your devices yet.</p>
+{% endif %}
+{% endblock %}

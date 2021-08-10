@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Devices</h1>
+<div>
+    <a href="{% url 'devices:add' %}" class="btn btn-primary btn-sm">Add Device</a>
+</div>
+{% if devices %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Friendly Name</th>
+                    <th scope="col">Identifier</th>
+                    <th scope="col">Protocol</th>
+                    <th scope="col">Location</th>
+                    <th scope="col">Dated Added</th>
+                    <th scope="col">Options</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for device in devices %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ device.friendly_name }}</td>
+                    <td>{{ device.device_identifier }}</td>
+                    <td>{{ device.protocol }}</td>
+                    <td>{{ device.location }}</td>
+                    <td>{{ device.created_at|date:"d M Y" }}</td>
+                    <td>
+                        <a class="btn btn-secondary" href="{% url 'devices:device:update' uuid=device.uuid %}">Update</a>
+                        <a class="btn btn-danger" href="{% url 'devices:device:delete' uuid=device.uuid %}">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p>You do not have any devices.</p>
+{% endif %}
+{% endblock %}

@@ -10,8 +10,15 @@
           <a class="nav-link active" aria-current="page" href="{% url 'homepage' %}">Home</a>
         </li>
       {% if user.is_authenticated %}
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="{% url 'homepage' %}">Devices</a>
+       <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            My Devices
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="{% url 'devices:list' %}">View Devices</a></li>
+            <li><a class="dropdown-item" href="{% url 'devices:locations:list' %}">View Locations</a></li>
+            <li><a class="dropdown-item" href="{% url 'devices:add' %}">Add Device</a></li>
+          </ul>
         </li>
         <li class="nav-item">
           <a class="nav-link active" aria-current="page" href="{% url 'homepage' %}">Network Traffic</a>
@@ -24,12 +31,14 @@
       </ul>
       <ul class="navbar-nav account-navbar">
       {% if user.is_authenticated %}
+       <li class="nav-item p-2"><strong>{{ user }}</strong>
+       </li>
        <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             My Account
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <li><a class="dropdown-item" href="{% url 'account_profile' %}">Profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'users:account_profile' %}">Profile</a></li>
             <li><a class="dropdown-item" href="{% url 'account_email' %}">Change Email</a></li>
             <li><a class="dropdown-item" href="{% url 'account_change_password' %}">Change Password</a></li>
             <li><a class="dropdown-item" href="{% url 'socialaccount_connections' %}">Social Accounts</a></li>
