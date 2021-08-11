@@ -9,8 +9,8 @@ from django.views.generic import (
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from . import models, forms, mixins
-from smarthub.mixins import MakeRequestObjectAvailableInFormMixin, AddUserToFormMixin
-from smarthub.views import UUIDView
+from ..mixins import MakeRequestObjectAvailableInFormMixin, AddUserToFormMixin
+from ..views import UUIDView
 
 
 class AddDeviceLocation(LoginRequiredMixin, AddUserToFormMixin, CreateView):

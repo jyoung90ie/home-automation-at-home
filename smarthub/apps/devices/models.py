@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from smarthub.models import BaseAbstractModel
+from ..models import BaseAbstractModel
 
 
 class DeviceLocationsQuerySet(models.QuerySet):
@@ -51,7 +51,7 @@ class Device(BaseAbstractModel):
         ZIGBEE = "ZIGBEE", _("Zigbee")
 
     friendly_name = models.CharField(max_length=150, blank=False, null=False)
-    device_identifier = models.CharField(max_length=255)
+    device_identifier = models.CharField(max_length=255, blank=False, null=False)
     location = models.ForeignKey(DeviceLocation, on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     protocol = models.CharField(

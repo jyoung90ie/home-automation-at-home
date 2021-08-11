@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 
+import dj_database_url
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -47,9 +49,9 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     # user added apps
-    "devices",
-    "pages",
-    "users",
+    "apps.devices",
+    "apps.pages",
+    "apps.users",
     # "zigbee",
     # "api",
     "debug_toolbar",
@@ -170,7 +172,10 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = "email"
-ACCOUNT_SIGNUP_FORM_CLASS = "users.forms.SignupForm"  # override default signup
+# customised implementations
+ACCOUNT_SIGNUP_FORM_CLASS = "apps.users.forms.SignupForm"
+ACCOUNT_ADATPER = "apps.users.adapter.CustomAccountAdapter"
+SOCIALACCOUNT_ADAPTER = "apps.users.adapter.CustomSocialAccountAdapter"
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
@@ -193,8 +198,6 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-ACCOUNT_ADATPER = "users.adapter.CustomAccountAdapter"
-SOCIALACCOUNT_ADAPTER = "users.adapter.CustomSocialAccountAdapter"
 
 # django debug
 INTERNAL_IPS = ["127.0.0.1"]

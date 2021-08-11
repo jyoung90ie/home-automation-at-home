@@ -1,4 +1,4 @@
-from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 class LimitResultsToUserMixin(LoginRequiredMixin):

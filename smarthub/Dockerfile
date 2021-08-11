@@ -6,7 +6,7 @@ WORKDIR /code
 RUN printf "deb http://ftp.de.debian.org/debian sid main" > /etc/apt/sources.list
 
 RUN apt-get update
-RUN apt-get install -y binutils gdal-bin libproj-dev postgis postgresql-13-postgis-3 postgresql-13-postgis-3-scripts
+RUN apt-get install -y wait-for-it binutils gdal-bin libproj-dev postgis postgresql-13-postgis-3 postgresql-13-postgis-3-scripts
 RUN rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /docker-entrypoint-initdb.d
