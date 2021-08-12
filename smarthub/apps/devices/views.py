@@ -1,3 +1,4 @@
+from ..zigbee.models import ZigbeeDevice
 from django.shortcuts import render
 from django.views.generic import (
     CreateView,
@@ -11,6 +12,8 @@ from django.urls import reverse_lazy
 from . import models, forms, mixins
 from ..mixins import MakeRequestObjectAvailableInFormMixin, AddUserToFormMixin
 from ..views import UUIDView
+
+DeviceModel = models.Device
 
 
 class AddDeviceLocation(LoginRequiredMixin, AddUserToFormMixin, CreateView):
@@ -56,22 +59,22 @@ class AddDevice(
 
 
 class UpdateDevice(UUIDView, mixins.LimitResultsToUserMixin, UpdateView):
-    model = models.Device
+    model = DeviceModel
     fields = ["friendly_name", "device_identifier", "location", "protocol"]
     template_name_suffix = "_update_form"
 
 
 class DeleteDevice(UUIDView, mixins.LimitResultsToUserMixin, DeleteView):
-    model = models.Device
+    model = DeviceModel
     success_url = reverse_lazy("devices:list")
 
 
 class ListDevices(UUIDView, mixins.LimitResultsToUserMixin, ListView):
-    model = models.Device
+    model = DeviceModel
     paginate_by = 10
     context_object_name = "devices"
 
 
 class DetailDevice(UUIDView, mixins.LimitResultsToUserMixin, DetailView):
-    model = models.Device
+    model = DeviceModel
     context_object_name = "device"

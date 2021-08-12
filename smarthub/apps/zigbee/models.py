@@ -1,41 +1,57 @@
 import logging
 from django.db import models
-from ..devices.models import Device, Q
+from django.apps import apps
 from ..models import BaseAbstractModel
 
-# Create your models here.
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("mqtt")
+logging.basicConfig()
 
 
 class ZigbeeDevice(BaseAbstractModel):
     """Captures zigbee device metadata and makes connection to user device"""
 
     INTERVIEW_TYPE = "device_interview"
+    # data to capture from mqtt
+    DATA_FIELDS = ["friendly_name", "ieee_address", "model_id", "power_source"]
+    DEFINITION_DATA_FIELDS = ["description", "model", "vendor"]
 
-    device = models.ForeignKey(model=Device, on_delete=models.CASCADE, null=True)
+    device = models.ForeignKey(
+        "devices.Device", on_delete=models.CASCADE, blank=True, null=True
+    )
     friendly_name = models.CharField(max_length=100, blank=True, null=True)
     ieee_address = models.CharField(max_length=100, blank=True, null=True)
-    device_description = models.CharField(max_length=100, blank=True, null=True)
-    interview_completed = models.BooleanField(default=False)
-    manufacturer = models.CharField(max_length=100, blank=True, null=True)
+    description = models.CharField(max_length=100, blank=True, null=True)
+    vendor = models.CharField(max_length=100, blank=True, null=True)
     model = models.CharField(max_length=100, blank=True, null=True)
-    firmware_build_date = models.DateField(blank=True, null=True)
+    model_id = models.CharField(max_length=100, blank=True, null=True)
+    power_source = models.CharField(max_length=100, blank=True, null=True)
 
-    def get_mqtt_data(self, data, data_key):
-        """Get device high-level metadata"""
-        if not data:
-            logger.info(f"No MQTT metadata could be with with key '{data_key}'")
-            return
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.user_device_model = apps.get_model("devices", "Device")
 
-        return data.get(data_key)
+    # def __init__(self, *args, **kwargs) -> None:
+    #     super().__init__(*args, **kwargs)
+    #     logger.info(
+    #         f"""
+    #         Create ZigbeeDevice...\n
+    #         device={self.device} -
+    #         friendly_name={self.friendly_name} -
+    #         ieee_address={self.ieee_address} -
+    #         description={self.description} -
+    #         vendor={self.vendor} -
+    #         model={self.model} -
+    #         model_id={self.model_id} -
+    #         power_source={self.power_source}
+    #         """
+    #     )
 
     @classmethod
     def process_metadata(self, metadata):
         """If mqtt data type is an interview then capture metadata for model"""
-        message_type = self.get_mqtt_data(metadata, "type")
+        message_type = metadata.get("type")
         if message_type and message_type == self.INTERVIEW_TYPE:
-            data = self.get_mqtt_data(metadata, "data")
+            data = metadata.get("data")
             ieee_address = data.get("ieee_address")
 
             if not ieee_address:
@@ -47,71 +63,122 @@ class ZigbeeDevice(BaseAbstractModel):
                 logger.info(f"Found new device with IEEE Address ='{ieee_address}'")
                 return self.create_device(self, metadata)
 
+    @staticmethod
+    def dict_generator(fields, data, dict={}):
+        """Returns a dict containing specified data fields"""
+        for field in fields:
+            dict[field] = data.get(field)
+
+        return dict
+
     @classmethod
     def create_device(self, metadata):
         """Creates new zigbee device based on information provided by MQTT broker"""
-        data = self.get_mqtt_data(metadata, "data")
+        logger.info(f"ZigbeeDevice metadata={metadata}")
 
-        if not data:
+        if not metadata:
             logger.info(
                 f"Could not create new zigbee device as metadata did not contain any data"
             )
             return
 
-        device_data = {}
-        device_data["friendly_name"] = (data.get("friendly_name"),)
-        device_data["ieee_address"] = (data.get("ieee_address"),)
+        device_dict = self.dict_generator(self.DATA_FIELDS, metadata)
+        logger.info(f"device dict1: {device_dict}")
 
-        definition_data = self.get_mqtt_data(data, "definition")
+        definition_data = metadata.get("definition")
 
         if definition_data:
-            device_data["device_description"] = definition_data.get("description")
-            device_data["model"] = definition_data.get("model")
-            device_data["brand"] = data.get("vendor")
+            device_dict = self.dict_generator(
+                self.DEFINITION_DATA_FIELDS, definition_data, device_dict
+            )
+            logger.info(f"device dict2: {device_dict}")
 
-        zigbee_device = self.objects.create(**device_data)
-        logger.info(
-            f"Zigbee device created: friendly_name={device_data['friendly_name']} - ieee_address={device_data['ieee_address']}'"
-        )
-
-        self.link_device(zigbee_device)
-
-    @classmethod
-    def link_device(self, zigbee_device) -> bool:
-        """Attempt to match zigbee device to an entry in Device model"""
-        obj = zigbee_device or self
-        logger.info(f"Attempting to link zigbee device to user devices...")
-
-        if not obj.device:
-            zigbee_device = Device.objects.filter(
-                Q(friendly_name=obj.friendly_name) | Q(friendly_name=obj.ieee_address)
+        logger.info(f"device dict3: {device_dict}")
+        zigbee_device = self.objects.create(**device_dict)
+        if zigbee_device:
+            logger.info(
+                f"Zigbee device created: friendly_name={device_dict['friendly_name']} - ieee_address={device_dict['ieee_address']}'"
             )
 
-            if zigbee_device:
-                self.device = zigbee_device
+            self.link_to_user_device(zigbee_device)
+            return zigbee_device
+
+        logger.error(f"Could not create ZigbeeDevice for {device_dict}")
+        return None
+
+    @classmethod
+    def link_to_user_device(self, zigbee_device=None) -> bool:
+        """Attempt to match zigbee device to an entry in Device model"""
+        if not self.user_device_model:
+            return
+
+        obj = zigbee_device or self
+        logger.info(f"ZigbeeDevice - link_device - obj={obj}")
+
+        if not obj.device:
+            device = self.user_device_model.objects.filter(
+                models.Q(friendly_name=obj.friendly_name)
+                | models.Q(friendly_name=obj.ieee_address)
+            )
+
+            if device:
+                self.device = device
                 self.save()
                 logger.info(
                     f"Zigbee device (friendly_name={obj.friendly_name}) linked to user device uuid='{obj.device.uuid}'"
                 )
                 return True
-
-        logger.info(
-            f"Could not link device - zigbee device (friendly_name={obj.friendly_name}) is already linked to user device uuid='{obj.device.uuid}'"
-        )
+            else:
+                logger.info(
+                    f"Could not link device (friendly_name={obj.friendly_name}) as no user device exists"
+                )
         return False
 
 
 class ZigbeeMessage(BaseAbstractModel):
     """Creates an entry to link an MQTT subscription message to a device and metadata"""
 
-    zigbee_device = models.ForeignKey(model=ZigbeeDevice, on_delete=models.CASCADE)
-    raw_message = models.JSONField(null=True)
-    source_topic = models.CharField(max_length=255, null=True)
+    zigbee_device = models.ForeignKey(
+        ZigbeeDevice, on_delete=models.CASCADE, null=True, blank=True
+    )
+    raw_message = models.JSONField()
+    topic = models.CharField(max_length=255)
+
+    # def __init__(self, *args, **kwargs) -> None:
+    #     super().__init__(*args, **kwargs)
+    #     logger.info(
+    #         f"Create ZigbeeMessage...\ndevice={self.zigbee_device} - raw_message={self.raw_message} - topic={self.topic}"
+    #     )
+
+    def get_zigbee_device_from_topic(self):
+        """Returns ZigbeeDevice using topic to extract device friendly_name"""
+        friendly_name_pos = self.topic.rfind("/") + 1
+        friendly_name = self.topic[friendly_name_pos:].strip()
+
+        device = None
+
+        try:
+            device = ZigbeeDevice.objects.get(friendly_name=friendly_name)
+        except ZigbeeDevice.DoesNotExist:
+            pass
+
+        return device
 
 
 class ZigbeeLog(BaseAbstractModel):
     """Captures metadata from MQTT subscription messages"""
 
-    broker_message = models.ForeignKey(model=ZigbeeMessage)
+    broker_message = models.ForeignKey(ZigbeeMessage, on_delete=models.CASCADE)
     metadata_type = models.CharField(max_length=100)
     metadata_value = models.JSONField(max_length=100)
+
+    # def __init__(self, *args, **kwargs) -> None:
+    #     super().__init__(*args, **kwargs)
+    #     logger.info(
+    #         f"""
+    #         Create ZigbeeLog...\n
+    #         broker_message={self.broker_message} -
+    #         metadata_type={self.metadata_type} -
+    #         metadata_value={self.metadata_value}
+    #         """
+    #     )

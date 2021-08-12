@@ -52,8 +52,8 @@ INSTALLED_APPS = [
     "apps.devices",
     "apps.pages",
     "apps.users",
-    # "zigbee",
-    # "api",
+    "apps.zigbee",
+    # "apps.api",
     "debug_toolbar",
 ]
 
