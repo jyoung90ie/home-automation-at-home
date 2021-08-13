@@ -15,8 +15,10 @@ class ZigbeeDevice(BaseAbstractModel):
     DATA_FIELDS = ["friendly_name", "ieee_address", "model_id", "power_source"]
     DEFINITION_DATA_FIELDS = ["description", "model", "vendor"]
 
+    user_device_model = None
+
     device = models.ForeignKey(
-        "devices.Device", on_delete=models.CASCADE, blank=True, null=True
+        "devices.Device", on_delete=models.SET_NULL, blank=True, null=True
     )
     friendly_name = models.CharField(max_length=100, blank=True, null=True)
     ieee_address = models.CharField(max_length=100, blank=True, null=True)
@@ -30,22 +32,6 @@ class ZigbeeDevice(BaseAbstractModel):
         super().__init__(*args, **kwargs)
         self.user_device_model = apps.get_model("devices", "Device")
 
-    # def __init__(self, *args, **kwargs) -> None:
-    #     super().__init__(*args, **kwargs)
-    #     logger.info(
-    #         f"""
-    #         Create ZigbeeDevice...\n
-    #         device={self.device} -
-    #         friendly_name={self.friendly_name} -
-    #         ieee_address={self.ieee_address} -
-    #         description={self.description} -
-    #         vendor={self.vendor} -
-    #         model={self.model} -
-    #         model_id={self.model_id} -
-    #         power_source={self.power_source}
-    #         """
-    #     )
-
     @classmethod
     def process_metadata(self, metadata):
         """If mqtt data type is an interview then capture metadata for model"""
@@ -57,11 +43,13 @@ class ZigbeeDevice(BaseAbstractModel):
             if not ieee_address:
                 return
 
-            zigbee_device = self.objects.filter(ieee_address=ieee_address)
+            zigbee_device: "ZigbeeDevice" = self.objects.filter(
+                ieee_address=ieee_address
+            )
 
             if not zigbee_device:
                 logger.info(f"Found new device with IEEE Address ='{ieee_address}'")
-                return self.create_device(self, metadata)
+                return self.create_device(metadata)
 
     @staticmethod
     def dict_generator(fields, data, dict={}):
@@ -123,7 +111,7 @@ class ZigbeeDevice(BaseAbstractModel):
 
             if device:
                 self.device = device
-                self.save()
+                obj.save()
                 logger.info(
                     f"Zigbee device (friendly_name={obj.friendly_name}) linked to user device uuid='{obj.device.uuid}'"
                 )
@@ -133,6 +121,9 @@ class ZigbeeDevice(BaseAbstractModel):
                     f"Could not link device (friendly_name={obj.friendly_name}) as no user device exists"
                 )
         return False
+
+    def __str__(self) -> str:
+        return f"{self.friendly_name} ({self.ieee_address})"
 
 
 class ZigbeeMessage(BaseAbstractModel):
@@ -144,25 +135,16 @@ class ZigbeeMessage(BaseAbstractModel):
     raw_message = models.JSONField()
     topic = models.CharField(max_length=255)
 
-    # def __init__(self, *args, **kwargs) -> None:
-    #     super().__init__(*args, **kwargs)
-    #     logger.info(
-    #         f"Create ZigbeeMessage...\ndevice={self.zigbee_device} - raw_message={self.raw_message} - topic={self.topic}"
-    #     )
-
-    def get_zigbee_device_from_topic(self):
-        """Returns ZigbeeDevice using topic to extract device friendly_name"""
+    def link_to_device_using_topic(self):
+        """Updates device for ZigbeeMessage using topic to match to ZigbeeDevice friendly_name - saves if matched"""
         friendly_name_pos = self.topic.rfind("/") + 1
         friendly_name = self.topic[friendly_name_pos:].strip()
 
-        device = None
-
         try:
-            device = ZigbeeDevice.objects.get(friendly_name=friendly_name)
+            self.zigbee_device = ZigbeeDevice.objects.get(friendly_name=friendly_name)
+            self.save()
         except ZigbeeDevice.DoesNotExist:
             pass
-
-        return device
 
 
 class ZigbeeLog(BaseAbstractModel):
@@ -171,14 +153,3 @@ class ZigbeeLog(BaseAbstractModel):
     broker_message = models.ForeignKey(ZigbeeMessage, on_delete=models.CASCADE)
     metadata_type = models.CharField(max_length=100)
     metadata_value = models.JSONField(max_length=100)
-
-    # def __init__(self, *args, **kwargs) -> None:
-    #     super().__init__(*args, **kwargs)
-    #     logger.info(
-    #         f"""
-    #         Create ZigbeeLog...\n
-    #         broker_message={self.broker_message} -
-    #         metadata_type={self.metadata_type} -
-    #         metadata_value={self.metadata_value}
-    #         """
-    #     )

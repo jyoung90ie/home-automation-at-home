@@ -1,5 +1,3 @@
-from ..zigbee.models import ZigbeeDevice
-from django.shortcuts import render
 from django.views.generic import (
     CreateView,
     UpdateView,
@@ -12,6 +10,8 @@ from django.urls import reverse_lazy
 from . import models, forms, mixins
 from ..mixins import MakeRequestObjectAvailableInFormMixin, AddUserToFormMixin
 from ..views import UUIDView
+from django.apps import apps
+from django.core.paginator import Paginator
 
 DeviceModel = models.Device
 
@@ -74,7 +74,35 @@ class ListDevices(UUIDView, mixins.LimitResultsToUserMixin, ListView):
     paginate_by = 10
     context_object_name = "devices"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["protocols"] = models.Device.DeviceProtocol.__members__
+        return context
+
 
 class DetailDevice(UUIDView, mixins.LimitResultsToUserMixin, DetailView):
     model = DeviceModel
     context_object_name = "device"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["uuid"] = self.kwargs.get("uuid")
+        return context
+
+
+class LogsForDevice(UUIDView, mixins.LimitResultsToUserMixin, ListView):
+    paginate_by = 5
+    context_object_name = "logs"
+    template_name = "devices/device_logs.html"
+    ordering = ["-created_at"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["device"] = self.device
+        return context
+
+    def get_queryset(self):
+        uuid = self.kwargs.pop("uuid")
+        self.device = models.Device.objects.get(uuid=uuid)
+        queryset = self.device.get_zigbee_logs()
+        return queryset

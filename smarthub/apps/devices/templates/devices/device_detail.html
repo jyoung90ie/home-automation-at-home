@@ -1,5 +1,106 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Device</h1>
+{% with is_linked=device.is_linked %}
+<div>
+    <h1 class="h3 fw-bold me-3 d-inline"><i class="fas fa-laptop-house me-2"></i>{{ device.friendly_name }}</h1>
+    {% include "devices/partials/_user_options.html" %}
+    {% if is_linked %}
+    {% include "devices/partials/_additional_device_options.html" %}
+    {% endif %}
+</div>
 
+
+<div class="mt-3">
+    <div class="row mt-2 p-3 bg-light">
+        <div class="fw-bold col-4 col-md-2">Friendly Name</div>
+        <div class="col-8 col-md-4">{{ device.friendly_name }}</div>
+        <div class="fw-bold col-4 col-md-2">Device Identifier</div>
+        <div class="col-8 col-md-4">{{ device.device_identifier }}</div>
+        <div class="fw-bold col-4 col-md-2">Location</div>
+        <div class="col-8 col-md-4">{{ device.location }}</div>
+        <div class="fw-bold col-4 col-md-2">Protocol</div>
+        <div class="col-8 col-md-4">{{ device.protocol }}</div>
+    </div>
+
+    <div class="row mt-2 text-muted">
+        <div class="col-md-6">
+            <h2 class="h5 text-center m-3">
+                <i class="fas fa-info me-3"></i> Hardware information
+            </h2>
+            <div class="row bg-light p-3 rounded-3 border border-5">
+                <div class="fw-bold col-6">Status</div>
+                <div class="col-6 fs-3">
+                    {% if is_linked %}
+                    <i class="fas fa-check text-success" title="Device is linked to a hardware device"></i>
+                    {% else %}
+                    <i class="fas fa-times-circle text-danger" title="Device is not linked to a hardware device"></i>
+                    {% endif %}
+                </div>
+
+                {% if is_linked %}
+                {% if device.zigbeedevice_set.first %}
+
+                {% for dict in device.zigbeedevice_set.values %}
+                {% for type, value in dict.items %}
+                <div class="fw-bold col-4 mb-2">{{ type|upper }}</div>
+                <div class="col-8 mb-2">{{ value }}</div>
+                {% empty %}
+                Hardware device data has not been captured.
+                {% endfor %}
+                {% endfor %}
+                {% elif device.apidevice_set.first%}
+                {% endif %}
+                {% else %}
+                <span class="m-2">Your device has not yet been linked to a hardware device. Please ensure that the
+                    device identifier
+                    matches the hardware device <em>ieee_address</em> or the <em>friendly_name</em> matches the
+                    device's.
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        {% if is_linked %}
+        <div class="offset-md-1 col-md-5">
+            <h2 class="h5 text-center m-3">
+                <i class="fas fa-server me-3"></i>Last update from device
+            </h2>
+            <div class="row bg-light p-3 rounded-3 border border-5">
+
+                {% with logs=device.get_lastest_zigbee_logs %}
+                {% if logs %}
+                {% for log in logs %}
+                {% if forloop.first %}
+                <table class="table-responsive">
+                    <caption>
+                        <em>Most recent data update from device.</em>
+                    </caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Data Type</th>
+                            <th scope="col">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% endif %}
+                        <tr>
+                            <td>{{ log.metadata_type }}</td>
+                            <td><em>{{ log.metadata_value }}</em></td>
+                        </tr>
+                        {% if forloop.last %}
+                    </tbody>
+                </table>
+                {% endif %}
+                {% endfor %}
+                {% else %}
+                <p>No data received from the device.</p>
+                {% endif %}
+                {% endwith %}
+
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endwith %}
 {% endblock %}

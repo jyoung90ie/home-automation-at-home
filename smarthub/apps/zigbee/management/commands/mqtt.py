@@ -18,11 +18,7 @@ QOS = 1
 
 MQTT_SERVER = "192.168.178.58"
 MQTT_BASE_TOPIC = "zigbee2mqtt"
-MQTT_TOPICS = [
-    "#"
-    # "temp-and-humid",
-    # "motion",
-]
+MQTT_TOPICS = ["#"]
 MQTT_CLIENT_NAME = "Smart Hub"
 
 
@@ -56,7 +52,7 @@ class MQTTClient:
         self.client.loop_forever()
 
     def on_connect(self, client, user_data, flags, result_code) -> None:
-        print(f"Connected to MQTT Broker - result code {result_code}")
+        logger.info(f"Connected to MQTT Broker - result code {result_code}")
 
         self.get_topics_for_subscribing()
 
@@ -166,7 +162,8 @@ class MQTTMessage:
             return
 
         zigbee_message.save()
-        zigbee_device = zigbee_message.get_zigbee_device_from_topic()
+        zigbee_device = zigbee_message.link_to_device_using_topic()
+        zigbee_message.zigbee_device = zigbee_device
 
         if zigbee_device:
             logger.info(
