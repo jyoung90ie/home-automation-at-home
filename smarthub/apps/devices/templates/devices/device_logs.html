@@ -1,56 +1,38 @@
 {% extends "base.html" %}
 {% load tz %}
 {% block content %}
-<div class="mb-3">
-    <h1 class="h3 d-inline me-3">Devices</h1>
-    <a href="{% url 'devices:add' %}" class="btn btn-success btn-sm">
-        <i class="fas fa-plus" title="Create new device"></i>
-    </a>
+<div class="mb-3 text-center">
+    <h1 class="h3">Showing device logs for...</h1>
+    <h2 class="h4"><strong>{{ device }}</strong></h2>
 </div>
 {% if logs %}
 
-<div class="table-responsive">
+<div class="mt-5 table-responsive">
     <table class="table table-hover table-striped" id="device-list">
         <thead>
             <tr>
                 <th scope="col">#</th>
                 <th scope="col">Received At</th>
-                <th scope="col">Data Type</th>
-                <th scope="col">Value</th>
+                <th scope="col">Raw Message</th>
             </tr>
         </thead>
         <tbody>
-            {% for log in page_obj %}
-            {% for entry in log %}
+            {% for message in page_obj %}
             <tr class="log-row">
-                <td>{{ forloop.counter }}</td>
-                <td>{{ entry.created_at|localtime }}</td>
-                <td>{{ entry.metadata_type }}</td>
-                <td>{{ entry.metadata_value }}</td>
+                <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                <td>{{ message.created_at|localtime }}</td>
+                <td>{{ message.raw_message }}</td>
             </tr>
-            {% endfor %}
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-<div class="pagination">
-    <span class="step-links">
-        {% if page_obj.has_previous %}
-        <a href="?page=1">&laquo; first</a>
-        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
-        {% endif %}
+<nav class="mt-3 pb-5" aria-label="Navigate device logs">
+    {% include "partials/_pagination.html" %}
+</nav>
 
-        <span class="current">
-            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-        </span>
 
-        {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">next</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-        {% endif %}
-    </span>
-</div>
 {% else %}
 <p>There are no logs for this device.</p>
 {% endif %}

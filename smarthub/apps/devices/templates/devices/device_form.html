@@ -2,15 +2,15 @@
 {% debug %}
 {% block content %}
 <h1>Add Device</h1>
-{% if locations %}
+{% if form.location %}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Add">
-    </form>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Add">
+</form>
 {% else %}
-    <p>You must add at least one device location before you can add a device.</p>
-    <a class="btn btn-primary" href="{% url 'devices:locations:add' %}" role="button">Add Device Location</a>
+<p>You must add at least one device location before you can add a device.</p>
+<a class="btn btn-primary" href="{% url 'devices:locations:add' %}" role="button">Add Device Location</a>
 {% endif %}
 {% endblock %}
