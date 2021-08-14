@@ -1,0 +1,11 @@
+<div class="dropdown d-inline">
+    <a class="btn btn-sm btn-info dropdown-toggle" href="#" role="button" id="deviceOptions" data-bs-toggle="dropdown"
+        aria-expanded="false">
+        <i class="fas fa-list" title="View additional device options"></i>
+    </a>
+
+    <ul class="dropdown-menu" aria-labelledby="deviceOptions">
+        <li><a class="dropdown-item" href="{% url 'devices:device:logs' uuid=uuid %}">View Logs</a></li>
+        <li><a class="dropdown-item" href="#">View Live Data</a></li>
+    </ul>
+</div>

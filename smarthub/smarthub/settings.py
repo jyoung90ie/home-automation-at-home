@@ -48,12 +48,13 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
+    "dynamic_breadcrumbs",
     # user added apps
     "apps.devices",
     "apps.pages",
     "apps.users",
-    # "zigbee",
-    # "api",
+    "apps.zigbee",
+    # "apps.api",
     "debug_toolbar",
 ]
 
@@ -82,6 +83,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.request",
+                "dynamic_breadcrumbs.context_processors.breadcrumbs",
             ],
         },
     },
@@ -201,3 +203,8 @@ SOCIALACCOUNT_PROVIDERS = {
 
 # django debug
 INTERNAL_IPS = ["127.0.0.1"]
+
+# mqtt
+
+# breadcrumbs
+DYNAMIC_BREADCRUMBS_SHOW_AT_BASE_PATH = True

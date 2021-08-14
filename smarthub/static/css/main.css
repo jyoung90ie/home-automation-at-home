@@ -2,3 +2,8 @@
     margin-left: auto;
     justify-content: flex-end;
 }
+
+/* device list */
+.device-row:hover {
+    cursor: pointer;
+}

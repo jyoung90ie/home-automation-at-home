@@ -1,25 +1,37 @@
 {% load static %}
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block head_title %}{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
-    <script src="https://kit.fontawesome.com/6cef40e88b.js" crossorigin="anonymous"></script>
-    <link href="{% static "css/main.css" %}" rel="stylesheet">
 
-    {% block extra_head %}{% endblock %}
-  </head>
-  <body>
-    {% include "includes/navbar.html" %}
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block head_title %}Smart Hub - your home, automated{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+  <script src="https://kit.fontawesome.com/6cef40e88b.js" crossorigin="anonymous"></script>
+  <link href="{% static "css/main.css" %}" rel="stylesheet">
 
-    <div class="container mt-5">
-        {% include "includes/messages.html" %}
-        {% block content %}{% endblock %}
-    </div>
+  {% block extra_head %}{% endblock %}
+</head>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
-    {% block extra_body %}{% endblock %}
-  </body>
+<body>
+  {% include "includes/navbar.html" %}
+
+  {% if breadcrumbs %}
+  {% include "partials/_breadcrumbs.html" with breadcrumbs=breadcrumbs %}
+  {% endif %}
+
+  <div class="container mt-5">
+    {% include "includes/messages.html" %}
+    {% block content %}{% endblock %}
+  </div>
+
+  {% block extra_body %}{% endblock %}
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
+    crossorigin="anonymous"></script>
+  <script src="{% static 'js/main.js' %}"></script>
+</body>
+
 </html>
