@@ -2,8 +2,9 @@ from . import models
 from django import forms
 
 
-class AddDeviceForm(forms.ModelForm):
-    """ """
+class DeviceForm(forms.ModelForm):
+    """Form for adding and updating a device. This is used to override default
+    device location list which displays all locations (including other users)."""
 
     class Meta:
         model = models.Device
