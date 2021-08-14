@@ -3,9 +3,9 @@
 {% with is_linked=device.is_linked %}
 <div>
     <h1 class="h3 fw-bold me-3 d-inline"><i class="fas fa-laptop-house me-2"></i>{{ device.friendly_name }}</h1>
-    {% include "devices/partials/_user_options.html" %}
+    {% include "devices/partials/_user_options_device.html" %}
     {% if is_linked %}
-    {% include "devices/partials/_additional_device_options.html" %}
+    {% include "devices/partials/_additional_options_device.html" %}
     {% endif %}
 </div>
 
@@ -103,4 +103,8 @@
 
 </div>
 {% endwith %}
+{% endblock %}
+
+{% block extra_body %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.0/dist/chart.min.js"></script>
 {% endblock %}
