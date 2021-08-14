@@ -146,6 +146,9 @@ class ZigbeeMessage(BaseAbstractModel):
         except ZigbeeDevice.DoesNotExist:
             pass
 
+    def __str__(self):
+        return str(self.topic)
+
 
 class ZigbeeLog(BaseAbstractModel):
     """Captures metadata from MQTT subscription messages"""
@@ -153,3 +156,6 @@ class ZigbeeLog(BaseAbstractModel):
     broker_message = models.ForeignKey(ZigbeeMessage, on_delete=models.CASCADE)
     metadata_type = models.CharField(max_length=100)
     metadata_value = models.JSONField(max_length=100)
+
+    def __str__(self):
+        return str(self.broker_message)
