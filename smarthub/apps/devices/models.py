@@ -199,3 +199,17 @@ class Device(BaseAbstractModel):
 
     def __str__(self):
         return f"{self.friendly_name} [{self.device_identifier}]"
+
+    @property
+    def last_communication(self):
+        """Returns the date and time of the most recent communication from the hardware device"""
+        received_at: str = ""
+        try:
+            last_message = self.get_zigbee_messages(latest_only=True)[0]
+            received_at = last_message.created_at
+
+        except Exception as ex:
+            logger.info(ex)
+            received_at = "-"
+
+        return received_at
