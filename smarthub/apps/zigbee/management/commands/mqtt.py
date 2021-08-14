@@ -173,7 +173,7 @@ class MQTTMessage:
         for field in mqtt_data:
             value = mqtt_data[field]
 
-            if value:
+            if len(str(value)) > 0:
                 log = ZigbeeLog(
                     broker_message=zigbee_message,
                     metadata_type=field,
