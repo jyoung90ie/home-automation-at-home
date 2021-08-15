@@ -221,3 +221,5 @@ cython_debug/
 smarthub/mqtt_subscriber.py
 smarthub/network_listener.py
 smarthub/rpi-docker-command.txt
+mqtt_device_data_structure_on_join.json
+mqtt_device_data_structure.json
