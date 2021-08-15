@@ -1,0 +1,6 @@
+<a class="btn btn-sm btn-primary" href="{% url 'devices:locations:update' uuid=location.uuid %}">
+    <i class="far fa-edit" title="Update device location"></i>
+</a>
+<a class="btn btn-sm btn-danger" href="{% url 'devices:locations:delete' uuid=location.uuid %}">
+    <i class="fas fa-trash-alt" title="Delete device location"></i>
+</a>

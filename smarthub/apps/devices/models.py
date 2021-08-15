@@ -62,7 +62,7 @@ class Device(BaseAbstractModel):
 
     friendly_name = models.CharField(max_length=150, blank=False, null=False)
     device_identifier = models.CharField(max_length=255, blank=False, null=False)
-    location = models.ForeignKey(DeviceLocation, on_delete=models.CASCADE)
+    location = models.ForeignKey(DeviceLocation, on_delete=models.PROTECT)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     protocol = models.CharField(
         max_length=10,
@@ -118,6 +118,7 @@ class Device(BaseAbstractModel):
     ) -> Union[QuerySet["ZigbeeLog"], bool]:
         """
         Return all processed messages for zigbee device.
+        If latest_only is True, returns only the most recent log entry based on created_at field.
         If message_obj is specified, returns logs for specified message_obj ONLY.
         """
         messages = self.get_zigbee_messages(latest_only)
@@ -151,7 +152,7 @@ class Device(BaseAbstractModel):
 
         return logs
 
-    def get_lastest_zigbee_logs(self):
+    def get_lastest_zigbee_logs(self) -> Union[QuerySet["ZigbeeLog"], bool]:
         return self.get_zigbee_logs(latest_only=True)
 
     def try_to_link_zigbee_device(self) -> None:
@@ -198,3 +199,17 @@ class Device(BaseAbstractModel):
 
     def __str__(self):
         return f"{self.friendly_name} [{self.device_identifier}]"
+
+    @property
+    def last_communication(self):
+        """Returns the date and time of the most recent communication from the hardware device"""
+        received_at: str = ""
+        try:
+            last_message = self.get_zigbee_messages(latest_only=True)[0]
+            received_at = last_message.created_at
+
+        except Exception as ex:
+            logger.info(ex)
+            received_at = "-"
+
+        return received_at

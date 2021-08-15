@@ -13,7 +13,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 
-import dj_database_url
+from django.contrib.messages import constants as messages
+from django.urls.base import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,6 +45,8 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "leaflet",
     "django.contrib.gis",
+    "crispy_forms",
+    "crispy_bootstrap5",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -170,15 +173,6 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = "email"
-# customised implementations
-ACCOUNT_SIGNUP_FORM_CLASS = "apps.users.forms.SignupForm"
-ACCOUNT_ADATPER = "apps.users.adapter.CustomAccountAdapter"
-SOCIALACCOUNT_ADAPTER = "apps.users.adapter.CustomSocialAccountAdapter"
-
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_USE_TLS = True
@@ -186,6 +180,18 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("EMAIL_HOST_USER")  # from address
+
+# allauth
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+LOGIN_REDIRECT_URL = reverse_lazy("devices:list")
+# customised implementations
+ACCOUNT_SIGNUP_FORM_CLASS = "apps.users.forms.SignupForm"
+ACCOUNT_ADATPER = "apps.users.adapter.CustomAccountAdapter"
+SOCIALACCOUNT_ADAPTER = "apps.users.adapter.CustomSocialAccountAdapter"
+
 
 # social logins
 SOCIALACCOUNT_PROVIDERS = {
@@ -208,3 +214,16 @@ INTERNAL_IPS = ["127.0.0.1"]
 
 # breadcrumbs
 DYNAMIC_BREADCRUMBS_SHOW_AT_BASE_PATH = True
+
+# crispy forms
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# override default messages tags
+MESSAGE_TAGS = {
+    messages.DEBUG: "secondary",
+    messages.ERROR: "danger",
+    messages.INFO: "info",
+    messages.SUCCESS: "success",
+    messages.WARNING: "warning",
+}

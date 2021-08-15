@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
 {% block content %}
 <h1>Update Location Description</h1>
 <p>Locations are used to group devices by a geographical location, such as a room, or a building.</p>
 <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
+    {{ form|crispy }}
     <input type="submit" value="Update">
 </form>
 {% endblock %}

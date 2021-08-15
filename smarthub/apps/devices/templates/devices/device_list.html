@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="mb-3">
-    <h1 class="h3 d-inline me-3">Devices</h1>
+<div>
+    <h1 class="d-inline">Devices</h1>
     <a href="{% url 'devices:add' %}" class="btn btn-success btn-sm">
         <i class="fas fa-plus" title="Create new device"></i>
     </a>
 </div>
 {% if devices %}
 
-<div class="table-responsive">
+<div class="pt-3 table-responsive">
     <table class="table table-hover table-striped" id="device-list">
         <thead>
             <tr>
@@ -17,7 +17,7 @@
                 <th scope="col">Identifier</th>
                 <th scope="col">Protocol</th>
                 <th scope="col">Location</th>
-                <th scope="col">Dated Added</th>
+                <th scope="col">Last Communication</th>
                 <th scope="col">Status</th>
                 <th scope="col">Options</th>
             </tr>
@@ -25,12 +25,12 @@
         <tbody>
             {% for device in devices %}
             <tr class="device-row" onclick='window.location="{% url "devices:device:detail" uuid=device.uuid %}";'>
-                <td>{{ forloop.counter }}</td>
+                <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                 <td>{{ device.friendly_name }}</td>
                 <td>{{ device.device_identifier }}</td>
                 <td>{{ device.protocol }}</td>
                 <td>{{ device.location }}</td>
-                <td>{{ device.created_at|date:"d M Y" }}</td>
+                <td>{{ device.last_communication }}</td>
                 <td>
                     {% if device.is_linked %}
                     <span class="badge bg-success" data-bs-toggle="tooltip" data-bs-placement="top"
@@ -43,14 +43,19 @@
                     <a class="btn btn-sm btn-secondary" href="{% url 'devices:device:detail' uuid=device.uuid %}">
                         <i class="fas fa-eye" title="View device information"></i>
                     </a>
-                    {% include "devices/partials/_user_options.html" %}
+                    {% include "devices/partials/_user_options_device.html" %}
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<nav class="mt-3 pb-5" aria-label="Navigate your devices">
+    {% include "partials/_pagination.html" %}
+</nav>
 {% else %}
 <p>You do not have any devices.</p>
 {% endif %}
+
 {% endblock %}

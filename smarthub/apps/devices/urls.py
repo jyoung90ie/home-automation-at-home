@@ -14,9 +14,26 @@ urlpatterns = [
             (
                 [
                     path("", views.DetailDevice.as_view(), name="detail"),
-                    path("update", views.UpdateDevice.as_view(), name="update"),
-                    path("delete", views.DeleteDevice.as_view(), name="delete"),
-                    path("logs", views.LogsForDevice.as_view(), name="logs"),
+                    path("update/", views.UpdateDevice.as_view(), name="update"),
+                    path("delete/", views.DeleteDevice.as_view(), name="delete"),
+                    path(
+                        "logs/",
+                        include(
+                            (
+                                [
+                                    path(
+                                        "", views.LogsForDevice.as_view(), name="view"
+                                    ),
+                                    path(
+                                        "export/",
+                                        views.ExportCSVDeviceLogs.as_view(),
+                                        name="export",
+                                    ),
+                                ],
+                                "logs",
+                            ),
+                        ),
+                    ),
                 ],
                 "device",
             ),
@@ -33,12 +50,15 @@ urlpatterns = [
                         include(
                             [
                                 path(
+                                    "", views.UpdateDeviceLocationRedirectView.as_view()
+                                ),
+                                path(
                                     "update/",
                                     views.UpdateDeviceLocation.as_view(),
                                     name="update",
                                 ),
                                 path(
-                                    "delete",
+                                    "delete/",
                                     views.DeleteDeviceLocation.as_view(),
                                     name="delete",
                                 ),
