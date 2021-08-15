@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Device Locations</h1>
 
-<div>
-    <a href="{% url 'devices:locations:add' %}" class="btn btn-primary btn-sm">Add Location</a>
+<div class="header-container">
+    <h1 class="d-inline">Device Locations</h1>
+    <a href="{% url 'devices:locations:add' %}" class="btn btn-success btn-sm">
+        <i class="fas fa-plus" title="Add new device location"></i>
+    </a>
 </div>
 
 {% if device_locations %}
@@ -21,30 +23,41 @@
         </thead>
         <tbody>
             {% for location in device_locations %}
-            <tr>
+            <tr class="devicelocation-row"
+                onclick='window.location="{% url "devices:locations:update" uuid=location.uuid %}";'>
                 <td>{{ forloop.counter }}</td>
                 <td>{{ location.location }}</td>
                 <td> {{ location.device_set.count }}</td>
                 <td>
-                    <ul>
-                    {% for device in location.device_set.all %}
-                        <li><a href="{% url 'devices:device:detail' uuid=device.uuid %}">{{ device }}</a></li>
-                    {% empty %}
-                        <li>None</li>
-                    {% endfor %}
-                    </ul>
+                    <!-- <ul class="list-group list-group-numbered"> -->
+                    <div class="list-group">
+                        {% for device in location.device_set.all %}
+                        <!-- <li class="list-group-item"> -->
+                        <a class="list-group-item list-group-item-action"
+                            href="{% url 'devices:device:detail' uuid=device.uuid %}">{{ device }}</a>
+                        <!-- </li> -->
+                        {% empty %}
+                        <!-- <li class="list-group-item"> -->
+                        <span class="list-group-item">None</span>
+                        <!-- </li> -->
+                        {% endfor %}
+                    </div>
+                    <!-- </ul> -->
                 </td>
                 <td>{{ location.created_at|date:"d M Y" }}</td>
                 <td>
-                    <a class="btn btn-secondary" href="{% url 'devices:locations:update' uuid=location.uuid %}">Update</a>
-                    <a class="btn btn-danger" href="{% url 'devices:locations:delete' uuid=location.uuid %}">Delete</a>
+                    {% include "devices/partials/_user_options_devicelocation.html" %}
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<nav class="mt-3 pb-5" aria-label="Navigate your devices">
+    {% include "partials/_pagination.html" %}
+</nav>
 {% else %}
-    <p>You have not added any locations for your devices yet.</p>
+<p>You have not added any locations for your devices yet.</p>
 {% endif %}
 {% endblock %}

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
 {% debug %}
 {% block content %}
 <h1>Add Device</h1>
@@ -6,7 +7,7 @@
 
 <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
+    {{ form|crispy }}
     <input type="submit" value="Add">
 </form>
 {% else %}

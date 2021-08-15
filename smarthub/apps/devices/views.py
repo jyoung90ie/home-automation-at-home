@@ -11,6 +11,9 @@ from django.views.generic import (
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic.base import RedirectView
+
+from csv_export.views import CSVExportView
+
 from . import models, forms, mixins
 from ..mixins import MakeRequestObjectAvailableInFormMixin, AddUserToFormMixin
 from ..views import UUIDView
@@ -118,7 +121,7 @@ class ListDevices(UUIDView, mixins.LimitResultsToUserMixin, ListView):
         return context
 
 
-class DetailDevice(UUIDView, mixins.LimitResultsToUserMixin, DetailView):
+class DetailDevice(UUIDView, mixins.PermitDeviceOwnerOnly, DetailView):
     model = models.Device
     context_object_name = "device"
 
@@ -128,7 +131,7 @@ class DetailDevice(UUIDView, mixins.LimitResultsToUserMixin, DetailView):
         return context
 
 
-class LogsForDevice(UUIDView, mixins.LimitResultsToUserMixin, ListView):
+class LogsForDevice(UUIDView, mixins.PermitDeviceOwnerOnly, ListView):
     paginate_by = 15
     context_object_name = "logs"
     template_name = "devices/device_logs.html"
@@ -142,6 +145,11 @@ class LogsForDevice(UUIDView, mixins.LimitResultsToUserMixin, ListView):
     def get_queryset(self):
         uuid = self.kwargs.pop("uuid")
         self.device = models.Device.objects.get(uuid=uuid)
-        print(dir(self.device))
         queryset = self.device.get_zigbee_messages()
         return queryset
+
+
+class ExportCSVDeviceLogs(CSVExportView, LogsForDevice):
+    """Exports logs for specified device"""
+
+    exclude = ("id", "uuid", "zigbee_device", "updated_at", "topic")

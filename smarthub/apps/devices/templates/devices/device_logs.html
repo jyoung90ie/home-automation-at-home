@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% load tz %}
 {% block content %}
-<div class="mb-3 text-center">
-    <h1 class="h3">Showing device logs for...</h1>
-    <h2 class="h4"><strong>{{ device }}</strong></h2>
+<div class="text-center">
+    <h1>Showing device logs for...</h1>
+    <h2><strong>{{ device }}</strong></h2>
+    {% include "devices/partials/_user_options_logs.html" %}
 </div>
 {% if logs %}
+
 
 <div class="mt-5 table-responsive">
     <table class="table table-hover table-striped" id="device-list">
