@@ -1,54 +1,98 @@
-<nav class="navbar navbar-light navbar-expand-md" style="background-color: #e3f2fd;">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Smart Hub</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+{% load static %}
+<nav class="navbar navbar-light navbar-expand-md">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'homepage' %}">
+      <img src="{% static 'images/brand-icon.png' %}" alt="Smart Hub icon" />
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav">
+        {% url 'homepage' as url %}
         <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="{% url 'homepage' %}">Home</a>
+          <a class="nav-link{% if request.path == url %} active{%endif%}" aria-current="page" href="{{ url }}"><i
+              class="fas fa-home" title="Homepage"></i> home</a>
         </li>
-      {% if user.is_authenticated %}
-       <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            My Devices
+
+        {% if user.is_authenticated %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-tablet-alt" title="my devices"></i> devices
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <li><a class="dropdown-item" href="{% url 'devices:list' %}">View Devices</a></li>
-            <li><a class="dropdown-item" href="{% url 'devices:locations:list' %}">View Locations</a></li>
-            <li><a class="dropdown-item" href="{% url 'devices:add' %}">Add Device</a></li>
+            {% url 'devices:list' as url %}
+            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View Devices</a>
+            </li>
+            {% url 'devices:locations:list' as url %}
+            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View Locations</a>
+            </li>
+            {% url 'devices:add' as url %}
+            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add Device</a>
+            </li>
           </ul>
         </li>
+        {% url 'homepage' as url %}
         <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="{% url 'homepage' %}">Network Traffic</a>
+          <a class="nav-link{% if request.path == url %} active{%endif%}" aria-current="page" href="#"> <i
+              class="fas fa-eye"></i> network
+            traffic</a>
         </li>
+        {% url 'homepage' as url %}
         <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="{% url 'homepage' %}">Routines</a>
+          <a class="nav-link{% if request.path == url %} active{%endif%}" aria-current="page" href="#"><i
+              class="fas fa-robot"></i> routines</a>
         </li>
-      {% endif %}
-       
+        {% endif %}
+
       </ul>
       <ul class="navbar-nav account-navbar">
-      {% if user.is_authenticated %}
-       <li class="nav-item p-2"><strong>{{ user }}</strong>
-       </li>
-       <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            My Account
+        {% if user.is_authenticated %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-user-alt" title="Account options"></i> account
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <li><a class="dropdown-item" href="{% url 'users:account_profile' %}">Profile</a></li>
-            <li><a class="dropdown-item" href="{% url 'account_email' %}">Change Email</a></li>
-            <li><a class="dropdown-item" href="{% url 'account_change_password' %}">Change Password</a></li>
-            <li><a class="dropdown-item" href="{% url 'socialaccount_connections' %}">Social Accounts</a></li>
+            {% url 'users:account_profile' as url %}
+            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Profile</a></li>
+            {% url 'account_email' as url %}
+            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change Email</a>
+            </li>
+            {% url 'account_change_password' as url %}
+            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change
+                Password</a></li>
+            {% url 'socialaccount_connections' as url %}
+            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Social
+                Accounts</a></li>
+            <li class="mt-2 dropdown-item disabled">{{user}}</li>
           </ul>
         </li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'account_logout' %}">Logout</a></li>
-      {% else %}
-        <li class="nav-item"><a class="nav-link" href="{% url 'account_login' %}">Login</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'account_signup' %}">Register</a></li>
-      {% endif %}
+        {% url 'account_logout' as url %}
+        <li class="nav-item"><a class="nav-link{% if request.path == url %} active{%endif%}" href="{{ url }}">
+            <i class="fas fa-sign-out-alt" title="Logout"></i> logout
+          </a></li>
+        {% else %}
+        {% url 'account_login' as url %}
+        <li class="nav-item"><a class="nav-link{% if request.path == url %} active{%endif%}" href="{{ url }}">
+          <i class="fas fa-sign-in-alt"></i> login</a>
+        </li>
+        {% url 'account_signup' as url %}
+        <li class="nav-item"><a class="nav-link{% if request.path == url %} active{%endif%}" href="{{ url }}">
+            <i class="far fa-address-card"></i> register</a></li>
+        {% endif %}
+        <li class="nav-item ms-5">
+          {% url 'about' as url %}
+          <a class="nav-link{% if request.path == url %} active{%endif%}" aria-current="page" href="{{ url }}"><i
+              class="fas fa-info-circle" title="about page"></i> about</a>
+        </li>
+        <li class="nav-item">
+          {% url 'help' as url %}
+          <a class="nav-link{% if request.path == url %} active{%endif%}" aria-current="page" href="{{ url }}"><i
+              class="far fa-question-circle" about="help page"></i> help</a>
+        </li>
       </ul>
     </div>
   </div>

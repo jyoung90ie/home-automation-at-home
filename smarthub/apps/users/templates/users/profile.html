@@ -1,13 +1,10 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
 {% block extra_head %}
-    {{ form.media }}
+{{ form.media }}
 {% endblock %}
 {% block content %}
-    <h1>Update Profile</h1>
+<h1>Update Profile</h1>
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Update">
-    </form>
+{% crispy form %}
 {% endblock %}

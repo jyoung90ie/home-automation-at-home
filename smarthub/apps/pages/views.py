@@ -6,4 +6,9 @@ class Home(TemplateView):
     template_name = "pages/index.html"
 
 
-home = Home.as_view()
+class About(TemplateView):
+    template_name = "pages/about.html"
+
+
+class Help(TemplateView):
+    template_name = "pages/help.html"
