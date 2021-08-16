@@ -2,9 +2,9 @@
     <ol class="breadcrumb">
         {% for breadcrumb in breadcrumbs %}
         {% if forloop.last %}
-        <li class="breadcrumb-item active" aria-current="page">{{ breadcrumb.name }}</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ breadcrumb.name|upper }}</li>
         {% else %}
-        <li class="breadcrumb-item"><a href="{{ breadcrumb.url }}">{{ breadcrumb.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ breadcrumb.url }}">{{ breadcrumb.name|upper }}</a></li>
         {% endif %}
         {% endfor %}
     </ol>

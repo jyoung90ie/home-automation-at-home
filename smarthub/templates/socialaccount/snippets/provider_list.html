@@ -7,14 +7,16 @@
 {% for brand in provider.get_brands %}
 <li><i class="fab fa-{{ brand.name|lower }}" title="{{ brand.name }}"></i>
     <a title="{{brand.name}}" class="socialaccount_provider {{provider.id}} {{brand.id}}"
-        href="{% provider_login_url provider.id openid=brand.openid_url process=process %}">{{brand.name}}</a>
+        href="{% provider_login_url provider.id openid=brand.openid_url process=process %}">
+        <strong>{{brand.name}}</strong>
+    </a>
 </li>
 {% endfor %}
 {% endif %}
 <li><i class="fab fa-{{ provider.name|lower }}" title="{{ provider.name }}"></i>
     <a title="{{provider.name}}" class="socialaccount_provider {{provider.id}}"
         href="{% provider_login_url provider.id process=process scope=scope auth_params=auth_params %}">
-        {{provider.name}}
+        <strong>{{provider.name}}</strong>
     </a>
 </li>
 {% endfor %}

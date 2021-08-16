@@ -11,7 +11,7 @@
 
 
 <div class="mt-3">
-    <div class="row mt-2 p-3 bg-light">
+    <div class="row content-box">
         <div class="fw-bold col-4 col-md-2">Friendly Name</div>
         <div class="col-8 col-md-4">{{ device.friendly_name }}</div>
         <div class="fw-bold col-4 col-md-2">Device Identifier</div>
@@ -23,11 +23,11 @@
     </div>
 
     <div class="row mt-2 text-muted">
-        <div class="col-md-6">
+        <div class="col-md-7">
             <h2 class="h5 text-center m-3">
                 <i class="fas fa-info me-3"></i> Hardware information
             </h2>
-            <div class="row bg-light p-3 rounded-3 border border-5">
+            <div class="row content-box">
                 <div class="fw-bold col-6">Status</div>
                 <div class="col-6 fs-3">
                     {% if is_linked %}
@@ -60,11 +60,11 @@
             </div>
         </div>
         {% if is_linked %}
-        <div class="offset-md-1 col-md-5">
+        <div class="col-md-5">
             <h2 class="h5 text-center m-3">
                 <i class="fas fa-server me-3"></i>Last update from device
             </h2>
-            <div class="row bg-light p-3 rounded-3 border border-5">
+            <div class="row content-box">
 
                 {% with logs=device.get_lastest_zigbee_logs %}
                 {% if logs %}

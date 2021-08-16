@@ -5,6 +5,7 @@
     --colour-two: #3498db;
     --colour-three: #1abc9c;
     --colour-four: #7B9E89;
+    --colour-five:#f8f9fa;
     --font-primary: #fff;
 }
 
@@ -41,6 +42,14 @@ h2 {
 
 h3, h4, h5 {
     font-size: 1.25em;
+}
+
+h1 .fas {
+    color: var(--colour-two);
+}
+
+h2 .fas {
+    color: var(--colour-three);
 }
 
 .header-container {
@@ -98,6 +107,26 @@ ul.navbar-nav > li {
     justify-content: flex-end;
 }
 
+/* breadcrumb */
+nav .breadcrumb {
+    margin: 1.5em;
+    letter-spacing: 3px;
+    
+}
+
+nav .breadcrumb a {
+    text-decoration: none;
+}
+
+nav .breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+    color: var(--colour-three);
+    font-weight: bold;
+}
+
 /* device list */
 .device-row:hover, .devicelocation-row:hover {
     cursor: pointer;
@@ -123,17 +152,6 @@ ul.navbar-nav > li {
     color: #C2F9BB;   
 }
 
-/* .navbar .fa-sign-out-alt{
-    color: #F9B9F2;
-}
-
-.navbar .fa-user-alt {
-    color: var(--colour-three);
-} */
-
-/* ul.navbar-nav > li.nav-item > a.nav-link:hover + i {
-    color: var(--colour-three);
-} */
 
 /* pagination */
 .page-item.active .page-link, .btn-primary, .btn-primary:hover, .bg-primary {
@@ -206,4 +224,13 @@ ul.navbar-nav > li {
 
 canvas {
     display: block;
+}
+
+/* body content */
+.content-box {
+    margin: 1em;
+    padding: 1em;
+    border: 5px solid #dee2e6;
+    border-radius: 0.3rem;
+    background-color: var(--colour-five);
 }
