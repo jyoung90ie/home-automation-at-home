@@ -1,7 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
 <h1><i class="fas fa-info-circle"></i> About</h1>
-<div class="content-box">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Maiores, ipsa alias architecto cum
-    soluta esse. Molestias, placeat? Excepturi totam dolorem odio quaerat officiis, commodi veniam voluptatibus neque,
-    nostrum voluptatem alias.</div>
+<div class="content-box">
+
+    <p class="h4">What is Smart Hub?</p>
+    <p class="ps-2">Smart Hub is an open source application designed to allow Internet of Things (IoT) devices to
+        communicate with each other, with Smart Hub acting as the integration platform.</p>
+
+    <p class="h4">What protocols does it support?</p>
+    <p class="ps-2">At present, it supports the following protocols:
+    <ul>
+        <li>Zigbee</li>
+        <li>API</li>
+    </ul>
+    Given the open source development, it is expected that this list will continue to grow overtime. If the protocol you
+    need is not supported, you are welcome to develop it and create pull request on GitHub - or let us know and we'll
+    priortise based on demand.
+    </p>
+
+    <p class="h4">How does it work?</p>
+    <p class="h5 ps-1">Zigbee</p>
+    <p class="ps-3">For Zigbee communication to work, a MQTT broker must be setup to communicate with the Zigbee
+        devices. Smart Hub can then be configured to connect to the MQTT broker with the relevant device topics (i.e.
+        the channel each device is publishing to). With these configurations in place, Smart Hub will then facilitate
+        all communication to and from the devices - based on your personal configurations.</p>
+    <p class="h5 ps-1">API</p>
+    <p class="ps-3">TBC</p>
+
+</div>
 {% endblock %}

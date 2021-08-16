@@ -1,4 +1,206 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Help Me!</h1>
+<h1>Help <i class="fas fa-question-circle" title="about page" aria-hidden="true"></i></h1>
+<div class="content-box">
+    <div class="accordion accordion-flush" id="helpPageContent">
+        <!-- help item -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingHelpItem1">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#helpPageItem1" aria-expanded="false" aria-controls="helpPageItem1">
+                    How do I configure Smart Hub to communicate with the Zigbee MQTT Broker?
+                </button>
+            </h2>
+            <div id="helpPageItem1" class="accordion-collapse collapse" aria-labelledby="headingHelpItem1"
+                data-bs-parent="#helpPageContent">
+                <div class="accordion-body">
+                    TBC
+                </div>
+            </div>
+        </div>
+        <!-- ./help item -->
+        <!-- help item -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingHelpItem2">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#helpPageItem2" aria-expanded="false" aria-controls="helpPageItem2">
+                    How do I add a Zigbee device to my account?
+                </button>
+            </h2>
+            <div id="helpPageItem2" class="accordion-collapse collapse" aria-labelledby="headingHelpItem2"
+                data-bs-parent="#helpPageContent">
+                <div class="accordion-body">
+                    In order for Smart Hub to detect and link a Zigbee device to your account, follow the steps below:
+                    <ol>
+                        <li>Ensure the device is running and connected to the MQTT broker - see Zigbee2MQTT manual.</li>
+                        <li><em>Before you can add a device</em>, you will need to make sure you have <em>at least</em>
+                            one <strong>device location</strong> created.
+                            <ul>
+                                <li>To view the device locations you have setup, select <strong>Devices > <a
+                                            href="{% url 'devices:locations:list' %}" target="_blank">View
+                                            Locations</a></strong></li>
+                            </ul>
+                        </li>
+                        <li>Select <strong>Devices > <a href="{% url 'devices:add' %}" target="_blank">Add
+                                    Device</a></strong> from the navigation bar at the top of the page.</li>
+                        <li>Fill in the required information:
+                            <ul>
+                                <li><strong>Friendly name:</strong> this will be used as the display name for the device
+                                    through the
+                                    Smart Hub interface. <strong>Please be aware</strong>, if Smart Hub is unable to
+                                    match the device by
+                                    <em>Device identifier</em>, it will attempt to match the MQTT topic to the device's
+                                    friendly name -
+                                    so
+                                    using a name consistent with how your device is configured in the MQTT broker will
+                                    make it easier to
+                                    link and manage.
+                                </li>
+                                <li><strong>Device Identifier:</strong></li>
+                                <li><strong>Location:</strong> this is typically the 'room' the device is located in -
+                                    however, you can use 'location' in whatever way works for you. It is essentially a
+                                    medium for grouping devices.</li>
+                                <li><strong>Protocol:</strong> ensure this is set to Zigbee, otherwise, the system will
+                                    be unable to
+                                    find the device.</li>
+                            </ul>
+                        </li>
+                        <li>Click '<strong>Add</strong>'</li>
+                        <li>Your device is now setup within Smart Hub - the application will now scan the MQTT broker
+                            for your device - this may not be immediate, depending upon whether your device was setup
+                            before or after configuring within Smart Hub.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <!-- ./help item -->
+        <!-- help item -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingHelpItem3">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#helpPageItem3" aria-expanded="false" aria-controls="helpPageItem3">
+                    How will I know when my device has been found by Smart Hub?
+                </button>
+            </h2>
+            <div id="helpPageItem3" class="accordion-collapse collapse" aria-labelledby="headingHelpItem3"
+                data-bs-parent="#helpPageContent">
+                <div class="accordion-body">
+                    When Smart Hub has found your device and linked it to your account, the following will be visible:
+                    <ul>
+                        <li>On <a href="{% url 'devices:list' %}" target="_blank">your devices</a> page, for each device
+                            that has been
+                            found you will see <strong>Status</strong> <span class="badge bg-success">Linked</span>.
+                        </li>
+                        <li>Clicking into a specific device, to see the detailed information, under the heading
+                            <strong>HARDWARE INFORMATION</strong>, there is a <em>Status</em> indicator - if the device
+                            has been found you will see <i class="mx-2 fas fa-check text-success"
+                                title="Device is linked to a hardware device" aria-hidden="true"></i>. There will also
+                            be detailed hardware information underneath this.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- ./help item -->
+        <!-- help item -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingHelpItem4">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#helpPageItem4" aria-expanded="false" aria-controls="helpPageItem4">
+                    Can I view and/or export device communication logs?
+                </button>
+            </h2>
+            <div id="helpPageItem4" class="accordion-collapse collapse" aria-labelledby="headingHelpItem4"
+                data-bs-parent="#helpPageContent">
+                <div class="accordion-body">
+                    <strong>Yes!</strong> Nagivate to the list of <a href="{% url 'devices:list' %}"
+                        target="_blank">your devices</a>,
+                    click any device
+                    that has a status of <strong>linked</strong>. Within the buttons along the top, you will have the
+                    option to
+                    <strong>View Logs</strong> - clicking this will bring you to the page for viewing and exporting
+                    logs. To export,
+                    click the button at the top of the page. <br /><br />Logs will be export as a comma-seperated value
+                    (CSV) file -
+                    enabling you to process the raw device communication logs as you see fit.
+                </div>
+            </div>
+        </div>
+        <!-- ./help item -->
+        <!-- help item -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingHelpItem5">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#helpPageItem5" aria-expanded="false" aria-controls="helpPageItem5">
+                    How do I add Zigbee devices to my account?
+                </button>
+            </h2>
+            <div id="helpPageItem5" class="accordion-collapse collapse" aria-labelledby="headingHelpItem5"
+                data-bs-parent="#helpPageContent">
+                <div class="accordion-body">
+                    TBC
+                </div>
+            </div>
+        </div>
+        <!-- ./help item -->
+        <!-- help item -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingHelpItem6">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#helpPageItem6" aria-expanded="false" aria-controls="helpPageItem6">
+                    What can I do if my device is not found?
+                </button>
+            </h2>
+            <div id="helpPageItem6" class="accordion-collapse collapse" aria-labelledby="headingHelpItem6"
+                data-bs-parent="#helpPageContent">
+                <div class="accordion-body">
+                    <ul class="no-bullets">
+                        <li>
+                            <strong>Zigbee device</strong>
+                            <ul>
+                                <li>If your device cannot be found, it is likely to be the result of one of the
+                                    following
+                                    situations:
+                                    <ol>
+                                        <li>The device identifier you specified when adding the device to Smart Hub does
+                                            not
+                                            match the hardware device's IEEE Address. <em>Double check that these
+                                                match.</em></li>
+                                        <li>Your device is not connected to the MQTT broker - please ensure that the
+                                            MQTT
+                                            broker is set to allow new devices to join the service; if you're unsure how
+                                            to
+                                            do this, check the broker documentation.</li>
+                                        <li>Your device may already be linked to another device entity you have created.
+                                            Check all your devices to ensure you have not used the same device
+                                            identifier and/or friendly name for another device.</li>
+                                        <li>Check that the MQTT broker is online and the configuration settings are
+                                            correct - specially check the MQTT IP and authenication details for Smart
+                                            Hub.</li>
+                                        <li>Replace the device battery to ensure it has sufficient power.</li>
+                                    </ol>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li>
+                            <strong>API device</strong>
+                            <ul>
+                                <li>
+                                    Something something here
+                                    <ol>
+                                        <li>Step 1</li>
+                                        <li>Step 2</li>
+                                        <li>Step 3</li>
+                                    </ol>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- ./help item -->
+    </div>
+</div>
 {% endblock %}

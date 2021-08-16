@@ -27,14 +27,14 @@
             <tr class="device-row" onclick='window.location="{% url "devices:device:detail" uuid=device.uuid %}";'>
                 <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                 <td>{{ device.friendly_name }}</td>
-                <td>{{ device.device_identifier }}</td>
-                <td>{{ device.protocol }}</td>
+                <td>{{ device.device_identifier|upper }}</td>
+                <td>{{ device.protocol|title }}</td>
                 <td>{{ device.location }}</td>
                 <td>{{ device.last_communication }}</td>
                 <td>
                     {% if device.is_linked %}
                     <span class="badge bg-success" data-bs-toggle="tooltip" data-bs-placement="top"
-                        title="Tooltip on top">Linked</span>
+                        title="{{device.protocol|title }} device has been deteched and linked to your account">Linked</span>
                     {% else %}
                     <span class="badge bg-danger">Unlinked</span>
                     {% endif %}

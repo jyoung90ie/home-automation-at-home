@@ -46,6 +46,16 @@
               class="fas fa-robot"></i> routines</a>
         </li>
         {% endif %}
+        <li class="nav-item">
+          {% url 'about' as url %}
+          <a class="nav-link{% if request.path == url %} active{%endif%}" aria-current="page" href="{{ url }}"><i
+              class="fas fa-info-circle" title="about page"></i> about</a>
+        </li>
+        <li class="nav-item">
+          {% url 'help' as url %}
+          <a class="nav-link{% if request.path == url %} active{%endif%}" aria-current="page" href="{{ url }}"><i
+              class="far fa-question-circle" about="help page"></i> help</a>
+        </li>
 
       </ul>
       <ul class="navbar-nav account-navbar">
@@ -77,22 +87,12 @@
         {% else %}
         {% url 'account_login' as url %}
         <li class="nav-item"><a class="nav-link{% if request.path == url %} active{%endif%}" href="{{ url }}">
-          <i class="fas fa-sign-in-alt"></i> login</a>
+            <i class="fas fa-sign-in-alt"></i> login</a>
         </li>
         {% url 'account_signup' as url %}
         <li class="nav-item"><a class="nav-link{% if request.path == url %} active{%endif%}" href="{{ url }}">
             <i class="far fa-address-card"></i> register</a></li>
         {% endif %}
-        <li class="nav-item ms-5">
-          {% url 'about' as url %}
-          <a class="nav-link{% if request.path == url %} active{%endif%}" aria-current="page" href="{{ url }}"><i
-              class="fas fa-info-circle" title="about page"></i> about</a>
-        </li>
-        <li class="nav-item">
-          {% url 'help' as url %}
-          <a class="nav-link{% if request.path == url %} active{%endif%}" aria-current="page" href="{{ url }}"><i
-              class="far fa-question-circle" about="help page"></i> help</a>
-        </li>
       </ul>
     </div>
   </div>

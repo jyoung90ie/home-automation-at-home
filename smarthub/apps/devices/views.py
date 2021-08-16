@@ -11,6 +11,7 @@ from django.views.generic import (
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic.base import RedirectView
+from django.utils.decorators import classonlymethod
 
 from csv_export.views import CSVExportView
 
