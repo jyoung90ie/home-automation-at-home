@@ -6,6 +6,14 @@ from django.core.management.base import CommandError
 import paho.mqtt.client as mqtt
 
 from django.core.management import BaseCommand
+from smarthub.settings import (
+    MQTT_BASE_TOPIC,
+    MQTT_CLIENT_NAME,
+    MQTT_QOS,
+    MQTT_SERVER,
+    MQTT_TOPICS,
+)
+
 
 from ....devices.models import Device
 from ...models import ZigbeeDevice, ZigbeeMessage, ZigbeeLog
@@ -13,13 +21,6 @@ from ...models import ZigbeeDevice, ZigbeeMessage, ZigbeeLog
 logger = logging.getLogger("mqtt")
 logger.setLevel(logging.INFO)
 logging.basicConfig()
-
-QOS = 1
-
-MQTT_SERVER = "192.168.178.58"
-MQTT_BASE_TOPIC = "zigbee2mqtt"
-MQTT_TOPICS = ["#"]
-MQTT_CLIENT_NAME = "Smart Hub"
 
 
 class MQTTClient:
@@ -193,7 +194,7 @@ class Command(BaseCommand):
         connection = None
         try:
             connection = MQTTClient(
-                MQTT_SERVER, MQTT_TOPICS, MQTT_CLIENT_NAME, QOS, MQTT_BASE_TOPIC
+                MQTT_SERVER, MQTT_TOPICS, MQTT_CLIENT_NAME, MQTT_QOS, MQTT_BASE_TOPIC
             )
             self.stdout.write(self.style.SUCCESS("MQTT client running"))
         except KeyboardInterrupt as ex:

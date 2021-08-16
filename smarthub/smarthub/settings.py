@@ -57,8 +57,8 @@ INSTALLED_APPS = [
     "apps.pages",
     "apps.users",
     "apps.zigbee",
+    "apps.notifications",
     # "apps.api",
-    "debug_toolbar",
 ]
 
 MIDDLEWARE = [
@@ -68,7 +68,6 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -205,11 +204,14 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-
-# django debug
-INTERNAL_IPS = ["127.0.0.1"]
-
 # mqtt
+MQTT_QOS = 1
+
+MQTT_SERVER = "192.168.178.58"
+MQTT_BASE_TOPIC = "zigbee2mqtt"
+MQTT_TOPICS = ["#"]
+MQTT_CLIENT_NAME = "Smart Hub"
+
 
 # breadcrumbs
 DYNAMIC_BREADCRUMBS_SHOW_AT_BASE_PATH = True
