@@ -8,7 +8,7 @@
 <form method="post">
     {% csrf_token %}
     {{ form|crispy }}
-    <input type="submit" value="Add">
+    <input type="submit" class="btn btn-primary" value="Add Device">
 </form>
 {% else %}
 <p>You must add at least one device location before you can add a device.</p>
