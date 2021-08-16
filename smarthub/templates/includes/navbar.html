@@ -68,6 +68,8 @@
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             {% url 'users:account_profile' as url %}
             <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Profile</a></li>
+            {% url 'notifications:list' as url %}
+            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Notifications</a></li>
             {% url 'account_email' as url %}
             <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change Email</a>
             </li>
