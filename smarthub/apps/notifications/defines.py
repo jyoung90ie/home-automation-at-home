@@ -1,0 +1,3 @@
+PUSHBULLET_API_BASE_URL = "https://api.pushbullet.com"
+PUSHBULLET_CONTENT_TYPE = "application/json"
+PUSHBULLET_FREE_API_REQUESTS_PER_MONTH = 500

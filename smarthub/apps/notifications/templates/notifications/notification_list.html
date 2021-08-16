@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div>
+    <h1 class="d-inline"><i class="fas fa-tablet-alt" title="my notifications"></i> Your Notifications</h1>
+    <a href="{% url 'notifications:add' %}" class="btn btn-success btn-sm">
+        <i class="fas fa-plus" title="Setup new notification"></i>
+    </a>
+</div>
+{% if devices %}
+
+<div class="pt-3 table-responsive">
+    <table class="table table-hover table-striped" id="notification-mediums-list">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Method</th>
+                <th scope="col">Status</th>
+                <th scope="col">Total Notifications</th>
+                <th scope="col">Options</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for notification in notifications %}
+            <tr class="device-row" onclick='window.location="#";'>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ notification.method }}</td>
+                <td>{{ notification.is_enabled }}</td>
+                <td>TBC</td>
+
+                <td>
+                    OPTIONS
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<p>You have not set up notifications yet - you can set them up <a href="{% url 'notifications:add' %}">here</a>.</p>
+{% endif %}
+
+{% endblock %}
