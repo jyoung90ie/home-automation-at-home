@@ -14,7 +14,7 @@ class Pushbullet:
 
     API_URL = defines.PUSHBULLET_API_BASE_URL
     CONTENT_TYPE = defines.PUSHBULLET_CONTENT_TYPE
-    NOTIFICATION_METHOD = models.NotificationMediums.PUSHBULLET
+    NOTIFICATION_METHOD = models.NotificationMedium.PUSHBULLET
 
     # API_URL = "https://api.pushbullet.com"
     # CONTENT_TYPE = "application/json"

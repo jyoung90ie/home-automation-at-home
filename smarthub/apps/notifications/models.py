@@ -2,25 +2,26 @@ from re import L
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.db.models.constraints import UniqueConstraint
-
+from django.urls.base import reverse
 from ..models import BaseAbstractModel
 
 
-class NotificationMediums(models.TextChoices):
+class NotificationMedium(models.TextChoices):
     """List of supported notification methods"""
 
     EMAIL = "Email"
     PUSHBULLET = "Pushbullet"
 
 
-class UserNotificationSetting(BaseAbstractModel):
+class NotificationSetting(BaseAbstractModel):
     """Stores all mediums by which a user should be notified"""
 
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     notification_medium = models.CharField(
+        verbose_name="Notification channel",
         max_length=30,
-        choices=NotificationMediums.choices,
-        default=NotificationMediums.EMAIL,
+        choices=NotificationMedium.choices,
+        default=NotificationMedium.EMAIL,
     )
     is_enabled = models.BooleanField(verbose_name="Enable notifications", default=True)
 
@@ -33,12 +34,18 @@ class UserNotificationSetting(BaseAbstractModel):
             )
         ]
 
+    def get_absolute_url(self):
+        return reverse("notifications:list")
+
+    def __str__(self) -> str:
+        return self.notification_medium
+
 
 class Notification(BaseAbstractModel):
     """Records all notifications sent to user including medium"""
 
     medium = models.ForeignKey(
-        UserNotificationSetting, on_delete=models.SET_NULL, null=True, blank=False
+        NotificationSetting, on_delete=models.SET_NULL, null=True, blank=False
     )
     topic = models.CharField(max_length=100, null=False, blank=False)
     message = models.TextField(blank=False, null=False)
@@ -48,17 +55,13 @@ class Notification(BaseAbstractModel):
 class PushbulletNotification(BaseAbstractModel):
     """Provider specific data fields"""
 
-    notification = models.OneToOneField(
-        UserNotificationSetting, on_delete=models.CASCADE
-    )
+    notification = models.OneToOneField(NotificationSetting, on_delete=models.CASCADE)
     access_token = models.CharField(max_length=60, null=False, blank=False)
 
 
 class EmailNotification(BaseAbstractModel):
     """Specifies email notification settings"""
 
-    notification = models.OneToOneField(
-        UserNotificationSetting, on_delete=models.CASCADE
-    )
+    notification = models.OneToOneField(NotificationSetting, on_delete=models.CASCADE)
     from_email = models.EmailField(null=False, blank=False)
     to_email = models.EmailField(null=False, blank=False)

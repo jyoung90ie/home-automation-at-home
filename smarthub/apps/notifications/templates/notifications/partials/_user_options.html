@@ -1,0 +1,6 @@
+<a class="btn btn-sm btn-primary" href="{% url 'notifications:notification:update' uuid=notification.uuid %}">
+    <i class="far fa-edit" title="Update notification channel"></i>
+</a>
+<a class="btn btn-sm btn-danger" href="{% url 'notifications:notification:delete' uuid=notification.uuid %}">
+    <i class="fas fa-trash-alt" title="Delete notification channel"></i>
+</a>

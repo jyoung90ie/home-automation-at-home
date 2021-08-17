@@ -1,12 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
 <div>
-    <h1 class="d-inline"><i class="fas fa-tablet-alt" title="my notifications"></i> Your Notifications</h1>
+    <h1 class="d-inline"><i class="fas fa-tablet-alt" title="my notifications"></i> Notifications Channels</h1>
     <a href="{% url 'notifications:add' %}" class="btn btn-success btn-sm">
-        <i class="fas fa-plus" title="Setup new notification"></i>
+        <i class="fas fa-plus" title="Setup new notification channel"></i>
     </a>
+    <p>Notification channels set out how Smart Hub should notify you when events you have defined have been triggered. 
+    You will be notified by each of the enabled channels below each time an event has been triggered. <br />
+    <strong>Note:</strong> you can only create one notification setting per channel - channel being the medium by which 
+    you will received the notification (e.g. email).</p>
 </div>
-{% if devices %}
+{% if notifications %}
 
 <div class="pt-3 table-responsive">
     <table class="table table-hover table-striped" id="notification-mediums-list">
@@ -21,14 +25,15 @@
         </thead>
         <tbody>
             {% for notification in notifications %}
-            <tr class="device-row" onclick='window.location="#";'>
+            <tr class="notification-row" onclick='window.location="{% url 'notifications:notification:update' uuid=notification.uuid %}";'>
                 <td>{{ forloop.counter }}</td>
-                <td>{{ notification.method }}</td>
-                <td>{{ notification.is_enabled }}</td>
+                <td>{{ notification.notification_medium }}</td>
+                <td>{% if notification.is_enabled %}<i class="fas fa-check text-success" title="Enabled"></i>{%else%}<i
+                        class="fas fa-times-circle text-danger" title="Disabled"></i>{%endif%}</td>
                 <td>TBC</td>
 
                 <td>
-                    OPTIONS
+                    {% include "notifications/partials/_user_options.html" %}
                 </td>
             </tr>
             {% endfor %}
@@ -37,7 +42,7 @@
 </div>
 
 {% else %}
-<p>You have not set up notifications yet - you can set them up <a href="{% url 'notifications:add' %}">here</a>.</p>
+<p>You have not yet set any notifications channels - click the green button above to do so.</p>
 {% endif %}
 
 {% endblock %}

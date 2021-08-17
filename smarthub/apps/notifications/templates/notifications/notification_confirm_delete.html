@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Delete Notification Channel?</h1>
+<p>If you delete this notification channel, all notification history and associated settings will be lost forever. Are
+    you sure you want to delete notifications by <strong>{{ object }}</strong>?</p>
+<form method="post">
+    {% csrf_token %}
+    <input type="submit" class="btn btn-danger" value="Delete">
+    <a href="{% url 'notifications:list' %}" class="btn btn-secondary" role="button">Cancel</a>
+</form>
+{% endblock %}
