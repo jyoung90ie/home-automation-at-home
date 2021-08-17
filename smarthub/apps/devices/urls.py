@@ -50,7 +50,9 @@ urlpatterns = [
                         include(
                             [
                                 path(
-                                    "", views.UpdateDeviceLocationRedirectView.as_view()
+                                    "",
+                                    views.DetailDeviceLocation.as_view(),
+                                    name="detail",
                                 ),
                                 path(
                                     "update/",

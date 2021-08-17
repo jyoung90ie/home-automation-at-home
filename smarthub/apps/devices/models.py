@@ -6,6 +6,7 @@ from django.apps import apps
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.db.models import Count
 from ..models import BaseAbstractModel
 
 import logging
@@ -16,11 +17,36 @@ if TYPE_CHECKING:
     from ..zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
 
 
+class DeviceProtocol(models.TextChoices):
+    """List of support smart device communication protocols"""
+
+    API = "API", _("API")
+    ZIGBEE = "ZIGBEE", _("Zigbee")
+
+
 class DeviceLocationsQuerySet(models.QuerySet):
     """ """
 
     def by_user(self, user):
         return self.filter(user=user)
+
+    def total_devices_by_protocol_and_location(
+        self, location: "DeviceLocation", protocol: "DeviceProtocol"
+    ):
+        """Return total number of devices with specified protocol in the specified location"""
+        return self.filter(device__protocol=protocol, device__location=location)
+
+    def total_zigbee_by_location(self, location: "DeviceLocation"):
+        """Return total zigbee devices in location"""
+        return self.total_devices_by_protocol_and_location(
+            location=location, protocol=DeviceProtocol.ZIGBEE
+        ).count()
+
+    def total_api_by_location(self, location: "DeviceLocation"):
+        """Return total API devices in location"""
+        return self.total_devices_by_protocol_and_location(
+            location=location, protocol=DeviceProtocol.API
+        ).count()
 
 
 class DeviceLocationManager(models.Manager.from_queryset(DeviceLocationsQuerySet)):
@@ -53,12 +79,6 @@ class Device(BaseAbstractModel):
     """Base device model"""
 
     objects = DeviceManager()
-
-    class DeviceProtocol(models.TextChoices):
-        """List of support smart device communication protocols"""
-
-        API = "API", _("API")
-        ZIGBEE = "ZIGBEE", _("Zigbee")
 
     friendly_name = models.CharField(max_length=150, blank=False, null=False)
     device_identifier = models.CharField(max_length=255, blank=False, null=False)
@@ -157,7 +177,7 @@ class Device(BaseAbstractModel):
 
     def try_to_link_zigbee_device(self) -> None:
         """Looks in Zigbee devices to see if there are any matches using friendly_name and device_identifier"""
-        if not self.DeviceProtocol.ZIGBEE or self.get_zigbee_device():
+        if not DeviceProtocol.ZIGBEE or self.get_zigbee_device():
             return
 
         if not self.zigbee_model:

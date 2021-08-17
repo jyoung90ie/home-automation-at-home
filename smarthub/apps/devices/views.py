@@ -27,6 +27,25 @@ class AddDeviceLocation(LoginRequiredMixin, AddUserToFormMixin, CreateView):
     ]
 
 
+class DetailDeviceLocation(UUIDView, DetailView):
+    model = models.DeviceLocation
+    context_object_name = "location"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["uuid"] = self.kwargs.get("uuid")
+        context[
+            "total_zigbee"
+        ] = models.DeviceLocation.objects.total_zigbee_by_location(
+            location=self.get_object()
+        )
+        context["total_api"] = models.DeviceLocation.objects.total_api_by_location(
+            location=self.get_object()
+        )
+
+        return context
+
+
 class UpdateDeviceLocation(UUIDView, mixins.LimitResultsToUserMixin, UpdateView):
     model = models.DeviceLocation
     fields = ["location"]
@@ -118,7 +137,7 @@ class ListDevices(UUIDView, mixins.LimitResultsToUserMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["protocols"] = models.Device.DeviceProtocol.__members__
+        context["protocols"] = models.DeviceProtocol.__members__
         return context
 
 

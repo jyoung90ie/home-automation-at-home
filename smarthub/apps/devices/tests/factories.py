@@ -14,7 +14,7 @@ class DeviceFactory(factory.django.DjangoModelFactory):
     friendly_name = factory.Faker("name")
     device_identifier = factory.Faker("catch_phrase")
     user = factory.SubFactory(UserFactory)
-    protocol = fuzzy.FuzzyChoice(models.Device.DeviceProtocol.values)
+    protocol = fuzzy.FuzzyChoice(models.DeviceProtocol.values)
     location = factory.SubFactory(
         "apps.devices.tests.factories.DeviceLocationFactory",
         device=None,

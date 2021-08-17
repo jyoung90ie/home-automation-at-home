@@ -1,0 +1,6 @@
+{% if device.is_linked %}
+<span class="badge bg-success" data-bs-toggle="tooltip" data-bs-placement="top"
+    title="{{device.protocol|title }} device has been detected and linked to your account">Linked</span>
+{% else %}
+<span class="badge bg-danger">Unlinked</span>
+{% endif %}

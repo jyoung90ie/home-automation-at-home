@@ -32,17 +32,10 @@
                 <td>{{ device.location }}</td>
                 <td>{{ device.last_communication }}</td>
                 <td>
-                    {% if device.is_linked %}
-                    <span class="badge bg-success" data-bs-toggle="tooltip" data-bs-placement="top"
-                        title="{{device.protocol|title }} device has been deteched and linked to your account">Linked</span>
-                    {% else %}
-                    <span class="badge bg-danger">Unlinked</span>
-                    {% endif %}
+                    {% include "devices/partials/_device_linked.html" %}
                 </td>
                 <td>
-                    <a class="btn btn-sm btn-secondary" href="{% url 'devices:device:detail' uuid=device.uuid %}">
-                        <i class="fas fa-eye" title="View device information"></i>
-                    </a>
+                    {% include "devices/partials/_user_options_view_device.html" %}
                     {% include "devices/partials/_user_options_device.html" %}
                 </td>
             </tr>
