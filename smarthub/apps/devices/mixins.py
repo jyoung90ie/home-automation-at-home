@@ -4,14 +4,6 @@ from django.shortcuts import get_object_or_404
 from . import models
 
 
-class LimitResultsToUserMixin(LoginRequiredMixin):
-    """Override queryset to only show results for current user. This prevents user from
-    accessing objects they do not own."""
-
-    def get_queryset(self):
-        return super().get_queryset().filter(user=self.request.user)
-
-
 class PermitDeviceOwnerOnly(LoginRequiredMixin):
     """Override queryset to only show results for current user. This prevents user from
     accessing objects they do not own."""
