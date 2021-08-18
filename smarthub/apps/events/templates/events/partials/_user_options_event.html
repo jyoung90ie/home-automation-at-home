@@ -1,0 +1,6 @@
+<a class="btn btn-sm btn-primary" href="{% url 'events:event:update' uuid=event.uuid %}">
+    <i class="far fa-edit" title="Update event"></i>
+</a>
+<a class="btn btn-sm btn-danger" href="{% url 'events:event:delete' uuid=event.uuid %}">
+    <i class="fas fa-trash-alt" title="Delete event"></i>
+</a>

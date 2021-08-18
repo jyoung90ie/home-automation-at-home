@@ -18,11 +18,11 @@
 
         {% if user.is_authenticated %}
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
+          <a class="nav-link dropdown-toggle" href="#" id="devicesNavbarDropdown" role="button"
             data-bs-toggle="dropdown" aria-expanded="false">
             <i class="fas fa-tablet-alt" title="my devices"></i> devices
           </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <ul class="dropdown-menu" aria-labelledby="devicesNavbarDropdown">
             <li class="dropdown-header">My Devices</li>
             {% url 'devices:list' as url %}
             <li>
@@ -50,10 +50,23 @@
               class="fas fa-eye"></i> network
             traffic</a>
         </li>
-        {% url 'homepage' as url %}
-        <li class="nav-item">
-          <a class="nav-link{% if request.path == url %} active{%endif%}" aria-current="page" href="#"><i
-              class="fas fa-robot"></i> routines</a>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="eventsNavbarDropdown" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            <i class="fas fa-robot"></i> Events</a>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="eventsNavbarDropdown">
+            <li class="dropdown-header">My Events</li>
+            {% url 'events:list' as url %}
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View All</a>
+            </li>
+            {% url 'events:add' as url %}
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add</a>
+            </li>
+
+          </ul>
         </li>
         {% endif %}
         <li class="nav-item">

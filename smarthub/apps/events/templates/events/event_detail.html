@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load icons %}
+{% block content %}
+<div>
+    <h1 class="d-inline"><i class="fas fas fa-robot me-2"></i>Event Detail</h1>
+    {% include "events/partials/_user_options_event.html" %}
+
+</div>
+
+
+<div class="mt-3">
+    <div class="row content-box">
+        <div class="fw-bold col-4 col-md-2">Description</div>
+        <div class="col-8 col-md-10 mb-3">{{ event.description|capfirst }}</div>
+        <div class="fw-bold col-4 col-md-2">Enabled?</div>
+        <div class="col-8 col-md-10 mb-3">{{ event.is_enabled|to_status_icon }}</div>
+        <div class="fw-bold col-4 col-md-2">Send Notifications?</div>
+        <div class="col-8 col-md-10 mb-3">{{ event.send_notification|to_status_icon }}</div>
+        <div class="fw-bold col-4 col-md-2">Notification Topic</div>
+        <div class="col-8 col-md-10 mb-3">{{ event.notification_topic|capfirst }}</div>
+        <div class="fw-bold col-4 col-md-2">Notification Message</div>
+        <div class="col-8 col-md-10 mb-3">{{ event.notification_message|capfirst }}</div>
+    </div>
+
+    <div class="mt-5 text-muted">
+        <h2 class="h5 text-center m-3">
+            <i class="fas fa-sitemap me-3"></i> Event Triggers
+        </h2>
+        <div class="row content-box">
+            {% for trigger in event_triggers %}
+            {% empty %}
+            <p>This event does not yet have any triggers - add some to kick the automation in to gear!</p>
+            {% endfor %}
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra_body %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.0/dist/chart.min.js"></script>
+{% endblock %}

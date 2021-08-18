@@ -1,5 +1,7 @@
+"""Captures information relating to device event triggers"""
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.urls.base import reverse
 from django.utils.translation import gettext_lazy as _
 
 from ..devices.models import Device
@@ -10,11 +12,34 @@ class Event(BaseAbstractModel):
     """Stores user defined events and notification messaging"""
 
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    description = models.CharField(max_length=200, blank=False)
-    is_enabled = models.BooleanField(default=True)
-    send_notification = models.BooleanField(default=True)
-    notification_topic = models.CharField(max_length=200)
-    notification_message = models.CharField(max_length=500)
+    description = models.CharField(
+        verbose_name="Descriptive name for this event", max_length=200, blank=False
+    )
+    is_enabled = models.BooleanField(
+        verbose_name="Enable event triggers?", default=True
+    )
+    send_notification = models.BooleanField(
+        verbose_name="Send notifications when triggered?", default=True
+    )
+    notification_topic = models.CharField(
+        verbose_name="Subject for message when event is triggered",
+        max_length=200,
+        null=True,
+        blank=True,
+    )
+    notification_message = models.CharField(
+        verbose_name="Message you will receive when event is triggered",
+        max_length=500,
+        null=True,
+        blank=True,
+    )
+
+    def get_absolute_url(self):
+        """Default redirect url"""
+        return reverse("events:event:detail", kwargs={"uuid": self.uuid})
+
+    def __str__(self):
+        return self.description
 
 
 class EventTriggerType(models.TextChoices):
@@ -29,7 +54,8 @@ class EventTriggerType(models.TextChoices):
 
 
 class EventTrigger(BaseAbstractModel):
-    """Stores potential event trigger values. Metadata values will be checked against device log tables"""
+    """Stores potential event trigger values. Metadata values will be checked against
+    device log tables"""
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
