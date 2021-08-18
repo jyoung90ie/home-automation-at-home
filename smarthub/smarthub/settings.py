@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "apps.pages",
     "apps.users",
     "apps.zigbee",
+    "apps.events",
     "apps.notifications",
     # "apps.api",
 ]

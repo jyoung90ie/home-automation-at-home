@@ -6,7 +6,6 @@ from django.apps import apps
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.db.models import Count
 from ..models import BaseAbstractModel
 
 import logging
