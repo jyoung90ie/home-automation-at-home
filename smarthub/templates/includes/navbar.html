@@ -4,8 +4,8 @@
     <a class="navbar-brand" href="{% url 'homepage' %}">
       <img src="{% static 'images/brand-icon.png' %}" alt="Smart Hub icon" />
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
@@ -23,14 +23,21 @@
             <i class="fas fa-tablet-alt" title="my devices"></i> devices
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            {% url 'devices:add' as url %}
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add Device</a>
+            </li>
             {% url 'devices:list' as url %}
-            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View Devices</a>
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View Devices</a>
+            </li>
+            {% url 'devices:locations:add' as url %}
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add Location</a>
             </li>
             {% url 'devices:locations:list' as url %}
-            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View Locations</a>
-            </li>
-            {% url 'devices:add' as url %}
-            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add Device</a>
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View Locations</a>
             </li>
           </ul>
         </li>
@@ -69,7 +76,8 @@
             {% url 'users:account_profile' as url %}
             <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Profile</a></li>
             {% url 'notifications:list' as url %}
-            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Notifications</a></li>
+            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Notifications</a>
+            </li>
             {% url 'account_email' as url %}
             <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change Email</a>
             </li>
