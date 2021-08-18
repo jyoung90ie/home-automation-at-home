@@ -12,6 +12,8 @@ class DeviceAdmin(admin.ModelAdmin):
         "updated_at",
     )
 
+    readonly_fields = ("uuid", "created_at", "updated_at")
+
 
 class DeviceLocationAdmin(admin.ModelAdmin):
     list_display = (
@@ -20,6 +22,8 @@ class DeviceLocationAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     )
+
+    readonly_fields = ("uuid", "created_at", "updated_at")
 
 
 admin.site.register(models.Device, DeviceAdmin)
