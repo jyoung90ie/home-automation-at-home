@@ -57,11 +57,18 @@ class DeviceLocation(BaseAbstractModel):
     """Permits users to define their own custom device locations"""
 
     objects = DeviceLocationManager()
-    location = models.CharField(max_length=100, blank=False, null=False)
+    location = models.CharField(
+        verbose_name="location name", max_length=100, blank=False, null=False
+    )
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=["user", "location"], name="user_device_location")
+        ]
+
     def get_absolute_url(self):
-        return reverse("devices:locations:list")
+        return reverse("devices:locations:detail", kwargs={"uuid": self.uuid})
 
     def __str__(self) -> str:
         return f"{self.location}"
