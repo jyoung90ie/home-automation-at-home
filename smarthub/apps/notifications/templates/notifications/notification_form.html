@@ -8,8 +8,8 @@
 
 {% block extra_body %}
 <script>
-    $("#id_notification_medium").change(function (event) {
-        notification_medium = event.target.value;
+    $(document).ready(function (event) {
+        notification_medium = $("#id_notification_medium").val()
 
         pushbullet_class = ".pushbullet-notification-setup";
         email_class = ".email-notification-setup";
