@@ -44,11 +44,11 @@ h3, h4, h5 {
     font-size: 1.25em;
 }
 
-h1 .fas {
+h1 .fas, h1 .far {
     color: var(--colour-two);
 }
 
-h2 .fas {
+h2 .fas, h2 .far {
     color: var(--colour-three);
 }
 
@@ -173,7 +173,7 @@ nav .breadcrumb a:hover {
 }
 
 /* clickable row styling */
-.device-row:hover, .devicelocation-row:hover, .notification-row:hover {
+.device-row:hover, .devicelocation-row:hover, .notification-row:hover, .event-row:hover {
     cursor: pointer;
 }
 
