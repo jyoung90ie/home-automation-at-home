@@ -1,5 +1,6 @@
 from django.contrib import messages as flash_message
 from django.db.models.deletion import ProtectedError
+from django.db.utils import IntegrityError
 from django.http.response import HttpResponseRedirect
 from django.views.generic import (
     CreateView,
@@ -11,7 +12,6 @@ from django.views.generic import (
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic.base import RedirectView
-from django.utils.decorators import classonlymethod
 
 from csv_export.views import CSVExportView
 
@@ -20,11 +20,28 @@ from ..mixins import MakeRequestObjectAvailableInFormMixin, AddUserToFormMixin
 from ..views import UUIDView
 
 
-class AddDeviceLocation(LoginRequiredMixin, AddUserToFormMixin, CreateView):
+class AddDeviceLocation(LoginRequiredMixin, CreateView):
     model = models.DeviceLocation
     fields = [
         "location",
     ]
+
+    def form_valid(self, form):
+        try:
+            form.instance.user = self.request.user
+            self.object = form.save()
+
+            flash_message.success(
+                self.request,
+                "The new device location has been added - you have been redirected to it.",
+            )
+            return super().form_valid(form)
+        except IntegrityError as ex:
+            flash_message.error(
+                self.request,
+                "You already have a device location with this name - please change the location name and try again",
+            )
+            return self.form_invalid(form)
 
 
 class DetailDeviceLocation(UUIDView, DetailView):
@@ -51,6 +68,23 @@ class UpdateDeviceLocation(UUIDView, mixins.LimitResultsToUserMixin, UpdateView)
     fields = ["location"]
     template_name_suffix = "_update"
 
+    def form_valid(self, form):
+        try:
+            form.instance.user = self.request.user
+            self.object = form.save()
+
+            flash_message.success(
+                self.request,
+                "The device location has been updated.",
+            )
+            return super().form_valid(form)
+        except IntegrityError as ex:
+            flash_message.error(
+                self.request,
+                "You already have a device location with this name - please change the location name and try again",
+            )
+            return self.form_invalid(form)
+
 
 class DeleteDeviceLocation(UUIDView, mixins.LimitResultsToUserMixin, DeleteView):
     model = models.DeviceLocation
@@ -62,6 +96,12 @@ class DeleteDeviceLocation(UUIDView, mixins.LimitResultsToUserMixin, DeleteView)
             self.object = self.get_object()
             success_url = self.get_success_url()
             self.object.delete()
+
+            flash_message.success(
+                self.request,
+                "The device location has been deleted.",
+            )
+
             return HttpResponseRedirect(success_url)
         except ProtectedError as ex:
             error_message = "Cannot delete item because it is being used by one or more of your devices - please update this device and try again"
@@ -110,6 +150,23 @@ class AddDevice(
         )
         return context
 
+    def form_valid(self, form):
+        try:
+            form.instance.user = self.request.user
+            self.object = form.save()
+
+            flash_message.success(
+                self.request,
+                "The new device has been created - you have been redirected to it.",
+            )
+            return super().form_valid(form)
+        except IntegrityError as ex:
+            flash_message.error(
+                self.request,
+                "You already have a device with this device identifier - please change it and try again",
+            )
+            return self.form_invalid(form)
+
 
 class UpdateDevice(
     UUIDView,
@@ -123,10 +180,53 @@ class UpdateDevice(
     def get_queryset(self):
         return models.Device.objects.filter(uuid=self.kwargs["uuid"])
 
+    def form_valid(self, form):
+        try:
+            self.object = form.save()
+
+            flash_message.success(
+                self.request,
+                "The device has been updated.",
+            )
+            return super().form_valid(form)
+        except IntegrityError as ex:
+            flash_message.error(
+                self.request,
+                "You already have a device with this device identifier - please change it and try again",
+            )
+            return self.form_invalid(form)
+
 
 class DeleteDevice(UUIDView, mixins.LimitResultsToUserMixin, DeleteView):
     model = models.Device
     success_url = reverse_lazy("devices:list")
+
+    def delete(self, request, *args, **kwargs):
+
+        try:
+            self.object = self.get_object()
+            success_url = self.get_success_url()
+            self.object.delete()
+
+            flash_message.success(
+                request,
+                "The device has been deleted.",
+            )
+
+            return HttpResponseRedirect(success_url)
+        except Exception as ex:
+            flash_message.error(
+                request,
+                "There was a problem deleting this device - please try again.",
+            )
+            return HttpResponseRedirect(request.path)
+
+    def form_valid(self, form):
+        flash_message.success(
+            self.request,
+            "The device has been deleted.",
+        )
+        return super().form_valid(form)
 
 
 class ListDevices(UUIDView, mixins.LimitResultsToUserMixin, ListView):
