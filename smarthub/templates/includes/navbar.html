@@ -23,22 +23,25 @@
             <i class="fas fa-tablet-alt" title="my devices"></i> devices
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            {% url 'devices:add' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add Device</a>
-            </li>
+            <li class="dropdown-header">My Devices</li>
             {% url 'devices:list' as url %}
             <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View Devices</a>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View All</a>
+            </li>
+            {% url 'devices:add' as url %}
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add </a>
+            </li>
+            <li class="dropdown-header">My Locations</li>
+            {% url 'devices:locations:list' as url %}
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View All</a>
             </li>
             {% url 'devices:locations:add' as url %}
             <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add Location</a>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add</a>
             </li>
-            {% url 'devices:locations:list' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View Locations</a>
-            </li>
+
           </ul>
         </li>
         {% url 'homepage' as url %}
@@ -73,35 +76,50 @@
             <i class="fas fa-user-alt" title="Account options"></i> account
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            {% url 'users:account_profile' as url %}
-            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Profile</a></li>
+            <li class="dropdown-header">{{user}}</li>
             {% url 'notifications:list' as url %}
-            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Notifications</a>
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Notifications</a>
             </li>
+            <div class="dropdown-divider"></div>
+            {% url 'users:account_profile' as url %}
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Profile</a>
+            </li>
+
             {% url 'account_email' as url %}
-            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change Email</a>
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change Email</a>
             </li>
             {% url 'account_change_password' as url %}
-            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change
-                Password</a></li>
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change
+                Password</a>
+            </li>
             {% url 'socialaccount_connections' as url %}
-            <li><a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Social
-                Accounts</a></li>
-            <li class="mt-2 dropdown-item disabled">{{user}}</li>
+            <li>
+              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Social
+                Accounts</a>
+            </li>
           </ul>
         </li>
         {% url 'account_logout' as url %}
-        <li class="nav-item"><a class="nav-link{% if request.path == url %} active{%endif%}" href="{{ url }}">
+        <li class="nav-item">
+          <a class="nav-link{% if request.path == url %} active{%endif%}" href="{{ url }}">
             <i class="fas fa-sign-out-alt" title="Logout"></i> logout
-          </a></li>
+          </a>
+        </li>
         {% else %}
         {% url 'account_login' as url %}
-        <li class="nav-item"><a class="nav-link{% if request.path == url %} active{%endif%}" href="{{ url }}">
+        <li class="nav-item">
+          <a class="nav-link{% if request.path == url %} active{%endif%}" href="{{ url }}">
             <i class="fas fa-sign-in-alt"></i> login</a>
         </li>
         {% url 'account_signup' as url %}
-        <li class="nav-item"><a class="nav-link{% if request.path == url %} active{%endif%}" href="{{ url }}">
-            <i class="far fa-address-card"></i> register</a></li>
+        <li class="nav-item">
+          <a class="nav-link{% if request.path == url %} active{%endif%}" href="{{ url }}">
+            <i class="far fa-address-card"></i> register</a>
+        </li>
         {% endif %}
       </ul>
     </div>

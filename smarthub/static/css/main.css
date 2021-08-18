@@ -139,6 +139,14 @@ ul.navbar-nav > li {
     justify-content: flex-end;
 }
 
+.dropdown-header {
+    font-weight: bold;
+}
+
+.dropdown-menu {
+    padding-top: 0;
+}
+
 /* alert */
 .alert {
     margin-bottom: 3em;
