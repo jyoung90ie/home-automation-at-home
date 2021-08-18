@@ -13,13 +13,13 @@
 <div class="mt-3">
     <div class="row content-box">
         <div class="fw-bold col-4 col-md-2">Friendly Name</div>
-        <div class="col-8 col-md-4">{{ device.friendly_name }}</div>
+        <div class="col-8 col-md-4">{{ device.friendly_name|title }}</div>
         <div class="fw-bold col-4 col-md-2">Device Identifier</div>
-        <div class="col-8 col-md-4">{{ device.device_identifier }}</div>
+        <div class="col-8 col-md-4">{{ device.device_identifier|upper }}</div>
         <div class="fw-bold col-4 col-md-2">Location</div>
-        <div class="col-8 col-md-4">{{ device.location }}</div>
+        <div class="col-8 col-md-4">{{ device.location|title }}</div>
         <div class="fw-bold col-4 col-md-2">Protocol</div>
-        <div class="col-8 col-md-4">{{ device.protocol }}</div>
+        <div class="col-8 col-md-4">{{ device.protocol|upper }}</div>
     </div>
 
     <div class="row mt-2 text-muted">

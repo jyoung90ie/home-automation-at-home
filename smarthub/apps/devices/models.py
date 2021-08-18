@@ -73,6 +73,12 @@ class DeviceLocation(BaseAbstractModel):
     def __str__(self) -> str:
         return f"{self.location}"
 
+    def save(self, *args, **kwargs):
+        # save lowercase to prevent duplicates with different casing
+        self.location = self.location.lower()
+
+        super().save(*args, **kwargs)
+
 
 class DeviceQuerySet(models.QuerySet):
     """ """
@@ -99,7 +105,12 @@ class Device(BaseAbstractModel):
 
     class Meta:
         constraints = [
-            UniqueConstraint(fields=["user", "device_identifier"], name="user_device")
+            UniqueConstraint(
+                fields=["user", "device_identifier"], name="user_device_identifier"
+            ),
+            UniqueConstraint(
+                fields=["user", "friendly_name"], name="user_device_friendly_name"
+            ),
         ]
 
     def __init__(self, *args, **kwargs) -> None:
@@ -107,8 +118,12 @@ class Device(BaseAbstractModel):
         self.zigbee_model = apps.get_model("zigbee", "ZigbeeDevice")
 
     def save(self, *args, **kwargs):
+        # save lowercase to prevent duplicates with different casing
+        self.friendly_name = self.friendly_name.lower()
+        self.device_identifier = self.device_identifier.lower()
+
+        super().save(*args, **kwargs)
         self.try_to_link_zigbee_device()
-        return super().save(*args, **kwargs)
 
     def get_zigbee_device(
         self, field_name="zigbeedevice_set"

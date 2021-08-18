@@ -37,6 +37,7 @@ class AddDeviceLocation(LoginRequiredMixin, CreateView):
             )
             return super().form_valid(form)
         except IntegrityError as ex:
+
             flash_message.error(
                 self.request,
                 "You already have a device location with this name - please change the location name and try again",
@@ -161,9 +162,13 @@ class AddDevice(
             )
             return super().form_valid(form)
         except IntegrityError as ex:
+
+            cause = (
+                "friendly name" if "friendly_name" in str(ex) else "device identifier"
+            )
             flash_message.error(
                 self.request,
-                "You already have a device with this device identifier - please change it and try again",
+                f"You already have a device with this {cause} - please change it and try again",
             )
             return self.form_invalid(form)
 

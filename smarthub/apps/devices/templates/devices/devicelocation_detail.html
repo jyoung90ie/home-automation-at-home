@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div>
-    <h1 class="d-inline"><i class="fas fa-laptop-house me-2"></i>{{ location.location }}</h1>
+    <h1 class="d-inline"><i class="fas fa-laptop-house me-2"></i>{{ location.location|title }}</h1>
     {% include "devices/partials/_user_options_devicelocation.html" %}
 </div>
 
@@ -41,9 +41,10 @@
                 </thead>
                 <tbody>
                     {% endif %}
-                    <tr class="devicelocation-row" onclick='window.location="{% url "devices:device:detail" uuid=device.uuid %}";'>
+                    <tr class="devicelocation-row"
+                        onclick='window.location="{% url "devices:device:detail" uuid=device.uuid %}";'>
                         <td>{{ forloop.counter }}</td>
-                        <td>{{ device.friendly_name }}</td>
+                        <td>{{ device.friendly_name|title }}</td>
                         <td>{{ device.protocol|upper }}</td>
                         <td>
                             {% include "devices/partials/_device_linked.html" %}

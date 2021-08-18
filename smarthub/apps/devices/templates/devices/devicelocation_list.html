@@ -25,7 +25,7 @@
             <tr class="devicelocation-row"
                 onclick='window.location="{% url "devices:locations:detail" uuid=location.uuid %}";'>
                 <td>{{ forloop.counter }}</td>
-                <td>{{ location.location }}</td>
+                <td>{{ location.location|title }}</td>
                 <td>{{ location.device_set.count }}</td>
                 <td>{{ location.created_at|date:"d M Y" }}</td>
                 <td>

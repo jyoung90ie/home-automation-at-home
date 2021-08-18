@@ -172,8 +172,8 @@ nav .breadcrumb a:hover {
     font-weight: bold;
 }
 
-/* device list */
-.device-row:hover, .devicelocation-row:hover {
+/* clickable row styling */
+.device-row:hover, .devicelocation-row:hover, .notification-row:hover {
     cursor: pointer;
 }
 
