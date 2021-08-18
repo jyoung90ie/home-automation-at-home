@@ -1,22 +1,18 @@
 import datetime
-from json.decoder import JSONDecodeError
-import logging
 import json
-from django.core.management.base import CommandError
-import paho.mqtt.client as mqtt
+import logging
+from json.decoder import JSONDecodeError
 
 from django.core.management import BaseCommand
-from smarthub.settings import (
-    MQTT_BASE_TOPIC,
-    MQTT_CLIENT_NAME,
-    MQTT_QOS,
-    MQTT_SERVER,
-    MQTT_TOPICS,
-)
+from django.core.management.base import CommandError
 
+import paho.mqtt.client as mqtt
+
+from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
+                               MQTT_SERVER, MQTT_TOPICS)
 
 from ....devices.models import Device
-from ...models import ZigbeeDevice, ZigbeeMessage, ZigbeeLog
+from ...models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
 
 logger = logging.getLogger("mqtt")
 logger.setLevel(logging.INFO)

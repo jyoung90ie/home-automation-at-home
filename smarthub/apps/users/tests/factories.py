@@ -1,6 +1,8 @@
-import factory
-from .. import models
 from django.contrib.gis.geos import Point
+
+import factory
+
+from .. import models
 
 
 def gen_coords():

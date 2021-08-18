@@ -1,18 +1,19 @@
-from django.urls import reverse_lazy
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import IntegrityError
+from django.http import HttpResponseRedirect
+from django.urls import reverse_lazy
 from django.views.generic.base import RedirectView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
-from django.contrib import messages
-from django.http import HttpResponseRedirect
-from django.db import IntegrityError
-from . import models, forms
+
 from ..mixins import (
     AddUserToFormMixin,
-    MakeRequestObjectAvailableInFormMixin,
     LimitResultsToUserMixin,
+    MakeRequestObjectAvailableInFormMixin,
 )
 from ..views import UUIDView
+from . import forms, models
 
 
 class AddNotificationSetting(
@@ -30,28 +31,12 @@ class AddNotificationSetting(
         kwargs = self.get_form_kwargs()
         request = kwargs["request"]
         notification_medium = form.cleaned_data["notification_medium"]
-        # try:
-        #     user_notification = models.NotificationSetting.objects.get(
-        #         user=user,
-        #         notification_medium=notification_medium,
-        #     )
-        #     if user_notification:
-        #         # user already has this setup
-        #         messages.error(
-        #             request,
-        #             f"You have already setup a notification channel for {notification_medium} -"
-        #             " you cannot create more than one per channel. Your existing settings can be updated by selecting below.",
-        #         )
-        #         return HttpResponseRedirect(reverse_lazy("notifications:list"))
-        # except ObjectDoesNotExist:
-        #     pass
 
         try:
             form_valid = super().form_valid(form)
             messages.success(request, "New notification channel added")
             return form_valid
         except IntegrityError as ex:
-            print("EXCEPTION", ex)
             messages.error(
                 request,
                 f"You have already setup a notification channel for {notification_medium} -"

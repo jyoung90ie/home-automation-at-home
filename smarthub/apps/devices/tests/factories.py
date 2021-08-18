@@ -1,8 +1,10 @@
+from django.db.models.signals import post_save
+
 import factory
 from factory import fuzzy
-from .. import models
+
 from ...users.tests.factories import UserFactory
-from django.db.models.signals import post_save
+from .. import models
 
 
 @factory.django.mute_signals(post_save)

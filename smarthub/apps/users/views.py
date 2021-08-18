@@ -1,10 +1,11 @@
-from django.urls.base import reverse_lazy
-from django.views.generic import UpdateView
-from django.contrib.auth import get_user_model
-from . import forms
 import logging
 
+from django.contrib.auth import get_user_model
+from django.urls.base import reverse_lazy
+from django.views.generic import UpdateView
 from django.views.generic.base import RedirectView
+
+from . import forms
 
 logger = logging.getLogger(__name__)
 

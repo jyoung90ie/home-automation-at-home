@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
+
 from .factories import DeviceFactory, DeviceLocationFactory, UserFactory
 
 login_url = reverse("account_login")

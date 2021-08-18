@@ -1,23 +1,18 @@
 from django.contrib import messages as flash_message
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.deletion import ProtectedError
 from django.db.utils import IntegrityError
 from django.http.response import HttpResponseRedirect
-from django.views.generic import (
-    CreateView,
-    UpdateView,
-    DeleteView,
-    ListView,
-    DetailView,
-)
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
+from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
+                                  UpdateView)
 from django.views.generic.base import RedirectView
 
 from csv_export.views import CSVExportView
 
-from . import models, forms, mixins
-from ..mixins import MakeRequestObjectAvailableInFormMixin, AddUserToFormMixin
+from ..mixins import AddUserToFormMixin, MakeRequestObjectAvailableInFormMixin
 from ..views import UUIDView
+from . import forms, mixins, models
 
 
 class AddDeviceLocation(LoginRequiredMixin, CreateView):

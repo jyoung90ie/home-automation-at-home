@@ -1,12 +1,13 @@
-from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from allauth.account.adapter import DefaultAccountAdapter
-from allauth.utils import SERIALIZED_DB_FIELD_PREFIX
-from allauth.exceptions import ImmediateHttpResponse
+import logging
+
 from django.contrib.auth import get_user_model
-from allauth.account.models import EmailAddress
 from django.http import HttpResponse
 
-import logging
+from allauth.account.adapter import DefaultAccountAdapter
+from allauth.account.models import EmailAddress
+from allauth.exceptions import ImmediateHttpResponse
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.utils import SERIALIZED_DB_FIELD_PREFIX
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +24,6 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
 
     def pre_social_login(self, request, sociallogin):
         """Connect social account to existing account, if existing email found"""
-        logger.debug(f"JY001: {request}")
-        logger.debug(f"JY001: {sociallogin}")
 
         if sociallogin.is_existing:
             return

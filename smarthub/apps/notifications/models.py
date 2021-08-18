@@ -1,8 +1,10 @@
 from re import L
-from django.db import models
+
 from django.contrib.auth import get_user_model
+from django.db import models
 from django.db.models.constraints import UniqueConstraint
 from django.urls.base import reverse
+
 from ..models import BaseAbstractModel
 
 

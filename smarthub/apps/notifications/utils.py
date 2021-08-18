@@ -1,9 +1,11 @@
-from django.contrib.auth import get_user_model
-from . import defines, models
-
-import logging
 import json
+import logging
+
+from django.contrib.auth import get_user_model
+
 import requests
+
+from . import defines, models
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

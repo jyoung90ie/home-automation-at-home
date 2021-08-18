@@ -1,6 +1,8 @@
 import logging
-from django.db import models
+
 from django.apps import apps
+from django.db import models
+
 from ..models import BaseAbstractModel
 
 logger = logging.getLogger("mqtt")

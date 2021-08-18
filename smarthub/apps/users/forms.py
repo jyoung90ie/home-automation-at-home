@@ -1,7 +1,8 @@
-from django.contrib.auth import get_user_model
 from django import forms
+from django.contrib.auth import get_user_model
+
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Column, Layout, Submit, Row
+from crispy_forms.layout import Column, Layout, Row, Submit
 
 
 class SignupForm(forms.ModelForm):

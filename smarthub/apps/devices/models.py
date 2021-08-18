@@ -1,14 +1,15 @@
-from typing import Union, TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, Union
+
+from django.apps import apps
+from django.contrib.auth import get_user_model
+from django.db import models
 from django.db.models.constraints import UniqueConstraint
 from django.db.models.query import QuerySet
-from django.utils.translation import gettext_lazy as _
-from django.apps import apps
-from django.db import models
-from django.contrib.auth import get_user_model
 from django.urls import reverse
-from ..models import BaseAbstractModel
+from django.utils.translation import gettext_lazy as _
 
-import logging
+from ..models import BaseAbstractModel
 
 logger = logging.getLogger(__name__)
 
