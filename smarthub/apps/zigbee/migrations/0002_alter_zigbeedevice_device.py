@@ -7,14 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('devices', '0005_auto_20210810_1440'),
-        ('zigbee', '0001_initial'),
+        ("devices", "0005_auto_20210810_1440"),
+        ("zigbee", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='zigbeedevice',
-            name='device',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='devices.device'),
+            model_name="zigbeedevice",
+            name="device",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="devices.device",
+            ),
         ),
     ]

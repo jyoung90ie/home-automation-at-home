@@ -11,42 +11,84 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('notifications', '0001_initial'),
+        ("notifications", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='NotificationSetting',
+            name="NotificationSetting",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('uuid', models.UUIDField(default=uuid.uuid4, editable=False, unique=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('notification_medium', models.CharField(choices=[('Email', 'Email'), ('Pushbullet', 'Pushbullet')], default='Email', max_length=30, verbose_name='Notification channel')),
-                ('is_enabled', models.BooleanField(default=True, verbose_name='Enable notifications')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "uuid",
+                    models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "notification_medium",
+                    models.CharField(
+                        choices=[("Email", "Email"), ("Pushbullet", "Pushbullet")],
+                        default="Email",
+                        max_length=30,
+                        verbose_name="Notification channel",
+                    ),
+                ),
+                (
+                    "is_enabled",
+                    models.BooleanField(
+                        default=True, verbose_name="Enable notifications"
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.AlterField(
-            model_name='emailnotification',
-            name='notification',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='notifications.notificationsetting'),
+            model_name="emailnotification",
+            name="notification",
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="notifications.notificationsetting",
+            ),
         ),
         migrations.AlterField(
-            model_name='notification',
-            name='medium',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='notifications.notificationsetting'),
+            model_name="notification",
+            name="medium",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="notifications.notificationsetting",
+            ),
         ),
         migrations.AlterField(
-            model_name='pushbulletnotification',
-            name='notification',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='notifications.notificationsetting'),
+            model_name="pushbulletnotification",
+            name="notification",
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="notifications.notificationsetting",
+            ),
         ),
         migrations.DeleteModel(
-            name='UserNotificationSetting',
+            name="UserNotificationSetting",
         ),
         migrations.AddConstraint(
-            model_name='notificationsetting',
-            constraint=models.UniqueConstraint(fields=('user', 'notification_medium'), name='user_notification_medium'),
+            model_name="notificationsetting",
+            constraint=models.UniqueConstraint(
+                fields=("user", "notification_medium"), name="user_notification_medium"
+            ),
         ),
     ]

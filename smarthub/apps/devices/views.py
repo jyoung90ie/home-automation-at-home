@@ -4,8 +4,13 @@ from django.db.models.deletion import ProtectedError
 from django.db.utils import IntegrityError
 from django.http.response import HttpResponseRedirect
 from django.urls import reverse_lazy
-from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
-                                  UpdateView)
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 from django.views.generic.base import RedirectView
 
 from csv_export.views import CSVExportView

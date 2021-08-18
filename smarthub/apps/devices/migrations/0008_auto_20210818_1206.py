@@ -6,25 +6,29 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('devices', '0007_auto_20210818_1149'),
+        ("devices", "0007_auto_20210818_1149"),
     ]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='device',
-            name='user_device',
+            model_name="device",
+            name="user_device",
         ),
         migrations.AlterField(
-            model_name='devicelocation',
-            name='location',
-            field=models.CharField(max_length=100, verbose_name='location name'),
+            model_name="devicelocation",
+            name="location",
+            field=models.CharField(max_length=100, verbose_name="location name"),
         ),
         migrations.AddConstraint(
-            model_name='device',
-            constraint=models.UniqueConstraint(fields=('user', 'device_identifier'), name='user_device_identifier'),
+            model_name="device",
+            constraint=models.UniqueConstraint(
+                fields=("user", "device_identifier"), name="user_device_identifier"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='device',
-            constraint=models.UniqueConstraint(fields=('user', 'friendly_name'), name='user_device_friendly_name'),
+            model_name="device",
+            constraint=models.UniqueConstraint(
+                fields=("user", "friendly_name"), name="user_device_friendly_name"
+            ),
         ),
     ]

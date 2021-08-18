@@ -184,7 +184,8 @@ class Device(BaseAbstractModel):
                 message_logs = getattr(message, field_name).all()
 
                 if latest_only:
-                    # latest_only -> returns only latest ZigbeeMessage -> no need to build queryset of logs as only one result
+                    # latest_only -> returns only latest ZigbeeMessage -> no need to build
+                    # queryset of logs as only one result
                     return message_logs
 
                 logs.append(message_logs)
@@ -209,7 +210,8 @@ class Device(BaseAbstractModel):
             return
 
         try:
-            # not using Q model here as priority is on a hierarchical match - if using Q, potential for two matches exists
+            # not using Q model here as priority is on a hierarchical match - if using
+            # Q, potential for two matches exists
             zigbee_device = self.zigbee_model.objects.filter(
                 ieee_address=self.device_identifier
             ) or self.zigbee_model.objects.filter(friendly_name=self.friendly_name)

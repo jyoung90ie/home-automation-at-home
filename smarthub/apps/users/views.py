@@ -9,7 +9,7 @@ from . import forms
 
 logger = logging.getLogger(__name__)
 
-# Create your views here.
+
 class Profile(UpdateView):
     form_class = forms.UpdateProfileForm
     template_name = "users/profile.html"
