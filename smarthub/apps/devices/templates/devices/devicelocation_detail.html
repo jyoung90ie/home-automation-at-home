@@ -44,7 +44,7 @@
                     <tr class="devicelocation-row" onclick='window.location="{% url "devices:device:detail" uuid=device.uuid %}";'>
                         <td>{{ forloop.counter }}</td>
                         <td>{{ device.friendly_name }}</td>
-                        <td>{{ device.protocol|title }}</td>
+                        <td>{{ device.protocol|upper }}</td>
                         <td>
                             {% include "devices/partials/_device_linked.html" %}
                         </td>

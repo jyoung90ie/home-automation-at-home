@@ -28,7 +28,7 @@
                 <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                 <td>{{ device.friendly_name }}</td>
                 <td>{{ device.device_identifier|upper }}</td>
-                <td>{{ device.protocol|title }}</td>
+                <td>{{ device.protocol|upper}}</td>
                 <td>{{ device.location }}</td>
                 <td>{{ device.last_communication }}</td>
                 <td>
