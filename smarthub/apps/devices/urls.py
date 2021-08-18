@@ -1,4 +1,4 @@
-from django.conf.urls import include
+""" URL endpoints for app """
 from django.urls import include, path
 
 from . import views

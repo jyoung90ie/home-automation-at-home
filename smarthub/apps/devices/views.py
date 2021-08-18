@@ -1,8 +1,10 @@
-from django.contrib import messages as flash_message
+"""Handles user requests to devices app"""
+
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.deletion import ProtectedError
 from django.db.utils import IntegrityError
-from django.http.response import HttpResponseRedirect
+from django.http.response import Http404, HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -10,44 +12,58 @@ from django.views.generic import (
     DetailView,
     ListView,
     UpdateView,
+    RedirectView,
 )
-from django.views.generic.base import RedirectView
 
 from csv_export.views import CSVExportView
 
-from ..mixins import AddUserToFormMixin, MakeRequestObjectAvailableInFormMixin
+from ..mixins import (
+    AddUserToFormMixin,
+    MakeRequestObjectAvailableInFormMixin,
+    LimitResultsToUserMixin,
+)
 from ..views import UUIDView
 from . import forms, mixins, models
 
 
 class AddDeviceLocation(LoginRequiredMixin, CreateView):
+    """Handles creation of device locations"""
+
     model = models.DeviceLocation
     fields = [
         "location",
     ]
+
+    def __init__(self) -> None:
+        self.object = None
+        super().__init__()
 
     def form_valid(self, form):
         try:
             form.instance.user = self.request.user
             self.object = form.save()
 
-            flash_message.success(
+            messages.success(
                 self.request,
                 "The new device location has been added - you have been redirected to it.",
             )
             return super().form_valid(form)
-        except IntegrityError as ex:
+        except IntegrityError:
 
-            flash_message.error(
+            messages.error(
                 self.request,
-                "You already have a device location with this name - please change the location name and try again",
+                "You already have a device location with this name - please change the location"
+                " name and try again",
             )
             return self.form_invalid(form)
 
 
-class DetailDeviceLocation(UUIDView, DetailView):
+class DetailDeviceLocation(LimitResultsToUserMixin, UUIDView, DetailView):
+    """Handles serving of specific device information"""
+
     model = models.DeviceLocation
     context_object_name = "location"
+    ordering = "created_at"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -64,32 +80,45 @@ class DetailDeviceLocation(UUIDView, DetailView):
         return context
 
 
-class UpdateDeviceLocation(UUIDView, mixins.LimitResultsToUserMixin, UpdateView):
+class UpdateDeviceLocation(UUIDView, LimitResultsToUserMixin, UpdateView):
+    """Handles updating of a specific device"""
+
     model = models.DeviceLocation
     fields = ["location"]
     template_name_suffix = "_update"
+
+    def __init__(self) -> None:
+        self.object = None
+        super().__init__()
 
     def form_valid(self, form):
         try:
             form.instance.user = self.request.user
             self.object = form.save()
 
-            flash_message.success(
+            messages.success(
                 self.request,
                 "The device location has been updated.",
             )
             return super().form_valid(form)
-        except IntegrityError as ex:
-            flash_message.error(
+        except IntegrityError:
+            messages.error(
                 self.request,
-                "You already have a device location with this name - please change the location name and try again",
+                "You already have a device location with this name - please change the location "
+                "name and try again",
             )
             return self.form_invalid(form)
 
 
-class DeleteDeviceLocation(UUIDView, mixins.LimitResultsToUserMixin, DeleteView):
+class DeleteDeviceLocation(UUIDView, LimitResultsToUserMixin, DeleteView):
+    """Enables user to delete device locations they have created"""
+
     model = models.DeviceLocation
     success_url = reverse_lazy("devices:locations:list")
+
+    def __init__(self) -> None:
+        self.object = None
+        super().__init__()
 
     def delete(self, request, *args, **kwargs):
 
@@ -98,26 +127,31 @@ class DeleteDeviceLocation(UUIDView, mixins.LimitResultsToUserMixin, DeleteView)
             success_url = self.get_success_url()
             self.object.delete()
 
-            flash_message.success(
+            messages.success(
                 self.request,
                 "The device location has been deleted.",
             )
 
             return HttpResponseRedirect(success_url)
         except ProtectedError as ex:
-            error_message = "Cannot delete item because it is being used by one or more of your devices - please update this device and try again"
+            error_message = (
+                "Cannot delete item because it is being used by one or more of your "
+                "devices - please update this device and try again"
+            )
             devices = ",".join(
                 [device.friendly_name for device in ex.protected_objects]
             )
 
-            flash_message.warning(
+            messages.warning(
                 request,
                 f"{error_message}  (Devices: {devices})",
             )
             return HttpResponseRedirect(request.path)
 
 
-class ListDeviceLocations(mixins.LimitResultsToUserMixin, ListView):
+class ListDeviceLocations(LimitResultsToUserMixin, ListView):
+    """Handles listing of device locations created by the user"""
+
     model = models.DeviceLocation
     paginate_by = 15
     context_object_name = "device_locations"
@@ -140,8 +174,14 @@ class AddDevice(
     AddUserToFormMixin,
     CreateView,
 ):
+    """Handles creation of a new device for the user"""
+
     form_class = forms.DeviceForm
     template_name = "devices/device_form.html"
+
+    def __init__(self) -> None:
+        self.object = None
+        super().__init__()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -156,7 +196,7 @@ class AddDevice(
             form.instance.user = self.request.user
             self.object = form.save()
 
-            flash_message.success(
+            messages.success(
                 self.request,
                 "The new device has been created - you have been redirected to it.",
             )
@@ -166,7 +206,7 @@ class AddDevice(
             cause = (
                 "friendly name" if "friendly_name" in str(ex) else "device identifier"
             )
-            flash_message.error(
+            messages.error(
                 self.request,
                 f"You already have a device with this {cause} - please change it and try again",
             )
@@ -176,11 +216,17 @@ class AddDevice(
 class UpdateDevice(
     UUIDView,
     MakeRequestObjectAvailableInFormMixin,
-    mixins.LimitResultsToUserMixin,
+    LimitResultsToUserMixin,
     UpdateView,
 ):
+    """Handles updating of an existing device for the specified user"""
+
     form_class = forms.DeviceForm
     template_name_suffix = "_update_form"
+
+    def __init__(self) -> None:
+        self.object = None
+        super().__init__()
 
     def get_queryset(self):
         return models.Device.objects.filter(uuid=self.kwargs["uuid"])
@@ -189,22 +235,29 @@ class UpdateDevice(
         try:
             self.object = form.save()
 
-            flash_message.success(
+            messages.success(
                 self.request,
                 "The device has been updated.",
             )
             return super().form_valid(form)
-        except IntegrityError as ex:
-            flash_message.error(
+        except IntegrityError:
+            messages.error(
                 self.request,
-                "You already have a device with this device identifier - please change it and try again",
+                "You already have a device with this device identifier - please change it and "
+                "try again",
             )
             return self.form_invalid(form)
 
 
-class DeleteDevice(UUIDView, mixins.LimitResultsToUserMixin, DeleteView):
+class DeleteDevice(UUIDView, LimitResultsToUserMixin, DeleteView):
+    """Enables user to delete any of their own devices"""
+
     model = models.Device
     success_url = reverse_lazy("devices:list")
+
+    def __init__(self) -> None:
+        self.object = None
+        super().__init__()
 
     def delete(self, request, *args, **kwargs):
 
@@ -213,28 +266,23 @@ class DeleteDevice(UUIDView, mixins.LimitResultsToUserMixin, DeleteView):
             success_url = self.get_success_url()
             self.object.delete()
 
-            flash_message.success(
+            messages.success(
                 request,
                 "The device has been deleted.",
             )
 
             return HttpResponseRedirect(success_url)
-        except Exception as ex:
-            flash_message.error(
+        except Exception:
+            messages.error(
                 request,
                 "There was a problem deleting this device - please try again.",
             )
             return HttpResponseRedirect(request.path)
 
-    def form_valid(self, form):
-        flash_message.success(
-            self.request,
-            "The device has been deleted.",
-        )
-        return super().form_valid(form)
 
+class ListDevices(UUIDView, LimitResultsToUserMixin, ListView):
+    """Enables user to list all of their devices"""
 
-class ListDevices(UUIDView, mixins.LimitResultsToUserMixin, ListView):
     model = models.Device
     paginate_by = 15
     context_object_name = "devices"
@@ -247,6 +295,8 @@ class ListDevices(UUIDView, mixins.LimitResultsToUserMixin, ListView):
 
 
 class DetailDevice(UUIDView, mixins.PermitDeviceOwnerOnly, DetailView):
+    """Enables user to view detailed information on their own device"""
+
     model = models.Device
     context_object_name = "device"
 
@@ -257,10 +307,17 @@ class DetailDevice(UUIDView, mixins.PermitDeviceOwnerOnly, DetailView):
 
 
 class LogsForDevice(UUIDView, mixins.PermitDeviceOwnerOnly, ListView):
+    """Enables user to view hardware device logs - if their device has been linked to a
+    hadware device"""
+
     paginate_by = 15
     context_object_name = "logs"
     template_name = "devices/device_logs.html"
     ordering = ["-created_at"]
+
+    def __init__(self) -> None:
+        self.device = None
+        super().__init__()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -270,7 +327,11 @@ class LogsForDevice(UUIDView, mixins.PermitDeviceOwnerOnly, ListView):
     def get_queryset(self):
         uuid = self.kwargs.pop("uuid")
         self.device = models.Device.objects.get(uuid=uuid)
+
         queryset = self.device.get_zigbee_messages()
+        if not queryset:
+            raise Http404("Could not find device logs")
+
         return queryset
 
 

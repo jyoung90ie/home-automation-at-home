@@ -1,3 +1,5 @@
+"""Captures user device information which can be used to link to hardware devices via other
+modules"""
 import logging
 from typing import TYPE_CHECKING, Union
 
@@ -25,9 +27,10 @@ class DeviceProtocol(models.TextChoices):
 
 
 class DeviceLocationsQuerySet(models.QuerySet):
-    """ """
+    """Custom queries"""
 
     def by_user(self, user):
+        """Return device locations created by specified user"""
         return self.filter(user=user)
 
     def total_devices_by_protocol_and_location(
@@ -50,7 +53,7 @@ class DeviceLocationsQuerySet(models.QuerySet):
 
 
 class DeviceLocationManager(models.Manager.from_queryset(DeviceLocationsQuerySet)):
-    """ """
+    """Custom object manager"""
 
 
 class DeviceLocation(BaseAbstractModel):
@@ -68,6 +71,7 @@ class DeviceLocation(BaseAbstractModel):
         ]
 
     def get_absolute_url(self):
+        """Default redirect url for forms"""
         return reverse("devices:locations:detail", kwargs={"uuid": self.uuid})
 
     def __str__(self) -> str:
@@ -81,11 +85,11 @@ class DeviceLocation(BaseAbstractModel):
 
 
 class DeviceQuerySet(models.QuerySet):
-    """ """
+    """Custom query set inherited by manager"""
 
 
 class DeviceManager(models.Manager.from_queryset(DeviceQuerySet)):
-    """ """
+    """Customer object manager"""
 
 
 class Device(BaseAbstractModel):
@@ -127,18 +131,18 @@ class Device(BaseAbstractModel):
 
     def get_zigbee_device(
         self, field_name="zigbeedevice_set"
-    ) -> Union[QuerySet["ZigbeeDevice"], bool]:
+    ) -> Union[QuerySet["ZigbeeDevice"], None]:
         """Return ZigbeeDevice object or false"""
-        obj: "ZigbeeDevice" = getattr(self, field_name, False)
+        obj: "ZigbeeDevice" = getattr(self, field_name, None)
 
-        return obj.all() if obj else False
+        return obj.all() if obj else None
 
     def get_zigbee_messages(
         self, latest_only=False, field_name="zigbeemessage_set"
     ) -> Union[QuerySet["ZigbeeMessage"], bool]:
         """Return all raw messages for zigbee device"""
         messages = False
-        zb_device: "ZigbeeDevice" = self.get_zigbee_device()
+        zb_device: QuerySet["ZigbeeDevice"] = self.get_zigbee_device()
 
         if zb_device:
             if isinstance(zb_device, QuerySet):
@@ -151,7 +155,6 @@ class Device(BaseAbstractModel):
                     messages = [messages.order_by("-created_at").first()]
             except AttributeError:
                 logger.error("There was a problem aggregating ZigbeeMessages")
-                pass
 
         return messages
 
@@ -166,13 +169,15 @@ class Device(BaseAbstractModel):
         messages = self.get_zigbee_messages(latest_only)
 
         if not messages:
-            logger.info(f"ZigbeeDevice has no messages - {self}")
+            logger.info("ZigbeeDevice has no messages - %s", self)
             return False
 
         if message_obj:
             if not isinstance(message_obj, apps.get_model("zigbee", "ZigbeeMessage")):
                 logger.info(
-                    "get_zigbee_logs(): Invalid object type provided - expected ZigbeeMessage (value={message_obj}"
+                    "get_zigbee_logs(): Invalid object type provided - expected ZigbeeMessage"
+                    " (value=%s)",
+                    message_obj,
                 )
                 return False
             return messages.filter(message=message_obj)
@@ -191,15 +196,16 @@ class Device(BaseAbstractModel):
                 logs.append(message_logs)
             except AttributeError:
                 logger.error("There was a problem aggregating ZigbeeLogs")
-                pass
 
         return logs
 
     def get_lastest_zigbee_logs(self) -> Union[QuerySet["ZigbeeLog"], bool]:
+        """Returns all logs relating to the last message from the device"""
         return self.get_zigbee_logs(latest_only=True)
 
     def try_to_link_zigbee_device(self) -> None:
-        """Looks in Zigbee devices to see if there are any matches using friendly_name and device_identifier"""
+        """Looks in Zigbee devices to see if there are any matches using friendly_name and
+        device_identifier"""
         if not DeviceProtocol.ZIGBEE or self.get_zigbee_device():
             return
 
@@ -233,12 +239,13 @@ class Device(BaseAbstractModel):
             if is_linked:
                 break
 
-            fk_obj = getattr(self, fk_name, False)
+            fk_obj = getattr(self, fk_name, None)
             is_linked = fk_obj and hasattr(fk_obj.first(), "device")
 
         return is_linked
 
     def get_absolute_url(self):
+        """Default redirect url"""
         return reverse("devices:device:detail", kwargs={"uuid": self.uuid})
 
     def __str__(self):

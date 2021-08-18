@@ -1,3 +1,4 @@
+"""Handles notification page requests"""
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
@@ -22,12 +23,16 @@ class AddNotificationSetting(
     MakeRequestObjectAvailableInFormMixin,
     CreateView,
 ):
+    """Enables user to create new notifications.
+    User can only create one setting per notification channel."""
+
     form_class = forms.NotificationSettingForm
     template_name = "notifications/notification_form.html"
     success_url = reverse_lazy("notifications:list")
 
     def form_valid(self, form):
-        """Override default implemtation to check that user does not already have this channel setup"""
+        """Override default implemtation to check that user does not already have this channel
+        setup"""
         kwargs = self.get_form_kwargs()
         request = kwargs["request"]
         notification_medium = form.cleaned_data["notification_medium"]
@@ -36,16 +41,19 @@ class AddNotificationSetting(
             form_valid = super().form_valid(form)
             messages.success(request, "New notification channel added")
             return form_valid
-        except IntegrityError as ex:
+        except IntegrityError:
             messages.error(
                 request,
                 f"You have already setup a notification channel for {notification_medium} -"
-                " you cannot create more than one per channel. Your existing settings can be updated by selecting below.",
+                " you cannot create more than one per channel. Your existing settings can be"
+                " updated by selecting below.",
             )
             return HttpResponseRedirect(reverse_lazy("notifications:list"))
 
 
 class ListNotificationSetting(LimitResultsToUserMixin, ListView):
+    """List all of the user's notification objects"""
+
     model = models.NotificationSetting
     context_object_name = "notifications"
     template_name = "notifications/notification_list.html"
@@ -53,6 +61,8 @@ class ListNotificationSetting(LimitResultsToUserMixin, ListView):
 
 
 class UpdateNotificationSetting(LimitResultsToUserMixin, UUIDView, UpdateView):
+    """Permit user to update their own notification objects"""
+
     form_class = forms.UpdateNotificationSettingForm
     template_name = "notifications/notification_update_form.html"
 
@@ -86,6 +96,8 @@ class UpdateNotificationSetting(LimitResultsToUserMixin, UUIDView, UpdateView):
 
 
 class DeleteNotificationSetting(LimitResultsToUserMixin, UUIDView, DeleteView):
+    """Enables user to delete their own notification objects"""
+
     model = models.NotificationSetting
     success_url = reverse_lazy("notifications:list")
     template_name = "notifications/notification_confirm_delete.html"

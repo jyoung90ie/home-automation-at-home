@@ -1,6 +1,5 @@
 import logging
 
-from django.contrib.auth import get_user_model
 from django.urls.base import reverse_lazy
 from django.views.generic import UpdateView
 from django.views.generic.base import RedirectView
@@ -11,11 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 class Profile(UpdateView):
+    """Enables user to update account information"""
+
     form_class = forms.UpdateProfileForm
     template_name = "users/profile.html"
-
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
 
     def get_object(self, queryset=None):
         return self.request.user
