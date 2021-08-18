@@ -87,6 +87,9 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "dynamic_breadcrumbs.context_processors.breadcrumbs",
             ],
+            "libraries": {
+                "icons": "smarthub.templatetags.icons",
+            },
         },
     },
 ]

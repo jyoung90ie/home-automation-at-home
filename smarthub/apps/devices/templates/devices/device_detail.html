@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icons %}
 {% block content %}
 {% with is_linked=device.is_linked %}
 <div>
@@ -30,11 +31,7 @@
             <div class="row content-box">
                 <div class="fw-bold col-6">Status</div>
                 <div class="col-6 fs-3">
-                    {% if is_linked %}
-                    <i class="fas fa-check text-success" title="Device is linked to a hardware device"></i>
-                    {% else %}
-                    <i class="fas fa-times-circle text-danger" title="Device is not linked to a hardware device"></i>
-                    {% endif %}
+                    {{ is_linked|to_status_icon }}
                 </div>
 
                 {% if is_linked %}
