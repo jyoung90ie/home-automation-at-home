@@ -15,7 +15,8 @@
             <tr>
                 <th scope="col">#</th>
                 <th scope="col">Location</th>
-                <th scope="col">Number of Devices</th>
+                <th scope="col">Total Devices</th>
+                <th scope="col">Total Linked Devices</th>
                 <th scope="col">Created On</th>
                 <th scope="col">Options</th>
             </tr>
@@ -27,6 +28,7 @@
                 <td>{{ forloop.counter }}</td>
                 <td>{{ location.location|title }}</td>
                 <td>{{ location.device_set.count }}</td>
+                <td>{{ location.total_linked_devices }}</td>
                 <td>{{ location.created_at|date:"d M Y" }}</td>
                 <td>
                     <a class="btn btn-sm btn-secondary" href="{% url 'devices:locations:detail' uuid=location.uuid %}">
