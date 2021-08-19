@@ -1,3 +1,4 @@
+"""Custom forms"""
 from typing import Optional
 
 from django import forms
@@ -197,9 +198,7 @@ class UpdateNotificationSettingForm(forms.ModelForm):
 
     def is_valid(self) -> bool:
         try:
-            main_form = (
-                super().is_valid()
-            )  # must call here to get access to cleaned_data
+            super().is_valid()  # enables access to form cleaned_data
             notification_settings: Optional(
                 PushbulletNotificationForm, EmailNotificationForm
             )
@@ -224,7 +223,8 @@ class UpdateNotificationSettingForm(forms.ModelForm):
                 )
 
             return notification_settings.is_valid()
-        except UnboundLocalError as ex:
+        except UnboundLocalError:
+            # field was manually overridden - avoids error
             self.errors.update({"notification_medium": ["Invalid value"]})
             return False
 
@@ -252,12 +252,18 @@ class UpdateNotificationSettingForm(forms.ModelForm):
 
 
 class PushbulletNotificationForm(forms.ModelForm):
+    """Form is nevered directly invoked, but is used within another form to validate input
+    fields"""
+
     class Meta:
         model = models.PushbulletNotification
         fields = ("access_token",)
 
 
 class EmailNotificationForm(forms.ModelForm):
+    """Form is nevered directly invoked, but is used within another form to validate input
+    fields"""
+
     class Meta:
         model = models.EmailNotification
         fields = (
