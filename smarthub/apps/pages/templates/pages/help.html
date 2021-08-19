@@ -8,13 +8,41 @@
             <h2 class="accordion-header" id="headingHelpItem1">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                     data-bs-target="#helpPageItem1" aria-expanded="false" aria-controls="helpPageItem1">
-                    How do I configure Smart Hub to communicate with the Zigbee MQTT Broker?
+                    How do I configure Smart Hub to communicate with the MQTT Broker?
                 </button>
             </h2>
             <div id="helpPageItem1" class="accordion-collapse collapse" aria-labelledby="headingHelpItem1"
                 data-bs-parent="#helpPageContent">
                 <div class="accordion-body">
-                    TBC
+                    There are five settings that must be updated in the Django settings module:
+                    <ol>
+                        <li>
+                            <strong>MQTT_QOS:</strong> The MQTT specification outlines three levels for QoS - you can
+                            find <a href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901103"
+                                target="_blank">more information</a>.
+                        </li>
+                        <li>
+                            <strong>MQTT_SERVER:</strong> This is the IP address of the server hosting the MQTT broker.
+                            In this instance, the LAN address of the Raspberry Pi device. If hosting locally,
+                            <em>recommended value = "192.168.x.x"</em> replacing the "x" with the relevant numbers.
+                        </li>
+                        <li>
+                            <strong>MQTT_BASE_TOPIC:</strong> This is the base topic that module will subscribe to.
+                            <em>Default value = "zigbee2mqtt"</em>
+                        </li>
+                        <li>
+                            <strong>MQTT_TOPICS:</strong> The topics you wish to subscribe to - this must be a Python
+                            list. <em>Default value = "#"</em> which means to subscribe to all topics (published in the
+                            base topic above). You can find out more about using topic wildcards in the <a
+                                href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901242"
+                                target="_blank">latest MQTT specification</a>.
+                        </li>
+                        <li>
+                            <strong>MQTT_CLIENT_NAME:</strong> This is the name of the MQTT listening module within the
+                            Django app. If you invoke actions on any device using MQTT, this is the name of the device
+                            that will show with published MQTT messages. <em>Default value = "Smart Hub"</em>
+                        </li>
+                    </ol>
                 </div>
             </div>
         </div>
@@ -138,7 +166,18 @@
             <div id="helpPageItem5" class="accordion-collapse collapse" aria-labelledby="headingHelpItem5"
                 data-bs-parent="#helpPageContent">
                 <div class="accordion-body">
-                    TBC
+                    <p>You cannot add a Zigbee device per say - you can however add a device and set the protocol to
+                        Zigbee
+                        on the Smart Hub application. The subtly here is that this is not the actual zigbee device, this
+                        is
+                        a device proxy that Smart Hub will attempt to link to a Zigbee device, <em>if it can</em>.</p>
+                    <p>The process for linking a Smart Hub device to a physical Zigbee device is conducted using the two
+                        Smart Hub device fields, <strong>device identifier</strong> or <strong>friendly name</strong>.
+                        It is therefore imperative that these fields match exactly to those of the device.</p>
+                    <p><strong>Device identifier</strong> will be matched against the hardware device <strong>IEEE
+                            address</strong></p>
+                    <p><strong>Friendly name</strong> will be matched against the MQTT topic and is especially important
+                        to match in order for communication messages to be linked to the correct device.</p>
                 </div>
             </div>
         </div>
