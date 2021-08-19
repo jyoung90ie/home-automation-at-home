@@ -1,15 +1,23 @@
+"""Custom user model implementation"""
+from django.apps import apps
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.db import models
+from django.db.models.query import QuerySet
+from django.db.models.query_utils import Q
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from . import defines
 
 
 class CustomUserManager(BaseUserManager):
+    """Custom implementation for creating users with email as username"""
+
     def create_user(self, email, password, **extra_fields):
+        """Overrides default to user email as username"""
         if not email:
             raise ValueError(_("Email address must be populated"))
 
@@ -20,6 +28,7 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password, **extra_fields):
+        """Overrides default to enable email as username field"""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -30,6 +39,31 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_("Superuser must have is_superuser=True"))
 
         return self.create_user(email, password, **extra_fields)
+
+    def user_devices(self, user) -> QuerySet:
+        """Return all devices created by user"""
+        return apps.get_model("devices", "Device").objects.filter(user=user)
+
+    def get_linked_devices(self, user) -> QuerySet:
+        """Return list of device objects for user"""
+        user_devices = self.user_devices(user=user)
+        if not user_devices:
+            return []
+
+        linked_devices = user_devices.filter(
+            Q(zigbeedevice__uuid__isnull=False)
+            # | Q(apidevice_set__uuid__isnull=False) # not yet active
+        )
+
+        return linked_devices
+
+    def total_linked_devices(self, user) -> int:
+        """Return the number of linked devices for user object"""
+        linked_devices = self.get_linked_devices(user=user)
+        if not linked_devices:
+            return 0
+
+        return linked_devices.count()
 
 
 class CustomUser(AbstractUser):
@@ -53,6 +87,22 @@ class CustomUser(AbstractUser):
         return self.email
 
     def get_absolute_url(self):
-        from django.urls import reverse
-
+        """Default redirect url for user object actions"""
         return reverse("users:account_profile")
+
+    @property
+    def get_linked_devices(self) -> QuerySet:
+        """Return total number of linked devices for user"""
+        return CustomUser.objects.get_linked_devices(user=self)
+
+    @property
+    def total_linked_devices(self) -> int:
+        """Return total number of linked devices for user"""
+        total = 0
+        try:
+            total = self.get_linked_devices.count()
+        except TypeError:
+            # queryset is empty and count() does not exist
+            pass
+
+        return total

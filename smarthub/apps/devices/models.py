@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Union
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
+from django.core.exceptions import EmptyResultSet, ObjectDoesNotExist
 from django.db import models
 from django.db.models.constraints import UniqueConstraint
 from django.db.models.query import QuerySet
@@ -83,6 +84,18 @@ class DeviceLocation(BaseAbstractModel):
 
         super().save(*args, **kwargs)
 
+    def total_linked_devices(self) -> int:
+        """Return number of user's linked devices in specified location"""
+        total = 0
+        try:
+            users_linked_devices: QuerySet = self.user.get_linked_devices
+
+            location_linked_devices = users_linked_devices.filter(location=self)
+            total = location_linked_devices.count()
+        except (EmptyResultSet, ObjectDoesNotExist):
+            pass
+        return total
+
 
 class DeviceQuerySet(models.QuerySet):
     """Custom query set inherited by manager"""
@@ -121,7 +134,7 @@ class Device(BaseAbstractModel):
         super().__init__(*args, **kwargs)
         self.zigbee_model = apps.get_model("zigbee", "ZigbeeDevice")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         # save lowercase to prevent duplicates with different casing
         self.friendly_name = self.friendly_name.lower()
         self.device_identifier = self.device_identifier.lower()
