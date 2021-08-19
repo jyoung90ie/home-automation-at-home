@@ -1,8 +1,6 @@
 """Custom forms for handling creation of events with event trigger objects"""
-from typing import Optional
 
 from django import forms
-from django.urls import reverse
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Column, Field, Fieldset, Layout, Row, Submit

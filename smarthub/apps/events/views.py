@@ -12,13 +12,14 @@ from django.views.generic import (
     UpdateView,
 )
 
-from . import models, forms
-from ..views import UUIDView
 from ..mixins import (
-    LimitResultsToUserMixin,
     AddUserToFormMixin,
+    LimitResultsToUserMixin,
     MakeRequestObjectAvailableInFormMixin,
+    UserHasLinkedDevice,
 )
+from ..views import UUIDView
+from . import forms, models
 
 
 class ListEvent(LimitResultsToUserMixin, ListView):
@@ -45,6 +46,7 @@ class DetailEvent(LimitResultsToUserMixin, UUIDView, DetailView):
 
 
 class AddEvent(
+    UserHasLinkedDevice,
     LoginRequiredMixin,
     AddUserToFormMixin,
     MakeRequestObjectAvailableInFormMixin,
@@ -58,9 +60,6 @@ class AddEvent(
 
     def form_valid(self, form):
         """Overrides default to add user message on success"""
-        kwargs = self.get_form_kwargs()
-        request = kwargs["request"]
-
         messages.success(self.request, "New event added")
         return super().form_valid(form)
 

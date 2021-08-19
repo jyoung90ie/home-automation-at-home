@@ -11,16 +11,16 @@ from django.views.generic import (
     DeleteView,
     DetailView,
     ListView,
-    UpdateView,
     RedirectView,
+    UpdateView,
 )
 
 from csv_export.views import CSVExportView
 
 from ..mixins import (
     AddUserToFormMixin,
-    MakeRequestObjectAvailableInFormMixin,
     LimitResultsToUserMixin,
+    MakeRequestObjectAvailableInFormMixin,
 )
 from ..views import UUIDView
 from . import forms, mixins, models

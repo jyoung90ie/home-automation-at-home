@@ -1,5 +1,6 @@
 # pylint: skip-file
 import dj_database_url
+
 from .settings import *
 
 TEST_MODE = True
