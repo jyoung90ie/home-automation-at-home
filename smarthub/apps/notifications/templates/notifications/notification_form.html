@@ -8,9 +8,9 @@
 
 {% block extra_body %}
 <script>
-    $(document).ready(function (event) {
-        notification_medium = $("#id_notification_medium").val()
+    notification_field = $("#id_notification_medium")
 
+    function showReleventFields(notification_medium) {
         pushbullet_class = ".pushbullet-notification-setup";
         email_class = ".email-notification-setup";
 
@@ -20,6 +20,17 @@
         } else if (notification_medium == "Email") {
             $(email_class).removeClass("d-none");
             $(pushbullet_class).addClass("d-none");
+        }
+    }
+    $(document).ready(function (event) {
+        notification_medium = notification_field.val()
+        showReleventFields(notification_medium)
+    })
+
+    $(document).change("", function (event) {
+        if (event.target = notification_field) {
+            notification_medium = notification_field.val()
+            showReleventFields(notification_medium)
         }
     })
 </script>
