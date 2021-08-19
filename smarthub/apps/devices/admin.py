@@ -1,9 +1,12 @@
+"""Customises admin pages for device related models to display more useful fields"""
 from django.contrib import admin
 
 from . import models
 
 
 class DeviceAdmin(admin.ModelAdmin):
+    """Customises admin page for this model"""
+
     list_display = (
         "device_identifier",
         "friendly_name",
@@ -16,6 +19,8 @@ class DeviceAdmin(admin.ModelAdmin):
 
 
 class DeviceLocationAdmin(admin.ModelAdmin):
+    """Customises admin page for this model"""
+
     list_display = (
         "location",
         "user",
