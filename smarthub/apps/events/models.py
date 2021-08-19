@@ -59,9 +59,19 @@ class EventTrigger(BaseAbstractModel):
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
-    metadata_field = models.CharField(max_length=255, null=True, blank=False)
-    metadata_trigger_value = models.CharField(max_length=255, null=True, blank=False)
+    metadata_field = models.CharField(
+        verbose_name="Data field for event trigger",
+        max_length=255,
+        null=True,
+        blank=False,
+    )
+    metadata_trigger_value = models.CharField(
+        verbose_name="Data field value for trigger",
+        max_length=255,
+        null=True,
+        blank=False,
+    )
     trigger_type = models.CharField(
         max_length=100, choices=EventTriggerType.choices, default=EventTriggerType.EQUAL
     )
-    is_enabled = models.BooleanField(default=True)
+    is_enabled = models.BooleanField(verbose_name="Enable this trigger?", default=True)
