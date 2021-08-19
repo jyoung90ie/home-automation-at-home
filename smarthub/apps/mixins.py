@@ -44,9 +44,6 @@ class UserHasLinkedDevice:
 
         total_linked_devices = user.total_linked_devices
 
-        print("total_linked_devices", total_linked_devices)
-        print("total_linked_devices", dir(total_linked_devices))
-
         if total_linked_devices == 0:
             messages.warning(
                 request,
