@@ -28,7 +28,7 @@
     })
 
     $(document).change("", function (event) {
-        if (event.target = notification_field) {
+        if (event.target.id === notification_field.attr("id")) {
             notification_medium = notification_field.val()
             showReleventFields(notification_medium)
         }
