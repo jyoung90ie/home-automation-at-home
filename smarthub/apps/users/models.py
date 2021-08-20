@@ -40,13 +40,13 @@ class CustomUserManager(BaseUserManager):
 
         return self.create_user(email, password, **extra_fields)
 
-    def user_devices(self, user) -> QuerySet:
+    def get_user_devices(self, user) -> QuerySet:
         """Return all devices created by user"""
         return apps.get_model("devices", "Device").objects.filter(user=user)
 
     def get_linked_devices(self, user) -> QuerySet:
         """Return list of device objects for user"""
-        user_devices = self.user_devices(user=user)
+        user_devices = self.get_user_devices(user=user)
         if not user_devices:
             return []
 
@@ -91,8 +91,13 @@ class CustomUser(AbstractUser):
         return reverse("users:account_profile")
 
     @property
+    def get_user_devices(self) -> QuerySet:
+        """Return queryset containing user's devices"""
+        return CustomUser.objects.get_user_devices(user=self)
+
+    @property
     def get_linked_devices(self) -> QuerySet:
-        """Return total number of linked devices for user"""
+        """Return queryset containing users linked devices"""
         return CustomUser.objects.get_linked_devices(user=self)
 
     @property
