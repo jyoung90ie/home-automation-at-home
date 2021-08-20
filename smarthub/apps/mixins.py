@@ -53,3 +53,10 @@ class UserHasLinkedDevice:
             return HttpResponseRedirect(reverse("devices:list"))
 
         return super().get(self, request, *args, **kwargs)
+
+
+class FormSuccessMessageMixin:
+    def form_valid(self, form):
+        """Overrides default to add user message on success"""
+        messages.success(self.request, self.success_message)
+        return super().form_valid(form)
