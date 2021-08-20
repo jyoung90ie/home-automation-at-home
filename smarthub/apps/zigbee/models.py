@@ -9,17 +9,18 @@ from ..models import BaseAbstractModel
 logger = logging.getLogger("mqtt")
 logging.basicConfig()
 
+METADATA_TYPE_FIELD = "zigbeemessage__zigbeelog__metadata_type"
+
 
 class ZigbeeDeviceQuerySet(models.QuerySet):
     """Custom queries"""
 
     def get_metadata_fields(self, device):
         """Return list of unique metadata values for the specified device"""
-        metadata_model_field = "zigbeemessage__zigbeelog__metadata_type"
         return (
             self.filter(device=device)
-            .order_by(metadata_model_field)
-            .values_list(metadata_model_field, flat=True)
+            .order_by(METADATA_TYPE_FIELD)
+            .values_list(METADATA_TYPE_FIELD, flat=True)
             .distinct()
         )
 
@@ -32,6 +33,7 @@ class ZigbeeDevice(BaseAbstractModel):
     """Captures zigbee device metadata and makes connection to user device"""
 
     INTERVIEW_TYPE = "device_interview"
+
     # data to capture from mqtt
     DATA_FIELDS = ["friendly_name", "ieee_address", "model_id", "power_source"]
     DEFINITION_DATA_FIELDS = ["description", "model", "vendor"]
