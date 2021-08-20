@@ -23,14 +23,22 @@
     </div>
 
     <div class="mt-5 text-muted">
-        <h2 class="h5 text-center m-3">
+        <h2 class="h5 text-center m-3 d-inline">
             <i class="fas fa-sitemap me-3"></i> Event Triggers
         </h2>
+
+        {% if user.total_linked_devices > 0 %}
+            {% include "events/partials/_user_options_add_event_trigger.html" %}
+        {% endif %}
         <div class="row content-box">
-            {% for trigger in event_triggers %}
-            {% empty %}
-            <p>This event does not yet have any triggers - add some to kick the automation in to gear!</p>
-            {% endfor %}
+            {% if user.total_linked_devices > 0 %}
+                {% for trigger in event_triggers %}
+                {% empty %}
+                <p>This event does not yet have any triggers - add some to kick the automation in to gear!</p>
+                {% endfor %}
+            {% else %}
+            <p>You cannot create event triggers until you have a linked device - see <a href="{%Help
+            {% endif %}
         </div>
 
     </div>
