@@ -61,13 +61,13 @@
             <h2 class="h5 text-center m-3">
                 <i class="fas fa-server me-3"></i>Last update from device
             </h2>
-            <div class="row content-box">
+            <div class="row content-box table-responsive">
 
                 {% with logs=device.get_lastest_zigbee_logs %}
                 {% if logs %}
                 {% for log in logs %}
                 {% if forloop.first %}
-                <table class="table-responsive">
+                <table>
                     <caption>
                         <em>Most recent data update from device.</em>
                     </caption>
