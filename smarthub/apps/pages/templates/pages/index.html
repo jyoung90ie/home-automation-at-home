@@ -3,28 +3,15 @@
 <h1>Smart Hub</h1>
 <p>Smart Hub helps you manage your Internet of Things (IoT) devices on your home network. It enables you to integrate
     devices from all supported protocols and brands - helping you take back control - your home, auomated.</p>
+
+{% if not user.is_authenticated %}
 <p>To start using this application you will need to create an account, either by registering, or by logging in via an
     existing social account (e.g. Gmail). Then the fun begins!</p>
-<h2>What can Smart Hub do?</h2>
-<p>Good question! Once your logged in to an account you will have access to the following:
-<ul>
-    <li><strong>Devices</strong>
-        <ul>
-            <li>Add, Update, Delete, View</li>
-            <li>View and Export device logs</li>
-        </ul>
-    </li>
-    <li><strong>Device Locations:</strong> this is the ability to group devices by location, however, this is open to
-        your own
-        intrepretation. This will enable you interact with the group as opposed to individually selecting each
-        individual device.</li>
-    <li><strong>Events:</strong> Here you can create <em>routines</em> for your devices, which will involve
-        <strong>triggers</strong>, <strong>notifications</strong>, and <strong>responses</strong>, building out your
-        automation capability.
-    </li>
-    <li><strong>Notifications:</strong> you can specify the notification <em>channels</em> that should be used to
-        contact you when any of your events have been triggered. At present you can be notified by <em>email</em> and
-        <em>mobile app</em></li>
-</ul>
+
+<div class="homepage-account-links">
+    <a href="{% url 'account_login' %}" class="btn btn-primary">Login</a>
+    <a href="{% url 'account_signup' %}" class="btn btn-secondary">Register</a>
+</div>
+{% endif %}
 </p>
 {% endblock %}
