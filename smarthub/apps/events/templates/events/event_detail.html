@@ -26,19 +26,57 @@
         <h2 class="h5 text-center m-3 d-inline">
             <i class="fas fa-sitemap me-3"></i> Event Triggers
         </h2>
-
         {% if user.total_linked_devices > 0 %}
-            {% include "events/partials/_user_options_add_event_trigger.html" %}
+        {% include "events/partials/_user_options_add_event_trigger.html" %}
         {% endif %}
-        <div class="row content-box">
+        <p class="m-2">Event Triggers are used to invoke an action when the device trigger condition is satisfied. It is
+            important to note that event triggers are independent of each other, i.e. if any of the triggers conditions
+            are statisfied, the event will be invoked (each event trigger is an OR condition).<em>You can create an
+                Event Trigger by clicking the button above.</em>
+        </p>
+        <div class="row content-box table-responsive">
             {% if user.total_linked_devices > 0 %}
-                {% for trigger in event_triggers %}
-                {% empty %}
-                <p>This event does not yet have any triggers - add some to kick the automation in to gear!</p>
-                {% endfor %}
-            {% else %}
-            <p>You cannot create event triggers until you have a linked device - see <a href="{%Help
+            {% for trigger in event.eventtrigger_set.all %}
+            {% if forloop.first %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Device</th>
+                        <th scope="col">Location</th>
+                        <th scope="col">Device Data</th>
+                        <th scope="col" style="width: 20%">Trigger Condition</th>
+                        <th scope="col">Value</th>
+                        <th scope="col">Enabled?</th>
+                        <th scope="col">Options</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    {% endif %}
+                    <tr class="event-trigger-row"
+                        onclick='window.location="{% url "events:event:triggers:trigger:update" uuid=event.uuid tuuid=trigger.uuid %}";'>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ trigger.device.friendly_name|title }}</td>
+                        <td>{{ trigger.device.location|title }}</td>
+                        <td>{{ trigger.metadata_field|title }}</td>
+                        <td>{{ trigger.trigger_type|upper }}</td>
+                        <td>{{ trigger.metadata_trigger_value }}</td>
+                        <td>{{ trigger.is_enabled|to_status_icon }}</td>
+                        <td>
+                            {% include "events/partials/_user_options_event_trigger.html" %}
+                        </td>
+                    </tr>
+                    {% if forloop.last %}
+                </tbody>
+            </table>
             {% endif %}
+            {% empty %}
+            <p>This event does not yet have any triggers - add some triggers to kick the automation in to gear!</p>
+            {% endfor %}
+            {% else %}
+            <p>You cannot create event triggers until you have a linked device - see <a href="{% url 'help' %}">Help</a>
+                {% endif %}
         </div>
 
     </div>
@@ -48,5 +86,5 @@
 
 
 {% block extra_body %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.0/dist/chart.min.js"></script>
+<script src=" https://cdn.jsdelivr.net/npm/chart.js@3.5.0/dist/chart.min.js"></script>
 {% endblock %}

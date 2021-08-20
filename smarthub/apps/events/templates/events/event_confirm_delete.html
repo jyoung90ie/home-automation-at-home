@@ -1,7 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Delete Event?</h1>
-<p>Are you sure you want to delete <strong>{{ object }}</strong>?</p>
+<p>Are you sure you want to delete the following event? Note: deleting the event will result in the deletion of all
+    associated event triggers.</p>
+<div class="table-responsive row">
+    <div class="col-lg-6">
+        <table class="table">
+            <tr>
+                <th scope="row">Description</th>
+                <td>{{object.description|capfirst}}</td>
+            </tr>
+            <tr>
+                <th scope="row">Total Event Triggers</th>
+                <td>{{object.eventtrigger_set.count}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
 <form method="post">
     {% csrf_token %}
     <input type="submit" class="btn btn-danger" value="Delete">

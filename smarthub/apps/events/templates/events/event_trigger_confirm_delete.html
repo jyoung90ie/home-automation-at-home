@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Delete Event Trigger?</h1>
+<p>Are you sure you want to delete the following trigger?</p>
+<div class="table-responsive row">
+    <div class="col-lg-6">
+        <table class="table">
+            <tr>
+                <th scope="row">Device</th>
+                <td>{{object.device.friendly_name|capfirst}}</td>
+            </tr>
+            <tr>
+                <th scope="row">Device Data</th>
+                <td>{{object.metadata_field|title}}</td>
+            </tr>
+            <tr>
+                <th scope="row">Trigger Condition</th>
+                <td>{{object.trigger_type|upper}}</td>
+            </tr>
+            <tr>
+                <th scope="row">Value</th>
+                <td>{{object.metadata_trigger_value}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<form method="post">
+    {% csrf_token %}
+    <input type="submit" class="btn btn-danger" value="Delete">
+    <a href="{% url 'events:list' %}" class="btn btn-secondary" role="button">Cancel</a>
+</form>
+{% endblock %}

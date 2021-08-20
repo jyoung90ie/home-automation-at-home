@@ -1,9 +1,8 @@
 """Handles user requests to events app"""
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.deletion import ProtectedError
 from django.http.response import HttpResponseRedirect
-from django.urls.base import reverse_lazy
+from django.urls.base import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -11,13 +10,18 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from django.views.generic.base import RedirectView
 
 from ..mixins import (
     AddUserToFormMixin,
     LimitResultsToUserMixin,
     MakeRequestObjectAvailableInFormMixin,
     UserHasLinkedDevice,
+    FormSuccessMessageMixin,
 )
+
+from .mixins import EventTriggerFormMixins, LimitResultsToEventOwner
+
 from ..views import UUIDView
 from . import forms, models
 
@@ -47,7 +51,7 @@ class DetailEvent(LimitResultsToUserMixin, UUIDView, DetailView):
 
 class AddEvent(
     UserHasLinkedDevice,
-    LoginRequiredMixin,
+    FormSuccessMessageMixin,
     AddUserToFormMixin,
     MakeRequestObjectAvailableInFormMixin,
     CreateView,
@@ -57,30 +61,25 @@ class AddEvent(
     form_class = forms.EventForm
     template_name = "events/event_form.html"
     success_url = reverse_lazy("events:list")
-
-    def form_valid(self, form):
-        """Overrides default to add user message on success"""
-        messages.success(self.request, "New event added")
-        return super().form_valid(form)
+    success_message = "The event has been created"
 
 
-class UpdateEvent(LimitResultsToUserMixin, UUIDView, UpdateView):
+class UpdateEvent(
+    FormSuccessMessageMixin, LimitResultsToEventOwner, UUIDView, UpdateView
+):
     """Enables user to update their own event"""
 
     form_class = forms.EventForm
     template_name = "events/event_update_form.html"
+    success_message = "The event has been updated"
 
     def get_queryset(self):
         """Populate with user's events only"""
         uuid = self.kwargs.get("uuid")
         return models.Event.objects.filter(uuid=uuid)
 
-    def form_valid(self, form):
-        messages.success(self.request, "Event has been updated")
-        return super().form_valid(form)
 
-
-class DeleteEvent(LimitResultsToUserMixin, UUIDView, DeleteView):
+class DeleteEvent(LimitResultsToEventOwner, UUIDView, DeleteView):
     """Enables user to delete their own event"""
 
     model = models.Event
@@ -105,15 +104,92 @@ class DeleteEvent(LimitResultsToUserMixin, UUIDView, DeleteView):
 
             return HttpResponseRedirect(success_url)
         except ProtectedError as ex:
-            error_message = (
-                "Could not delete event as it is linked to another device(s) - "
-            )
-            devices = ",".join(
-                [device.friendly_name for device in ex.protected_objects]
-            )
-
-            messages.warning(
+            messages.error(
                 request,
-                f"{error_message}  (Devices: {devices})",
+                f"Could not delete the event - please try again.",
             )
             return HttpResponseRedirect(request.path)
+
+
+class AddEventTrigger(
+    FormSuccessMessageMixin,
+    LimitResultsToEventOwner,
+    EventTriggerFormMixins,
+    UserHasLinkedDevice,
+    CreateView,
+):
+    """Enables user to create event and define the triggers that invoke it"""
+
+    form_class = forms.EventTriggerForm
+    template_name = "events/event_trigger_form.html"
+    success_message = "The event has been updated with the new trigger."
+
+
+class UpdateEventTrigger(
+    FormSuccessMessageMixin,
+    LimitResultsToEventOwner,
+    EventTriggerFormMixins,
+    UUIDView,
+    UpdateView,
+):
+    """Enables user to create event and define the triggers that invoke it"""
+
+    form_class = forms.EventTriggerForm
+    template_name = "events/event_trigger_update_form.html"
+    slug_url_kwarg = "tuuid"
+    success_message = "The event trigger has been updated."
+
+    def get_queryset(self):
+        return models.EventTrigger.objects.filter(uuid=self.kwargs["tuuid"])
+
+
+class DeleteEventTrigger(LimitResultsToEventOwner, UUIDView, DeleteView):
+    """Enables user to delete an event trigger"""
+
+    model = models.EventTrigger
+    template_name = "events/event_trigger_confirm_delete.html"
+    slug_url_kwarg = "tuuid"
+
+    def get_success_url(self):
+        return reverse_lazy("events:event:detail", kwargs={"uuid": self.kwargs["uuid"]})
+
+    def __init__(self) -> None:
+        self.object = None
+        super().__init__()
+
+    def delete(self, request, *args, **kwargs):
+
+        try:
+            self.object = self.get_object()
+            success_url = self.get_success_url()
+            self.object.delete()
+
+            messages.success(
+                request,
+                "The event trigger has been deleted.",
+            )
+
+            return HttpResponseRedirect(success_url)
+        except Exception:
+            messages.error(
+                request,
+                "There was a problem deleting the event trigger - please try again.",
+            )
+            return HttpResponseRedirect(request.path)
+
+
+class EventDetailRedirectView(RedirectView):
+    """Redirects URL to proper update path - for breadcrumb"""
+
+    def get_redirect_url(self, *args, **kwargs):
+        return reverse("events:event:detail", kwargs={"uuid": kwargs.pop("uuid")})
+
+
+class EventTriggerRedirectView(RedirectView):
+    """Redirects URL to proper update path - for breadcrumb"""
+
+    def get_redirect_url(self, *args, **kwargs):
+        return reverse(
+            "events:event:triggers:trigger:update",
+            kwargs={"uuid": kwargs.pop("uuid"), "tuuid": kwargs.pop("tuuid")},
+        )
