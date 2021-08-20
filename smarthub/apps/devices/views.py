@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.deletion import ProtectedError
 from django.db.utils import IntegrityError
-from django.http.response import Http404, HttpResponseRedirect
+from django.http.response import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -14,8 +14,11 @@ from django.views.generic import (
     RedirectView,
     UpdateView,
 )
+from django.shortcuts import get_object_or_404
+from django.apps import apps
 
 from csv_export.views import CSVExportView
+from django.views.generic.detail import BaseDetailView
 
 from ..mixins import (
     AddUserToFormMixin,
@@ -147,6 +150,39 @@ class DeleteDeviceLocation(UUIDView, LimitResultsToUserMixin, DeleteView):
                 f"{error_message}  (Devices: {devices})",
             )
             return HttpResponseRedirect(request.path)
+
+
+class DeviceMetadata(UUIDView, BaseDetailView):
+    """Return distinct list of device's metadata - for user in event trigger form with AJAX"""
+
+    http_method_names = [
+        "get",
+    ]
+
+    def __init__(self) -> None:
+        self.request = None
+        super().__init__()
+
+    def get_object(self, queryset=None):
+        """Prevent user from accessing devices that aren't theirs"""
+        return get_object_or_404(
+            models.Device, uuid=self.kwargs["uuid"], user=self.request.user
+        )
+
+    def get(self, request, *args, **kwargs):
+        """Create JSON response with list of metadata fields from logs"""
+        self.request = request
+        device = self.get_object()
+
+        try:
+            zigbee_device = apps.get_model("zigbee", "ZigbeeDevice")
+            metadata_fields = zigbee_device.objects.get_metadata_fields(device)
+            json_data = list(metadata_fields)
+        except Exception as ex:
+            metadata_on_error = ("", "-----")
+            json_data = list(metadata_on_error)
+
+        return JsonResponse({"data": json_data}, safe=False)
 
 
 class ListDeviceLocations(LimitResultsToUserMixin, ListView):

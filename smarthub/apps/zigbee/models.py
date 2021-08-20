@@ -2,11 +2,30 @@ import logging
 
 from django.apps import apps
 from django.db import models
+from django.db.models.query_utils import Q
 
 from ..models import BaseAbstractModel
 
 logger = logging.getLogger("mqtt")
 logging.basicConfig()
+
+
+class ZigbeeDeviceQuerySet(models.QuerySet):
+    """Custom queries"""
+
+    def get_metadata_fields(self, device):
+        """Return list of unique metadata values for the specified device"""
+        metadata_model_field = "zigbeemessage__zigbeelog__metadata_type"
+        return (
+            self.filter(device=device)
+            .order_by(metadata_model_field)
+            .values_list(metadata_model_field, flat=True)
+            .distinct()
+        )
+
+
+class ZigbeeDeviceManager(models.Manager.from_queryset(ZigbeeDeviceQuerySet)):
+    """Custom manager"""
 
 
 class ZigbeeDevice(BaseAbstractModel):
@@ -18,6 +37,8 @@ class ZigbeeDevice(BaseAbstractModel):
     DEFINITION_DATA_FIELDS = ["description", "model", "vendor"]
 
     user_device_model = None
+
+    objects = ZigbeeDeviceManager()
 
     device = models.ForeignKey(
         "devices.Device", on_delete=models.SET_NULL, blank=True, null=True
