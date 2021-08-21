@@ -9,12 +9,14 @@ from django.core.exceptions import EmptyResultSet, ObjectDoesNotExist
 from django.db import models
 from django.db.models.constraints import UniqueConstraint
 from django.db.models.query import QuerySet
+from django.db.models.query_utils import Q
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from ..models import BaseAbstractModel
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 if TYPE_CHECKING:
     from ..zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
@@ -68,7 +70,8 @@ class DeviceLocation(BaseAbstractModel):
 
     class Meta:
         constraints = [
-            UniqueConstraint(fields=["user", "location"], name="user_device_location")
+            UniqueConstraint(fields=["user", "location"],
+                             name="user_device_location")
         ]
 
     def get_absolute_url(self):
@@ -90,7 +93,8 @@ class DeviceLocation(BaseAbstractModel):
         try:
             users_linked_devices: QuerySet = self.user.get_linked_devices
 
-            location_linked_devices = users_linked_devices.filter(location=self)
+            location_linked_devices = users_linked_devices.filter(
+                location=self)
             total = location_linked_devices.count()
         except (EmptyResultSet, ObjectDoesNotExist):
             pass
@@ -111,7 +115,8 @@ class Device(BaseAbstractModel):
     objects = DeviceManager()
 
     friendly_name = models.CharField(max_length=150, blank=False, null=False)
-    device_identifier = models.CharField(max_length=255, blank=False, null=False)
+    device_identifier = models.CharField(
+        max_length=255, blank=False, null=False)
     location = models.ForeignKey(DeviceLocation, on_delete=models.PROTECT)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     protocol = models.CharField(
@@ -140,7 +145,13 @@ class Device(BaseAbstractModel):
         self.device_identifier = self.device_identifier.lower()
 
         super().save(*args, **kwargs)
-        self.try_to_link_zigbee_device()
+
+        obj = self
+        if not isinstance(self, Device):
+            # if item is queryset get the object inside it
+            obj = self.first()
+
+        obj.try_to_link_zigbee_device()
 
     def get_zigbee_device(
         self, field_name="zigbeedevice_set"
@@ -229,18 +240,26 @@ class Device(BaseAbstractModel):
             return
 
         try:
+            logger.info("Attempting to link device...")
             # not using Q model here as priority is on a hierarchical match - if using
             # Q, potential for two matches exists
             zigbee_device = self.zigbee_model.objects.filter(
-                ieee_address=self.device_identifier
-            ) or self.zigbee_model.objects.filter(friendly_name=self.friendly_name)
+                Q(ieee_address=self.device_identifier)
+                | Q(friendly_name=self.friendly_name)
+            )
 
-            if zigbee_device and not zigbee_device.device:
+            if zigbee_device and not hasattr(zigbee_device, "device"):
                 # obj found and is not already matched
+                zigbee_device = zigbee_device.first()
+
                 zigbee_device.device = self
                 zigbee_device.save()
-        except self.zigbee_model.DoesNotExist:
-            pass
+
+                logger.info("Device linked and save as object %s",
+                            zigbee_device)
+
+        except (self.zigbee_model.DoesNotExist, Exception) as ex:
+            logger.error("Device could not be linked - %s", ex)
 
     def is_linked(self) -> bool:
         """Returns true if user device is linked to a hardware device"""
