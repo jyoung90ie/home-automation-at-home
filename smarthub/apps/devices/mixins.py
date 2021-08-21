@@ -10,7 +10,8 @@ class PermitDeviceOwnerOnly(LoginRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
         uuid = kwargs.pop("uuid")
-        device = get_object_or_404(models.Device, uuid=uuid, user=self.request.user)
+        device = get_object_or_404(
+            models.Device, uuid=uuid, user=self.request.user)
         if not device:
             return device
 

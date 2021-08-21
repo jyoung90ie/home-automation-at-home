@@ -1,30 +1,21 @@
 """Handles user requests to devices app"""
 
+from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.deletion import ProtectedError
 from django.db.utils import IntegrityError
 from django.http.response import Http404, HttpResponseRedirect, JsonResponse
-from django.urls import reverse_lazy
-from django.views.generic import (
-    CreateView,
-    DeleteView,
-    DetailView,
-    ListView,
-    RedirectView,
-    UpdateView,
-)
 from django.shortcuts import get_object_or_404
-from django.apps import apps
-
-from csv_export.views import CSVExportView
+from django.urls import reverse_lazy
+from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
+                                  RedirectView, UpdateView)
 from django.views.generic.detail import BaseDetailView
 
-from ..mixins import (
-    AddUserToFormMixin,
-    LimitResultsToUserMixin,
-    MakeRequestObjectAvailableInFormMixin,
-)
+from csv_export.views import CSVExportView
+
+from ..mixins import (AddUserToFormMixin, LimitResultsToUserMixin,
+                      MakeRequestObjectAvailableInFormMixin)
 from ..views import UUIDView
 from . import forms, mixins, models
 
@@ -240,7 +231,8 @@ class AddDevice(
         except IntegrityError as ex:
 
             cause = (
-                "friendly name" if "friendly_name" in str(ex) else "device identifier"
+                "friendly name" if "friendly_name" in str(
+                    ex) else "device identifier"
             )
             messages.error(
                 self.request,

@@ -48,7 +48,8 @@ class EventTriggerType(models.TextChoices):
     LESS_THAN = "Less than", _("Less than")
     LESS_THAN_OR_EQUAL = "Less than or equal to", _("Less than or equal to")
     EQUAL = "Equal to", _("Equal to")
-    GREATER_THAN_OR_EQUAL = "Greater than or equal to", _("Greater than or equal to")
+    GREATER_THAN_OR_EQUAL = "Greater than or equal to", _(
+        "Greater than or equal to")
     GREATER_THAN = "Greater than", _("Greater than")
     NOT_EQUAL = "Not equal to", _("Not equal to")
 
@@ -74,4 +75,5 @@ class EventTrigger(BaseAbstractModel):
     trigger_type = models.CharField(
         max_length=100, choices=EventTriggerType.choices, default=EventTriggerType.EQUAL
     )
-    is_enabled = models.BooleanField(verbose_name="Enable this trigger?", default=True)
+    is_enabled = models.BooleanField(
+        verbose_name="Enable this trigger?", default=True)

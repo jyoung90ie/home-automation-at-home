@@ -29,14 +29,16 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "uuid",
-                    models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
+                    models.UUIDField(default=uuid.uuid4,
+                                     editable=False, unique=True),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "notification_medium",
                     models.CharField(
-                        choices=[("Email", "Email"), ("Pushbullet", "Pushbullet")],
+                        choices=[("Email", "Email"),
+                                 ("Pushbullet", "Pushbullet")],
                         default="Email",
                         max_length=30,
                         verbose_name="Notification channel",

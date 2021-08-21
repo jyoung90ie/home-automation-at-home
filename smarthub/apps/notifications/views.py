@@ -8,11 +8,8 @@ from django.views.generic.base import RedirectView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 
-from ..mixins import (
-    AddUserToFormMixin,
-    LimitResultsToUserMixin,
-    MakeRequestObjectAvailableInFormMixin,
-)
+from ..mixins import (AddUserToFormMixin, LimitResultsToUserMixin,
+                      MakeRequestObjectAvailableInFormMixin)
 from ..views import UUIDView
 from . import forms, models
 
@@ -77,7 +74,8 @@ class UpdateNotificationSetting(LimitResultsToUserMixin, UUIDView, UpdateView):
         """Pass through value for manual form field"""
         initial = super().get_initial()
         obj = self.get_object()
-        initial["notification_medium"] = getattr(obj, "notification_medium", "")
+        initial["notification_medium"] = getattr(
+            obj, "notification_medium", "")
 
         pushbullet = getattr(obj, "pushbulletnotification", False)
         email = getattr(obj, "emailnotification", False)

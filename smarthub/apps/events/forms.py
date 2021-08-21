@@ -6,8 +6,8 @@ from django.core.exceptions import ValidationError
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Column, Field, Fieldset, Layout, Row, Submit
 
+from ..zigbee.models import METADATA_TYPE_FIELD, ZigbeeDevice
 from . import models
-from ..zigbee.models import ZigbeeDevice, METADATA_TYPE_FIELD
 
 
 class EventForm(forms.ModelForm):
@@ -71,14 +71,16 @@ class CustomChoiceField(forms.ChoiceField):
     def validate(self, value) -> None:
         """Removes validation against initial choices list"""
         if value in self.empty_values and self.required:
-            raise ValidationError(self.error_messages["required"], code="required")
+            raise ValidationError(
+                self.error_messages["required"], code="required")
         return True
 
 
 class EventTriggerForm(forms.ModelForm):
     """Custom form for capturing event trigger data"""
 
-    _device = CustomChoiceField(label="Device", required=True, choices=[("", "-----")])
+    _device = CustomChoiceField(
+        label="Device", required=True, choices=[("", "-----")])
 
     _metadata_field = CustomChoiceField(
         label="Device data field", choices=[("", "-----")]
@@ -103,7 +105,10 @@ class EventTriggerForm(forms.ModelForm):
 
     def clean(self):
         clean = super().clean()
-        error_message = "Select a valid choice. The value you selected is not one of the available choices."
+        error_message = (
+            "Select a valid choice. The value you selected is not one of the"
+            " available choices."
+        )
         # form field names
         device_field_name = "_device"
         metadata_field_name = "_metadata_field"
@@ -124,7 +129,8 @@ class EventTriggerForm(forms.ModelForm):
             self.device = device.get()
 
         # metadata validation
-        valid_metadata = ZigbeeDevice.objects.get_metadata_fields(device=self.device)
+        valid_metadata = ZigbeeDevice.objects.get_metadata_fields(
+            device=self.device)
 
         if (
             form_metadata

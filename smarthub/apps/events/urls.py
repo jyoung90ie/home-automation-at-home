@@ -21,7 +21,8 @@ urlpatterns = [
                         include(
                             (
                                 [
-                                    path("", views.EventDetailRedirectView.as_view()),
+                                    path(
+                                        "", views.EventDetailRedirectView.as_view()),
                                     path(
                                         "add/",
                                         views.AddEventTrigger.as_view(),

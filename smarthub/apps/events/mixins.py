@@ -40,7 +40,8 @@ class LimitResultsToEventOwner(LoginRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
 
-        obj = get_object_or_404(models.Event, user=request.user, uuid=kwargs["uuid"])
+        obj = get_object_or_404(
+            models.Event, user=request.user, uuid=kwargs["uuid"])
         if not obj:
             return Http404("Could not find the Event")
         return super().dispatch(request, *args, **kwargs)

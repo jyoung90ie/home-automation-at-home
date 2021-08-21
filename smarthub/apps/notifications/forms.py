@@ -68,7 +68,8 @@ class NotificationSettingForm(forms.ModelForm):
             ),
         )
 
-        self.helper.add_input(Submit("submit", "Save", css_class="btn btn-primary"))
+        self.helper.add_input(
+            Submit("submit", "Save", css_class="btn btn-primary"))
 
     def is_valid(self) -> bool:
         main_form = super().is_valid()  # must call here to get access to cleaned_data
@@ -194,7 +195,8 @@ class UpdateNotificationSettingForm(forms.ModelForm):
             ),
         )
 
-        self.helper.add_input(Submit("submit", "Update", css_class="btn btn-primary"))
+        self.helper.add_input(
+            Submit("submit", "Update", css_class="btn btn-primary"))
 
     def is_valid(self) -> bool:
         try:

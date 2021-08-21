@@ -31,7 +31,8 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "uuid",
-                    models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
+                    models.UUIDField(default=uuid.uuid4,
+                                     editable=False, unique=True),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
@@ -67,12 +68,14 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "uuid",
-                    models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
+                    models.UUIDField(default=uuid.uuid4,
+                                     editable=False, unique=True),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 ("metadata_field", models.CharField(max_length=255, null=True)),
-                ("metadata_trigger_value", models.CharField(max_length=255, null=True)),
+                ("metadata_trigger_value", models.CharField(
+                    max_length=255, null=True)),
                 (
                     "trigger_type",
                     models.CharField(
@@ -80,7 +83,8 @@ class Migration(migrations.Migration):
                             ("Less than", "Less than"),
                             ("Less than or equal to", "Less than or equal to"),
                             ("Equal to", "Equal to"),
-                            ("Greater than or equal to", "Greater than or equal to"),
+                            ("Greater than or equal to",
+                             "Greater than or equal to"),
                             ("Greater than", "Greater than"),
                             ("Not equal to", "Not equal to"),
                         ],

@@ -32,7 +32,8 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
 
         for email in email_addresses:
             try:
-                user_email = EmailAddress.objects.get(email__iexact=email.email)
+                user_email = EmailAddress.objects.get(
+                    email__iexact=email.email)
             except EmailAddress.DoesNotExist:
                 continue
 
