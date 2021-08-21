@@ -279,3 +279,11 @@ canvas {
     border-radius: 0.3rem;
     background-color: var(--colour-five);
 }
+
+#id_location {
+    text-transform: capitalize;
+}
+
+#id_trigger_type {
+    text-transform: uppercase;
+}
