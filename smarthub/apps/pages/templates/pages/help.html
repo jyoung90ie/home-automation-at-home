@@ -49,10 +49,38 @@
         <!-- ./help item -->
         <!-- help item -->
         <div class="accordion-item">
+            <h2 class="accordion-header" id="headingHelpItem5">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#helpPageItem5" aria-expanded="false" aria-controls="helpPageItem5">
+                    How do I add Zigbee devices to my account?
+                </button>
+            </h2>
+            <div id="helpPageItem5" class="accordion-collapse collapse" aria-labelledby="headingHelpItem5"
+                data-bs-parent="#helpPageContent">
+                <div class="accordion-body">
+                    <p>You cannot add a Zigbee device per say - you can however add a device and set the protocol to
+                        Zigbee
+                        on the Smart Hub application. The subtly here is that this is not the actual zigbee device, this
+                        is
+                        a device proxy that Smart Hub will attempt to link to a Zigbee device, <em>if it can</em>.</p>
+                    <p>The process for linking a Smart Hub device to a physical Zigbee device is conducted using the two
+                        Smart Hub device fields, <strong>device identifier</strong> or <strong>friendly name</strong>.
+                        It is therefore imperative that these fields match exactly to those of the device.</p>
+                    <p><strong>Device identifier</strong> will be matched against the hardware device <strong>IEEE
+                            address</strong>. This is the primary matching mechanism for linking devices to users, and
+                        messages to devices.</p>
+                    <p><strong>Friendly name</strong> will be used as a secondary matching mechanism for matching
+                        messages from the device.</p>
+                </div>
+            </div>
+        </div>
+        <!-- ./help item -->
+        <!-- help item -->
+        <div class="accordion-item">
             <h2 class="accordion-header" id="headingHelpItem2">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                     data-bs-target="#helpPageItem2" aria-expanded="false" aria-controls="helpPageItem2">
-                    How do I add a Zigbee device to my account?
+                    What information is needed to link a Zigbee device to my account?
                 </button>
             </h2>
             <div id="helpPageItem2" class="accordion-collapse collapse" aria-labelledby="headingHelpItem2"
@@ -60,7 +88,9 @@
                 <div class="accordion-body">
                     In order for Smart Hub to detect and link a Zigbee device to your account, follow the steps below:
                     <ol>
-                        <li>Ensure the device is running and connected to the MQTT broker - see Zigbee2MQTT manual.</li>
+                        <li>Ensure the device is running and connected to the MQTT broker - see <a
+                                href="https://www.zigbee2mqtt.io/getting_started/running_zigbee2mqtt.html"
+                                target="_blank">Zigbee2MQTT manual.</a></li>
                         <li><em>Before you can add a device</em>, you will need to make sure you have <em>at least</em>
                             one <strong>device location</strong> created.
                             <ul>
@@ -73,6 +103,9 @@
                                     Device</a></strong> from the navigation bar at the top of the page.</li>
                         <li>Fill in the required information:
                             <ul>
+                                <li><strong>Device Identifier:</strong> this is the device's IEEE address. The device
+                                    will typically default to publishes messages on this channel, so it is important
+                                    that the value you input matches exactly to that on the device.</li>
                                 <li><strong>Friendly name:</strong> this will be used as the display name for the device
                                     through the
                                     Smart Hub interface. <strong>Please be aware</strong>, if Smart Hub is unable to
@@ -84,7 +117,6 @@
                                     make it easier to
                                     link and manage.
                                 </li>
-                                <li><strong>Device Identifier:</strong></li>
                                 <li><strong>Location:</strong> this is typically the 'room' the device is located in -
                                     however, you can use 'location' in whatever way works for you. It is essentially a
                                     medium for grouping devices.</li>
@@ -151,33 +183,6 @@
                     click the button at the top of the page. <br /><br />Logs will be export as a comma-seperated value
                     (CSV) file -
                     enabling you to process the raw device communication logs as you see fit.
-                </div>
-            </div>
-        </div>
-        <!-- ./help item -->
-        <!-- help item -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingHelpItem5">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#helpPageItem5" aria-expanded="false" aria-controls="helpPageItem5">
-                    How do I add Zigbee devices to my account?
-                </button>
-            </h2>
-            <div id="helpPageItem5" class="accordion-collapse collapse" aria-labelledby="headingHelpItem5"
-                data-bs-parent="#helpPageContent">
-                <div class="accordion-body">
-                    <p>You cannot add a Zigbee device per say - you can however add a device and set the protocol to
-                        Zigbee
-                        on the Smart Hub application. The subtly here is that this is not the actual zigbee device, this
-                        is
-                        a device proxy that Smart Hub will attempt to link to a Zigbee device, <em>if it can</em>.</p>
-                    <p>The process for linking a Smart Hub device to a physical Zigbee device is conducted using the two
-                        Smart Hub device fields, <strong>device identifier</strong> or <strong>friendly name</strong>.
-                        It is therefore imperative that these fields match exactly to those of the device.</p>
-                    <p><strong>Device identifier</strong> will be matched against the hardware device <strong>IEEE
-                            address</strong></p>
-                    <p><strong>Friendly name</strong> will be matched against the MQTT topic and is especially important
-                        to match in order for communication messages to be linked to the correct device.</p>
                 </div>
             </div>
         </div>
