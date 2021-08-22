@@ -8,14 +8,23 @@ from django.db.utils import IntegrityError
 from django.http.response import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
-                                  RedirectView, UpdateView)
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    RedirectView,
+    UpdateView,
+)
 from django.views.generic.detail import BaseDetailView
 
 from csv_export.views import CSVExportView
 
-from ..mixins import (AddUserToFormMixin, LimitResultsToUserMixin,
-                      MakeRequestObjectAvailableInFormMixin)
+from ..mixins import (
+    AddUserToFormMixin,
+    LimitResultsToUserMixin,
+    MakeRequestObjectAvailableInFormMixin,
+)
 from ..views import UUIDView
 from . import forms, mixins, models
 
