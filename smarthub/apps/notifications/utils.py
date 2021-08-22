@@ -21,11 +21,6 @@ class Pushbullet:
     def __init__(self, access_token: str) -> None:
         """Check that user has configured pushbullet"""
         try:
-            # access_token = user.notification_set.objects.get(
-            #     method=self.NOTIFICATION_METHOD
-            # ).values_list(flat=True)
-            # access_token = self.HARDCODED_TOKEN
-
             self.request = self.authenticate_and_create_auth_header(
                 access_token=access_token
             )
