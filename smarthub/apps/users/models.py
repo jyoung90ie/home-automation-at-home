@@ -50,12 +50,10 @@ class CustomUserManager(BaseUserManager):
         if not user_devices:
             return []
 
-        linked_devices = user_devices.filter(
+        return user_devices.filter(
             Q(zigbeedevice__uuid__isnull=False)
             # | Q(apidevice_set__uuid__isnull=False) # not yet active
         )
-
-        return linked_devices
 
     def total_linked_devices(self, user) -> int:
         """Return the number of linked devices for user object"""
@@ -64,6 +62,15 @@ class CustomUserManager(BaseUserManager):
             return 0
 
         return linked_devices.count()
+
+    def get_user_notifications(self, user) -> QuerySet:
+        return apps.get_model("notifications", "NotificationSetting").objects.filter(
+            user=user
+        )
+
+    def get_active_notifications(self, user) -> QuerySet:
+        """Return queryset of active notification mediums for specified user"""
+        return self.get_user_notifications(user=user).filter(is_enabled=True)
 
 
 class CustomUser(AbstractUser):
