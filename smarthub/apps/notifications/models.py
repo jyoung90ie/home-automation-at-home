@@ -1,11 +1,17 @@
+import logging
 from re import L
 
 from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
 from django.db import models
 from django.db.models.constraints import UniqueConstraint
 from django.urls.base import reverse
 
 from ..models import BaseAbstractModel
+from .utils import Pushbullet
+
+logger = logging.getLogger("mqtt")
+logging.basicConfig(level=logging.INFO)
 
 
 class NotificationMedium(models.TextChoices):
@@ -62,6 +68,26 @@ class PushbulletNotification(BaseAbstractModel):
         NotificationSetting, on_delete=models.CASCADE)
     access_token = models.CharField(max_length=60, null=False, blank=False)
 
+    def send(self, topic, message, triggered_by, notification_obj):
+        """Invoke functionality to send notification"""
+        pushbullet = Pushbullet(access_token=self.access_token)
+
+        logging.info(
+            "Sending pushbullet notification (topic=%s, message=%s)", topic, message
+        )
+
+        # message += f"\n\nTriggered by: {triggered_by}"
+        pushbullet.send_push(title=topic, body=message)
+
+        # create notification record
+        obj = Notification(
+            medium=notification_obj,
+            topic=topic,
+            message=message,
+            triggered_by=triggered_by,
+        )
+        obj.save()
+
 
 class EmailNotification(BaseAbstractModel):
     """Specifies email notification settings"""
@@ -70,3 +96,24 @@ class EmailNotification(BaseAbstractModel):
         NotificationSetting, on_delete=models.CASCADE)
     from_email = models.EmailField(null=False, blank=False)
     to_email = models.EmailField(null=False, blank=False)
+
+    def send(self, topic, message, triggered_by, notification_obj):
+        """Invoke functionality to send notification"""
+        email = send_mail(
+            subject=topic,
+            message=message,
+            from_email=self.from_email,
+            recipient_list=[self.to_email],
+            fail_silently=True,
+        )
+
+        if email:
+            # create notification record
+            logger.info("Email sent for trigger %s", triggered_by)
+            obj = Notification(
+                medium=notification_obj,
+                topic=topic,
+                message=message,
+                triggered_by=triggered_by,
+            )
+            obj.save()
