@@ -5,13 +5,19 @@ import logging
 from json.decoder import JSONDecodeError
 from random import random
 
+from django.core import cache
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 
 import paho.mqtt.client as mqtt
 
-from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
-                               MQTT_SERVER, MQTT_TOPICS)
+from smarthub.settings import (
+    MQTT_BASE_TOPIC,
+    MQTT_CLIENT_NAME,
+    MQTT_QOS,
+    MQTT_SERVER,
+    MQTT_TOPICS,
+)
 
 from ...models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
 
@@ -50,14 +56,18 @@ class MQTTClient:
 
     def connect(self) -> None:
         """Connects to MQTT broker and retains connection through loop"""
-        self.client = mqtt.Client(self.client_name)
-        self.client.on_connect = self.on_connect
-        self.client.on_message = self.on_message
-        self.client.on_subscribe = self.on_subscribe
-        self.client.on_disconnect = self.on_disconnect
+        try:
+            self.client = mqtt.Client(self.client_name)
+            self.client.on_connect = self.on_connect
+            self.client.on_message = self.on_message
+            self.client.on_subscribe = self.on_subscribe
+            self.client.on_disconnect = self.on_disconnect
 
-        self.client.connect(self.server)
-        self.client.loop_forever()
+            self.client.connect(self.server)
+            self.client.loop_forever()
+        except KeyboardInterrupt as ex:
+            logger.info(ex)
+            self.disconnect()
 
     def on_connect(self, client, user_data, flags, result_code) -> None:
         """Callback function - called when connection is successful"""
@@ -85,14 +95,12 @@ class MQTTClient:
 
     def on_disconnect(self, client, userdata, rc):
         """Callback function - called when client disconnects from MQTT broker"""
-        logger.info("MQTT client (%s) disconnected - %s - %s",
-                    client, userdata, rc)
+        logger.info("MQTT client disconnected")
 
     def disconnect(self) -> None:
         """Disconnects from MQTT broker - manually invoked via Ctrl+C in terminal"""
         self.client.disconnect()
         self.client = None
-        logger.info("MQTT client (%s) disconnected")
 
     def get_topics_for_subscribing(self) -> None:
         """Returns list of topics used to subscribe to via MQTT broker"""
@@ -128,7 +136,7 @@ class MQTTMessage:
 
     topic = None
     raw_payload = None
-    payload = None
+    parsed_payload = None
 
     def __init__(self, topic, payload):
         """Constructor"""
@@ -136,7 +144,7 @@ class MQTTMessage:
         self.raw_payload = payload
 
         try:
-            self.payload = json.loads(payload)
+            self.parsed_payload = json.loads(payload)
 
         except JSONDecodeError:
             return
@@ -155,7 +163,7 @@ class MQTTMessage:
         current_devices = ZigbeeDevice.objects.all().values_list(
             self.ZIGBEE_DEVICE_IDENTIFIER_FIELD, flat=True
         )
-        devices = self.payload
+        devices = self.parsed_payload
 
         for device in devices:
             ieee_address = device.get("ieee_address")
@@ -183,12 +191,23 @@ class MQTTMessage:
         ZigbeeLog - the raw message is parsed, creating a record for each metadata field with
                     associated value. This is useful for dynamically providing trigger options
                     for each Device."""
-        payload = self.payload
+        payload = self.parsed_payload
 
         if isinstance(payload, list) and len(payload) > 0:
             payload = payload[0]
 
         try:
+
+            # make sure message does not already exist first - MQTT devices rebroadcast if
+            # it is not aware that the message has been received
+            existing_messages = ZigbeeMessage.objects.filter(
+                raw_message=self.raw_payload
+            ).count()
+
+            if existing_messages > 0:
+                logger.info("Duplicate message - ignoring")
+                return
+
             zigbee_message = ZigbeeMessage(
                 zigbee_device=None, raw_message=self.raw_payload, topic=self.topic
             )
@@ -202,10 +221,12 @@ class MQTTMessage:
                 )
                 return
 
-            zigbee_message.save()
             # updates zigbeedevice field and saves object
-            zigbee_message.link_to_zigbee_device()
+            zigbee_message.save()
 
+            # TODO - add caching for latest values
+            # TODO - use latest cache values to check if notification should be invoked (i.e. has it changed)
+            # TODO - possibly set cache value for notify_user=True (if falls outside notification criteria) & False if it stays in criteria range
             for field in mqtt_data:
                 field = str(field).lower()
                 value = mqtt_data[field]
@@ -234,11 +255,9 @@ class Command(BaseCommand):
     run from terminal"""
 
     def handle(self, *args, **options):
-        connection = None
         try:
-            connection = MQTTClient(
+            MQTTClient(
                 MQTT_SERVER, MQTT_TOPICS, MQTT_CLIENT_NAME, MQTT_QOS, MQTT_BASE_TOPIC
             )
-        except KeyboardInterrupt:
-            connection.disconnect()
+        except Exception:
             raise CommandError("MQTT connection closed")
