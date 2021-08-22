@@ -15,7 +15,7 @@ from django.utils.translation import gettext_lazy as _
 
 from ..models import BaseAbstractModel
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("mqtt")
 logging.basicConfig(level=logging.INFO)
 
 if TYPE_CHECKING:
@@ -103,6 +103,10 @@ class DeviceLocation(BaseAbstractModel):
 
 class DeviceQuerySet(models.QuerySet):
     """Custom query set inherited by manager"""
+
+    def get_event_triggers(self):
+        """Return event triggers the object is assocaited with"""
+        return self.filter(eventtrigger_set__is_enabled=True)
 
 
 class DeviceManager(models.Manager.from_queryset(DeviceQuerySet)):
@@ -296,3 +300,8 @@ class Device(BaseAbstractModel):
             received_at = "-"
 
         return received_at
+
+    def get_event_triggers(self) -> QuerySet:
+        """Return all enabled event triggers that object is related to"""
+
+        return self.eventtrigger_set.filter(is_enabled=True)
