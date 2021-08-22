@@ -36,4 +36,19 @@ class UserNotificationSettingAdmin(admin.ModelAdmin):
         return inlines
 
 
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = (
+        "medium",
+        "topic",
+        "triggered_by",
+        "created_at",
+        "updated_at",
+    )
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+
 admin.site.register(models.NotificationSetting, UserNotificationSettingAdmin)
+admin.site.register(models.Notification, NotificationAdmin)
