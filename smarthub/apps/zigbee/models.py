@@ -1,15 +1,22 @@
 """Specifies data models for creating and storing information from zigbee devices"""
+import json
 import logging
+from json.decoder import JSONDecodeError
+from typing import TYPE_CHECKING, Union
 
 from django.apps import apps
+from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
 
 from ..models import BaseAbstractModel
+from ..notifications.models import NotificationMedium
+
+if TYPE_CHECKING:
+    from ..devices.models import Device
 
 logger = logging.getLogger("mqtt")
-logging.basicConfig()
+logging.basicConfig(level=logging.INFO)
 
 METADATA_TYPE_FIELD = "zigbeemessage__zigbeelog__metadata_type"
 
@@ -159,6 +166,11 @@ class ZigbeeDevice(BaseAbstractModel):
     def __str__(self) -> str:
         return f"{self.friendly_name} ({self.ieee_address})"
 
+    @property
+    def user_device(self) -> Union["Device", None]:
+        """Returns user device if it exists, otherwise None"""
+        return getattr(self, "device", None)
+
     def save(self, *args, **kwargs):
         # save lowercase to maintain consistency with MQTT broker
         self.friendly_name = self.friendly_name.lower()
@@ -176,9 +188,16 @@ class ZigbeeMessage(BaseAbstractModel):
     raw_message = models.JSONField()
     topic = models.CharField(max_length=255)
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.user = None
+        self.user_device = None
+        self.message = None
+
     def link_to_zigbee_device(self) -> None:
         """Attempts to match object to a ZigbeeDevice, if matched the zigbee_device field is set
-        and the object is saved.
+        and the object is saved. IMPORTANT - this method is called from obj.save() - do NOT call
+        self.save() here or it will invoke a recursive loop.
 
         Matching messages to devices is conducted by by matching MQTT topic to user device
          device_identifier. If no match is found, an attempt is made using the device
@@ -193,12 +212,113 @@ class ZigbeeMessage(BaseAbstractModel):
             ).first()
 
             self.zigbee_device = zigbee_device
-            self.save()
+            # self.save()
         except ZigbeeDevice.DoesNotExist:
             pass
 
     def __str__(self):
         return str(self.topic)
+
+    def save(self, *args, **kwargs) -> None:
+        """
+        Provides additional logic for:
+        1) Linking ZigbeeMessage (self) to ZigbeeDevice via link_to_zigbee_device()
+        1) Checks if Device is linked to an EventTrigger
+        """
+        # methods modifying object that need to be performed pre-save
+        self.link_to_zigbee_device()
+        super().save(*args, **kwargs)
+
+        # methods accessing object attributes that need to be perform post-save
+        self.check_event_triggers()
+
+    def check_event_triggers(self):
+        """Checks if linked device is attached to event trigger - if so, values check and event
+        triggered if necessary"""
+
+        self.user_device = self.zigbee_device.user_device
+        if not self.user_device:
+            return
+
+        self.user = getattr(self.user_device, "user", None)
+
+        triggers = self.user_device.get_event_triggers()
+
+        if not triggers:
+            logger.info(
+                "ZigbeeMessage - check_event_triggers - no event triggers")
+            return
+
+        try:
+            parsed_message = json.loads(self.raw_message)
+        except JSONDecodeError:
+            logger.info(
+                "ZigbeeMessage - check_event_triggers - could not parse message JSON"
+            )
+            return
+
+        # return self.process_event_trigger(triggers=triggers)
+        for trigger in triggers:
+            self.process_event_trigger(
+                parsed_message=parsed_message, trigger=trigger)
+
+    def process_event_trigger(self, parsed_message, trigger):
+        """Processes event triggers and invokes notifications/event responses if criteria met"""
+        field = getattr(trigger, "metadata_field")
+        device_value = parsed_message.get(field, None)
+
+        if not device_value:
+            return
+
+        event = getattr(trigger, "event")
+        if not event.is_enabled or not event.send_notification:
+            return
+
+        trigger_result = trigger.is_triggered(device_value)
+
+        if trigger_result:
+            # matched a trigger - record notification
+            message = f"{event.notification_message}\n\nTriggered by={trigger}\n\nDevice value={device_value}"
+
+            self.invoke_notifications(
+                topic=event.notification_topic,
+                message=message,
+                triggered_by=trigger,
+            )
+
+    def invoke_event_response(self):
+        """ """
+        pass
+
+    def invoke_notifications(self, topic, message, triggered_by):
+        """Invoke all of user's enabled notifications"""
+        if not self.user:
+            logger.info(
+                "invoke_notifications(): no user object - cannot proceed")
+            return
+
+        user_notifications = get_user_model().objects.get_active_notifications(
+            user=self.user
+        )
+        if not user_notifications:
+            logger.info(
+                "invoke_notifications(): user has no active notification mediums"
+            )
+
+            return
+
+        for notification in user_notifications:
+            notification_data = {
+                "topic": topic,
+                "message": message,
+                "triggered_by": triggered_by,
+                "notification_obj": notification,
+            }
+
+            if notification.notification_medium == NotificationMedium.PUSHBULLET:
+                notification.pushbulletnotification.send(**notification_data)
+            elif notification.notification_medium == NotificationMedium.EMAIL:
+                notification.emailnotification.send(**notification_data)
 
 
 class ZigbeeLog(BaseAbstractModel):
