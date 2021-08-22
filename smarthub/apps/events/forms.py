@@ -1,5 +1,7 @@
 """Custom forms for handling creation of events with event trigger objects"""
 
+import logging
+
 from django import forms
 from django.core.exceptions import ValidationError
 
@@ -8,6 +10,9 @@ from crispy_forms.layout import Column, Field, Fieldset, Layout, Row, Submit
 
 from ..zigbee.models import METADATA_TYPE_FIELD, ZigbeeDevice
 from . import models
+
+logger = logging.getLogger("mqtt")
+logging.basicConfig(level=logging.INFO)
 
 
 class EventForm(forms.ModelForm):
@@ -104,6 +109,7 @@ class EventTriggerForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
     def clean(self):
+        logger.info("Start EventTriggerForm clean()")
         clean = super().clean()
         error_message = (
             "Select a valid choice. The value you selected is not one of the"
@@ -142,12 +148,15 @@ class EventTriggerForm(forms.ModelForm):
                 metadata_field_name,
                 error_message,
             )
+        logger.info("Finish EventTriggerForm clean()")
         return clean
 
     def save(self, commit=True):
         """Attached custom field values and link to source event"""
+        logger.info("Start EventTriggerForm save()")
         self.instance.event = models.Event.objects.get(uuid=self.event_uuid)
         self.instance.device = self.device
         self.instance.metadata_field = self.cleaned_data["_metadata_field"]
 
-        return super().save(commit=commit)
+        super().save(commit=commit)
+        logger.info("Finish EventTriggerForm save()")
