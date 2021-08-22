@@ -11,15 +11,18 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:?POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER:?POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD}
+  memcached:
+    image: memcached
   web:
     build: .
-    command: bash -c "wait-for-it db:5432 -- python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "wait-for-it db:5432 -- wait-for-it memcached:11211 -- python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code
     ports:
       - "8000:8000"
     depends_on:
       - db
+      - memcached
     environment:
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY}
       - POSTGRES_DB=${POSTGRES_DB:?POSTGRES_DB}
