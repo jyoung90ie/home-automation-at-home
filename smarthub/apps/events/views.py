@@ -11,6 +11,7 @@ from django.views.generic import (
     UpdateView,
 )
 from django.views.generic.base import RedirectView
+from django.apps import apps
 
 from ..mixins import (
     AddUserToFormMixin,
@@ -139,6 +140,33 @@ class UpdateEventTrigger(
 
     def get_queryset(self):
         return models.EventTrigger.objects.filter(uuid=self.kwargs["tuuid"])
+
+    def get_form(self, form_class=None):
+        """Device is already selected - get device specific metadata"""
+        form = super().get_form(form_class=form_class)
+
+        device = getattr(self.get_object(), "device", "")
+
+        zigbee_device = apps.get_model("zigbee", "ZigbeeDevice")
+        form.fields["_metadata_field"].choices = [
+            (field, field)
+            for field in zigbee_device.objects.get_metadata_fields(device)
+        ]
+
+        return form
+
+    def get_initial(self):
+        """Populate update form with stored data"""
+        initial = super().get_initial()
+        obj = self.get_object()
+
+        device = getattr(obj, "device", "")
+        field = getattr(obj, "metadata_field", "")
+
+        initial["_device"] = (device.uuid, device.friendly_name) if device else ""
+        initial["_metadata_field"] = field if field else ""
+
+        return initial
 
 
 class DeleteEventTrigger(LimitResultsToEventOwner, UUIDView, DeleteView):

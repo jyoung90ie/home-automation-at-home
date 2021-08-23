@@ -58,11 +58,6 @@
         }
     }
 
-    // event listeners
-    $(document).ready(function (event) {
-        getMetadataFields(uuid)
-    })
-
     $(document).change("", function (event) {
         if (event.target.id === device_field.attr("id")) {
             uuid = device_field.val()

@@ -14,6 +14,7 @@ class EventTriggerFormMixins:
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         kwargs["event_uuid"] = self.kwargs["uuid"]
+        # kwargs["trigger_uuid"] = self.kwargs["tuuid"]
         return kwargs
 
     def get_form(self, form_class=None):
@@ -40,8 +41,7 @@ class LimitResultsToEventOwner(LoginRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
 
-        obj = get_object_or_404(
-            models.Event, user=request.user, uuid=kwargs["uuid"])
+        obj = get_object_or_404(models.Event, user=request.user, uuid=kwargs["uuid"])
         if not obj:
             return Http404("Could not find the Event")
         return super().dispatch(request, *args, **kwargs)

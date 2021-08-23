@@ -10,8 +10,9 @@ from crispy_forms.layout import Column, Field, Fieldset, Layout, Row, Submit
 
 from ..zigbee.models import METADATA_TYPE_FIELD, ZigbeeDevice
 from . import models
+from ..events.defines import NUMERIC_TRIGGER_TYPES, NON_NUMERIC_TRIGGER_TYPES
 
-logger = logging.getLogger("mqtt")
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
@@ -76,16 +77,14 @@ class CustomChoiceField(forms.ChoiceField):
     def validate(self, value) -> None:
         """Removes validation against initial choices list"""
         if value in self.empty_values and self.required:
-            raise ValidationError(
-                self.error_messages["required"], code="required")
+            raise ValidationError(self.error_messages["required"], code="required")
         return True
 
 
 class EventTriggerForm(forms.ModelForm):
     """Custom form for capturing event trigger data"""
 
-    _device = CustomChoiceField(
-        label="Device", required=True, choices=[("", "-----")])
+    _device = CustomChoiceField(label="Device", required=True, choices=[("", "-----")])
 
     _metadata_field = CustomChoiceField(
         label="Device data field", choices=[("", "-----")]
@@ -97,8 +96,8 @@ class EventTriggerForm(forms.ModelForm):
             "_device",
             "is_enabled",
             "_metadata_field",
-            "metadata_trigger_value",
             "trigger_type",
+            "metadata_trigger_value",
             "is_enabled",
         ]
 
@@ -109,6 +108,7 @@ class EventTriggerForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
     def clean(self):
+        """Validate manual fields - raise form errors if unexpected values found"""
         logger.info("Start EventTriggerForm clean()")
         clean = super().clean()
         error_message = (
@@ -118,10 +118,14 @@ class EventTriggerForm(forms.ModelForm):
         # form field names
         device_field_name = "_device"
         metadata_field_name = "_metadata_field"
+        trigger_type_field_name = "trigger_type"
+        trigger_value_field_name = "metadata_trigger_value"
 
         # form values
         form_device = clean[device_field_name]
         form_metadata = clean[metadata_field_name]
+        form_trigger_type = clean[trigger_type_field_name]
+        form_trigger_value = clean[trigger_value_field_name]
 
         # device validation
         device = self.request.user.get_linked_devices.filter(uuid=form_device)
@@ -135,8 +139,7 @@ class EventTriggerForm(forms.ModelForm):
             self.device = device.get()
 
         # metadata validation
-        valid_metadata = ZigbeeDevice.objects.get_metadata_fields(
-            device=self.device)
+        valid_metadata = ZigbeeDevice.objects.get_metadata_fields(device=self.device)
 
         if (
             form_metadata
@@ -148,6 +151,26 @@ class EventTriggerForm(forms.ModelForm):
                 metadata_field_name,
                 error_message,
             )
+
+        # number must be numeric if numeric trigger type selected
+        if form_trigger_type in NUMERIC_TRIGGER_TYPES:
+            try:
+                int(form_trigger_value)
+            except ValueError:
+                self.add_error(
+                    trigger_value_field_name,
+                    "Value must be numeric with the specified trigger type",
+                )
+
+                non_numeric_options = ", ".join(
+                    [trigger.upper() for trigger in NON_NUMERIC_TRIGGER_TYPES]
+                )
+
+                self.add_error(
+                    trigger_type_field_name,
+                    f"If you wish to use a non-numeric trigger value, you can select one of the following: {non_numeric_options}",
+                )
+
         logger.info("Finish EventTriggerForm clean()")
         return clean
 
