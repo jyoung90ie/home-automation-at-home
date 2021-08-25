@@ -19,11 +19,10 @@ from smarthub.settings import (
     MQTT_TOPICS,
 )
 
-from ...models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
+from apps.zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
 
 logger = logging.getLogger("mqtt")
-logger.setLevel(logging.INFO)
-logging.basicConfig()
+logging.basicConfig(level=logging.INFO)
 
 
 class MQTTClient:
@@ -71,14 +70,17 @@ class MQTTClient:
 
     def on_connect(self, client, user_data, flags, result_code) -> None:
         """Callback function - called when connection is successful"""
-        logger.info("Connected to MQTT Broker")
+        if result_code == 0:
+            logger.info("Connected to MQTT Broker")
 
-        self.get_topics_for_subscribing()
+            self.get_topics_for_subscribing()
 
-        if self.subscribed_topics:
-            client.subscribe(self.subscribed_topics)
+            if self.subscribed_topics:
+                client.subscribe(self.subscribed_topics)
+        else:
+            logger.error("Could not connect to MQTT broker")
 
-    def on_message(self, client, data, message) -> None:
+    def on_message(self, client, user_data, message) -> None:
         """Callback function - called each time a message is received"""
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         topic = message.topic
@@ -87,13 +89,11 @@ class MQTTClient:
         logger.info(f"MQTT msg received: {now} - [{topic}] " + str(payload))
         MQTTMessage(topic=topic, payload=payload)
 
-    def on_subscribe(self, client, user_data, mid, granted_qos) -> None:
+    def on_subscribe(self, client, user_data, mid, qos) -> None:
         """Callback function - called when MQTT subscribers have been successful"""
-        logger.info(
-            "MQTT subscribed to topics with guaranteed QoS level (%s)", granted_qos
-        )
+        logger.info("MQTT subscribed to topics with guaranteed QoS level (%s)", qos)
 
-    def on_disconnect(self, client, userdata, rc):
+    def on_disconnect(self, client, user_data, result_code):
         """Callback function - called when client disconnects from MQTT broker"""
         logger.info("MQTT client disconnected")
 
@@ -119,6 +119,10 @@ class MQTTClient:
             topics_for_subscribing.append((new_topic, self.qos))
 
         self.subscribed_topics = topics_for_subscribing
+
+    def publish(self, topic, payload, qos=1):
+        """Send messages to MQTT broker"""
+        self.client.publish(topic, payload)
 
 
 class MQTTMessage:
@@ -172,8 +176,7 @@ class MQTTMessage:
                 try:
                     new_device = ZigbeeDevice.create_device(device)
 
-                    logger.info("MQTT - new device added - %s",
-                                new_device.ieee_address)
+                    logger.info("MQTT - new device added - %s", new_device.ieee_address)
                 except Exception as ex:
                     logger.error(
                         "Exception creating new Zigbee Device (%s) %s", device, ex
