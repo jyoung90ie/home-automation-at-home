@@ -14,7 +14,6 @@ class EventTriggerFormMixins:
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         kwargs["event_uuid"] = self.kwargs["uuid"]
-        # kwargs["trigger_uuid"] = self.kwargs["tuuid"]
         return kwargs
 
     def get_form(self, form_class=None):
