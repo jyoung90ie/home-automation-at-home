@@ -6,7 +6,6 @@ from django.db import models
 from django.urls.base import reverse
 from django.utils.translation import gettext_lazy as _
 
-from ..devices.models import Device
 from ..models import BaseAbstractModel
 
 logger = logging.getLogger(__name__)
@@ -63,7 +62,7 @@ class EventTrigger(BaseAbstractModel):
     device log tables"""
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    device = models.ForeignKey(Device, on_delete=models.CASCADE)
+    device = models.ForeignKey("devices.Device", on_delete=models.CASCADE)
     metadata_field = models.CharField(
         verbose_name="Data field for event trigger",
         max_length=255,
@@ -124,4 +123,30 @@ class EventTrigger(BaseAbstractModel):
         logger.info("Finish EventTrigger is_triggered()")
 
     def __str__(self) -> str:
-        return f"Trigger Settings [Device={self.device} - Field={self.metadata_field} - Type={self.trigger_type} - Value={self.metadata_trigger_value}]"
+        return (
+            f"Trigger Settings [Device={self.device} - Field={self.metadata_field}"
+            " - Type={self.trigger_type} - Value={self.metadata_trigger_value}]"
+        )
+
+
+class EventResponse(BaseAbstractModel):
+    """Stores the devices and device states that should be invoked in response to an event
+    trigger.
+
+    An EventResponse object can be attached to many events and/or many devices. This enables
+    a user to define one revent response and have it trigger many devices, in response to
+    many events."""
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    device_state = models.ForeignKey("devices.DeviceState", on_delete=models.CASCADE)
+    is_enabled = models.BooleanField(verbose_name="Enable?", default=True)
+
+    # TODO - add __str__
+
+
+# class EventTriggerLog(BaseAbstractModel):
+#     """Stores information on when an event was triggered, what triggered it, and any response
+#     to the trigger."""
+#     event = models.ForeignKey(Event, on_delete=models.CASCADE)
+#     TODO - attach to notification log
+#     TODO - attach event responses

@@ -1,6 +1,10 @@
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericInlineModelAdmin
+
+from django_admin_inline_paginator.admin import TabularInlinePaginated
 
 from . import models
+from ..devices.models import DeviceState
 
 
 def truncate_string(string_val, length=50):
@@ -14,18 +18,29 @@ def truncate_string(string_val, length=50):
     return string_val
 
 
-class ZigbeeMessageInline(admin.TabularInline):
+# class DeviceStateInline(GenericInlineModelAdmin):
+#     """Add device states to device page"""
+
+#     ct_field = "device_type"
+#     ct_fk_field = "device_object_id"
+#     model = DeviceState
+#     extra = 0
+#     fields = ("name", "command", "command_value", "device_type")
+
+
+class ZigbeeMessageInline(TabularInlinePaginated):
     model = models.ZigbeeMessage
-    max_num = 5
+    per_page = 5
     extra = 0
     ordering = ["-created_at"]
     fields = ("topic", "raw_message")
     readonly_fields = ("created_at", "updated_at")
 
 
-class ZigbeeLogsInline(admin.TabularInline):
+class ZigbeeLogsInline(TabularInlinePaginated):
     model = models.ZigbeeLog
     extra = 0
+    per_page = 15
     ordering = ["-created_at"]
     readonly_fields = ("created_at", "updated_at")
 
@@ -42,6 +57,7 @@ class ZigbeeDeviceAdmin(admin.ModelAdmin):
     )
     inlines = [
         ZigbeeMessageInline,
+        # DeviceStateInline,
     ]
     readonly_fields = ("created_at", "updated_at")
 

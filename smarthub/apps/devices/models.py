@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Union
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import EmptyResultSet, ObjectDoesNotExist
 from django.db import models
 from django.db.models.constraints import UniqueConstraint
@@ -70,8 +72,7 @@ class DeviceLocation(BaseAbstractModel):
 
     class Meta:
         constraints = [
-            UniqueConstraint(fields=["user", "location"],
-                             name="user_device_location")
+            UniqueConstraint(fields=["user", "location"], name="user_device_location")
         ]
 
     def get_absolute_url(self):
@@ -93,8 +94,7 @@ class DeviceLocation(BaseAbstractModel):
         try:
             users_linked_devices: QuerySet = self.user.get_linked_devices
 
-            location_linked_devices = users_linked_devices.filter(
-                location=self)
+            location_linked_devices = users_linked_devices.filter(location=self)
             total = location_linked_devices.count()
         except (EmptyResultSet, ObjectDoesNotExist):
             pass
@@ -119,8 +119,7 @@ class Device(BaseAbstractModel):
     objects = DeviceManager()
 
     friendly_name = models.CharField(max_length=150, blank=False, null=False)
-    device_identifier = models.CharField(
-        max_length=255, blank=False, null=False)
+    device_identifier = models.CharField(max_length=255, blank=False, null=False)
     location = models.ForeignKey(DeviceLocation, on_delete=models.PROTECT)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     protocol = models.CharField(
@@ -259,26 +258,26 @@ class Device(BaseAbstractModel):
                 zigbee_device.device = self
                 zigbee_device.save()
 
-                logger.info("Device linked and save as object %s",
-                            zigbee_device)
+                logger.info("Device linked and save as object %s", zigbee_device)
 
         except (self.zigbee_model.DoesNotExist, Exception) as ex:
             logger.error("Device could not be linked - %s", ex)
 
-    def is_linked(self) -> bool:
-        """Returns true if user device is linked to a hardware device"""
-        fk_obj: "ZigbeeDevice"
-        is_linked = False
-
+    def get_linked_device(self) -> object:
+        """Return the hardware device object this user device is linked to"""
         foreign_keys = ["zigbeedevice_set", "apidevice_set"]
         for fk_name in foreign_keys:
-            if is_linked:
-                break
-
             fk_obj = getattr(self, fk_name, None)
             is_linked = fk_obj and hasattr(fk_obj.first(), "device")
 
-        return is_linked
+            if is_linked:
+                return fk_obj
+
+        return None
+
+    def is_linked(self) -> bool:
+        """Returns true if user device is linked to a hardware device"""
+        return self.get_linked_device() is not None
 
     def get_absolute_url(self):
         """Default redirect url"""
@@ -305,3 +304,29 @@ class Device(BaseAbstractModel):
         """Return all enabled event triggers that object is related to"""
 
         return self.eventtrigger_set.filter(is_enabled=True)
+
+
+class DeviceState(BaseAbstractModel):
+    """Stores device states that can be used to trigger the device to assume a particular
+    state (e.g. on/off)"""
+
+    device_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    device_object_id = models.PositiveBigIntegerField()
+    content_object = GenericForeignKey("device_type", "device_object_id")
+
+    name = models.CharField(
+        verbose_name="Name you want to save this state under",
+        max_length=50,
+        blank=False,
+        null=False,
+    )
+    command = models.CharField(
+        verbose_name="What is the command name that invokes the state change in your device?",
+        max_length=100,
+        blank=False,
+    )
+    command_value = models.CharField(
+        verbose_name="What state value should be sent to your device?",
+        max_length=100,
+        blank=False,
+    )

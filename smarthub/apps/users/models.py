@@ -42,7 +42,11 @@ class CustomUserManager(BaseUserManager):
 
     def get_user_devices(self, user) -> QuerySet:
         """Return all devices created by user"""
-        return apps.get_model("devices", "Device").objects.filter(user=user)
+        return (
+            apps.get_model("devices", "Device")
+            .objects.filter(user=user)
+            .order_by("friendly_name")
+        )
 
     def get_linked_devices(self, user) -> QuerySet:
         """Return list of device objects for user"""

@@ -12,6 +12,8 @@ from ..zigbee.models import METADATA_TYPE_FIELD, ZigbeeDevice
 from . import models
 from ..events.defines import NUMERIC_TRIGGER_TYPES, NON_NUMERIC_TRIGGER_TYPES
 
+from ..forms import CustomChoiceField
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -65,20 +67,6 @@ class EventForm(forms.ModelForm):
         self.helper.add_input(
             Submit("submit", "Create Event", css_class="btn btn-primary")
         )
-
-
-class CustomChoiceField(forms.ChoiceField):
-    """Overrides validation method to prevent validation against default list of choices. This
-    enables custom validation to be performed in form.clean() method as the data is accessible
-    via cleaned_data dict.
-
-    IMPORTANT - default validation is removed using this class"""
-
-    def validate(self, value) -> None:
-        """Removes validation against initial choices list"""
-        if value in self.empty_values and self.required:
-            raise ValidationError(self.error_messages["required"], code="required")
-        return True
 
 
 class EventTriggerForm(forms.ModelForm):
@@ -168,7 +156,8 @@ class EventTriggerForm(forms.ModelForm):
 
                 self.add_error(
                     trigger_type_field_name,
-                    f"If you wish to use a non-numeric trigger value, you can select one of the following: {non_numeric_options}",
+                    f"If you wish to use a non-numeric trigger value, you can select one"
+                    " of the following: {non_numeric_options}",
                 )
 
         logger.info("Finish EventTriggerForm clean()")

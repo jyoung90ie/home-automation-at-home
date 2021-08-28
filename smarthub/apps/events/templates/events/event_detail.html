@@ -23,7 +23,7 @@
     </div>
 
     <div class="mt-5 text-muted">
-        <h2 class="h5 text-center m-3 d-inline">
+        <h2 class="h5 m-3 d-inline">
             <i class="fas fa-sitemap me-3"></i> Event Triggers
         </h2>
         {% if user.total_linked_devices > 0 %}
@@ -76,6 +76,55 @@
             {% endfor %}
             {% else %}
             <p>You cannot create event triggers until you have a linked device - see <a href="{% url 'help' %}">Help</a>
+                {% endif %}
+        </div>
+
+    </div>
+
+
+
+    <div class="mt-5 text-muted">
+        <h2 class="h5 m-3 d-inline">
+            <i class="fas fa-cogs me-2"></i>Event Responses
+        </h2>
+        {% if user.total_linked_devices > 0 %}
+        {% include "events/partials/_user_options_add_event_trigger.html" %}
+        {% endif %}
+        <p class="m-2">Event Responses are automatically invoked when an Event has been triggered by any of the Event
+            Triggers. For example, if you would like a device to be turned on (or off) in response to some external
+            trigger (e.g. motion in a room), then you would add the Device here and select the Device State that
+            corresponds to what you wish for. NOTE: You must have at least one Device State created (see <a
+                href="{% url 'devices:list' %}">Devices</a> for more information).
+        </p>
+        <div class="row content-box table-responsive">
+            {% if user.total_linked_devices > 0 %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Device</th>
+                        <th scope="col">State when triggered</th>
+                        <th scope="col">Enabled?</th>
+                        <th scope="col">Options</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr class="event-response-row" onclick='window.location="";'>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+
+                </tbody>
+            </table>
+            <p>This event does not yet have any responses - begin the transistion to an easier life by adding some!</p>
+            {% else %}
+            <p>You cannot create an event response until you have a linked device - see <a
+                    href="{% url 'help' %}">Help</a>
                 {% endif %}
         </div>
 

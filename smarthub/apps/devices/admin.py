@@ -31,5 +31,10 @@ class DeviceLocationAdmin(admin.ModelAdmin):
     readonly_fields = ("uuid", "created_at", "updated_at")
 
 
+class DeviceStateAdmin(admin.ModelAdmin):
+    """ """
+
+
 admin.site.register(models.Device, DeviceAdmin)
 admin.site.register(models.DeviceLocation, DeviceLocationAdmin)
+admin.site.register(models.DeviceState, DeviceStateAdmin)

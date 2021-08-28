@@ -8,6 +8,7 @@ from django.db.utils import IntegrityError
 from django.http.response import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
+from django.urls.base import reverse
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -22,9 +23,13 @@ from csv_export.views import CSVExportView
 
 from ..mixins import (
     AddUserToFormMixin,
+    FormSuccessMessageMixin,
     LimitResultsToUserMixin,
     MakeRequestObjectAvailableInFormMixin,
 )
+
+from .mixins import PermitDeviceOwnerOnly, DeviceStateFormMixin
+
 from ..views import UUIDView
 from . import forms, mixins, models
 
@@ -240,8 +245,7 @@ class AddDevice(
         except IntegrityError as ex:
 
             cause = (
-                "friendly name" if "friendly_name" in str(
-                    ex) else "device identifier"
+                "friendly name" if "friendly_name" in str(ex) else "device identifier"
             )
             messages.error(
                 self.request,
@@ -376,3 +380,49 @@ class ExportCSVDeviceLogs(CSVExportView, LogsForDevice):
     """Exports logs for specified device"""
 
     exclude = ("id", "uuid", "zigbee_device", "updated_at", "topic")
+
+
+class DeviceRedirectView(RedirectView):
+    """Redirects URL to proper update path - for breadcrumb"""
+
+    def get_redirect_url(self, *args, **kwargs):
+        return reverse("devices:device:detail", kwargs={"uuid": kwargs.pop("uuid")})
+
+
+class AddDeviceState(
+    FormSuccessMessageMixin, DeviceStateFormMixin, PermitDeviceOwnerOnly, CreateView
+):
+    form_class = forms.DeviceStateForm
+    template_name = "devices/device_state_form.html"
+    success_message = "New state added for this device"
+
+
+class UpdateDeviceState(
+    FormSuccessMessageMixin,
+    DeviceStateFormMixin,
+    PermitDeviceOwnerOnly,
+    UUIDView,
+    UpdateView,
+):
+    form_class = forms.DeviceStateForm
+    template_name = "devices/device_state_update_form.html"
+    slug_url_kwarg = "suuid"
+    success_message = "State values have been updated"
+
+    def get_queryset(self):
+        return models.DeviceState.objects.filter(uuid=self.kwargs["suuid"])
+
+    def get_initial(self):
+        """Populate update form with stored data"""
+        initial = super().get_initial()
+        obj = self.get_object()
+        print("form loaded:", obj, dir(obj))
+        hardware_device = getattr(obj, "content_object", "")
+
+        initial["_device"] = (
+            (hardware_device.device.uuid, hardware_device.device.friendly_name)
+            if hardware_device
+            else ""
+        )
+
+        return initial

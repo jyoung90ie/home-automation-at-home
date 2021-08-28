@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     "dynamic_breadcrumbs",
     "debug_toolbar",
+    "django_admin_inline_paginator",
     # user added apps
     "apps.devices",
     "apps.pages",

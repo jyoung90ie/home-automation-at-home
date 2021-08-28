@@ -16,8 +16,7 @@ urlpatterns = [
                     path("", views.DetailDevice.as_view(), name="detail"),
                     path("update/", views.UpdateDevice.as_view(), name="update"),
                     path("delete/", views.DeleteDevice.as_view(), name="delete"),
-                    path("metadata/", views.DeviceMetadata.as_view(),
-                         name="metadata"),
+                    path("metadata/", views.DeviceMetadata.as_view(), name="metadata"),
                     path(
                         "logs/",
                         include(
@@ -33,6 +32,46 @@ urlpatterns = [
                                     ),
                                 ],
                                 "logs",
+                            ),
+                        ),
+                    ),
+                    path(
+                        "state/",
+                        include(
+                            (
+                                [
+                                    path("", views.DeviceRedirectView.as_view()),
+                                    path(
+                                        "add/",
+                                        views.AddDeviceState.as_view(),
+                                        name="add",
+                                    ),
+                                    path(
+                                        "<uuid:suuid>/",
+                                        include(
+                                            (
+                                                [
+                                                    path(
+                                                        "",
+                                                        views.DeviceRedirectView.as_view(),
+                                                    ),
+                                                    path(
+                                                        "delete/",
+                                                        views.AddDeviceState.as_view(),
+                                                        name="delete",
+                                                    ),
+                                                    path(
+                                                        "update/",
+                                                        views.UpdateDeviceState.as_view(),
+                                                        name="update",
+                                                    ),
+                                                ],
+                                                "state",
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                                "states",
                             ),
                         ),
                     ),

@@ -23,9 +23,60 @@
         <div class="col-8 col-md-4">{{ device.protocol|upper }}</div>
     </div>
 
-    <div class="row mt-2 text-muted">
+    <div class="mt-5 text-muted">
+        <h2 class="h5 m-3 d-inline">
+            <i class="fas fa-sliders-h me-3"></i>Device States
+        </h2>
+        {% if user.total_linked_devices > 0 %}
+        {% include "devices/partials/_user_options_add_device_state.html" %}
+        {% endif %}
+        <p class="m-2 mb-3">When an event has been triggered, the device state associated with that event will be
+            communicated to the device. What does this mean? It means if you want your device to react a particular way
+            to an event, you can create a state here, with the configuration settings (see your device manual for
+            relevant options) and your device will react accordingly.
+        </p>
+        <div class="row mt-2 content-box table-responsive">
+            {% for state in device.get_linked_device.first.device_states.all %}
+            {% if forloop.first %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Command</th>
+                        <th scope="col">Value</th>
+                        <th scope="col">Number of Events</th>
+                        <th scope="col">Options</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    {% endif %}
+                    <tr class="event-trigger-row"
+                        onclick='window.location="{% url "devices:device:states:state:update" uuid=device.uuid suuid=state.uuid %}";'>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ state.name|capfirst }}</td>
+                        <td>{{ state.command|upper }}</td>
+                        <td>{{ state.command_value|upper }}</td>
+                        <td>TBC</td>
+                        <td>
+
+                        </td>
+                    </tr>
+                    {% if forloop.last %}
+                </tbody>
+            </table>
+            {% endif %}
+            {% empty %}
+            <p class="m-0">This device does not yet have any states - you can add some using the button above.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+
+    <div class="row mt-5 text-muted">
         <div class="col-md-7">
-            <h2 class="h5 text-center m-3">
+            <h2 class="h5 m-3">
                 <i class="fas fa-info me-3"></i> Hardware information
             </h2>
             <div class="row content-box">
@@ -35,9 +86,8 @@
                 </div>
 
                 {% if is_linked %}
-                {% if device.zigbeedevice_set.first %}
 
-                {% for dict in device.zigbeedevice_set.values %}
+                {% for dict in device.get_linked_device.all.values %}
                 {% for type, value in dict.items %}
                 <div class="fw-bold col-4 mb-2">{{ type|upper }}</div>
                 <div class="col-8 mb-2">{{ value }}</div>
@@ -45,8 +95,6 @@
                 Hardware device data has not been captured.
                 {% endfor %}
                 {% endfor %}
-                {% elif device.apidevice_set.first%}
-                {% endif %}
                 {% else %}
                 <span class="m-2">Your device has not yet been linked to a hardware device. Please ensure that the
                     device identifier
@@ -58,7 +106,7 @@
         </div>
         {% if is_linked %}
         <div class="col-md-5">
-            <h2 class="h5 text-center m-3">
+            <h2 class="h5 m-3">
                 <i class="fas fa-server me-3"></i>Last update from device
             </h2>
             <div class="row content-box table-responsive">

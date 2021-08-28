@@ -2,10 +2,12 @@
 import json
 import logging
 from json.decoder import JSONDecodeError
+
 from typing import TYPE_CHECKING, Union
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models.query_utils import Q
 
@@ -54,6 +56,14 @@ class ZigbeeDevice(BaseAbstractModel):
     device = models.ForeignKey(
         "devices.Device", on_delete=models.SET_NULL, blank=True, null=True
     )
+
+    device_states = GenericRelation(
+        "devices.DeviceState",
+        object_id_field="device_object_id",
+        content_type_field="device_type",
+        related_query_name="zigbee",
+    )
+
     friendly_name = models.CharField(max_length=100, blank=True, null=True)
     ieee_address = models.CharField(max_length=100, blank=True, null=True)
     description = models.CharField(max_length=100, blank=True, null=True)
@@ -82,8 +92,7 @@ class ZigbeeDevice(BaseAbstractModel):
             )
 
             if not zigbee_device:
-                logger.info(
-                    "Found new device with IEEE Address ='%s'", ieee_address)
+                logger.info("Found new device with IEEE Address ='%s'", ieee_address)
                 return cls.create_device(metadata)
 
     @staticmethod
@@ -131,23 +140,23 @@ class ZigbeeDevice(BaseAbstractModel):
         return None
 
     @classmethod
-    def link_to_user_device(self, zigbee_device=None) -> bool:
+    def link_to_user_device(cls, zigbee_device=None) -> bool:
         """Attempt to match zigbee device to an entry in Device model"""
         try:
-            if not self.user_device_model:
+            if not cls.user_device_model:
                 return
 
-            obj = zigbee_device or self
-            logger.info(f"ZigbeeDevice - link_device - obj={obj}")
+            obj = zigbee_device or cls
+            logger.info("ZigbeeDevice - link_device - obj=%s", obj)
 
             if not obj.device:
-                device = self.user_device_model.objects.filter(
+                device = cls.user_device_model.objects.filter(
                     models.Q(friendly_name=obj.friendly_name)
                     | models.Q(friendly_name=obj.ieee_address)
                 )
 
                 if device:
-                    self.device = device
+                    cls.device = device
                     obj.save()
                     logger.info(
                         "Zigbee device (friendly_name=%s) linked to user device uuid='%s'",
@@ -245,8 +254,7 @@ class ZigbeeMessage(BaseAbstractModel):
         triggers = self.user_device.get_event_triggers()
 
         if not triggers:
-            logger.info(
-                "ZigbeeMessage - check_event_triggers - no event triggers")
+            logger.info("ZigbeeMessage - check_event_triggers - no event triggers")
             return
 
         try:
@@ -259,8 +267,7 @@ class ZigbeeMessage(BaseAbstractModel):
 
         # return self.process_event_trigger(triggers=triggers)
         for trigger in triggers:
-            self.process_event_trigger(
-                parsed_message=parsed_message, trigger=trigger)
+            self.process_event_trigger(parsed_message=parsed_message, trigger=trigger)
 
     def process_event_trigger(self, parsed_message, trigger):
         """Processes event triggers and invokes notifications/event responses if criteria met"""
@@ -278,7 +285,10 @@ class ZigbeeMessage(BaseAbstractModel):
 
         if trigger_result:
             # matched a trigger - record notification
-            message = f"{event.notification_message}\n\nTriggered by={trigger}\n\nDevice value={device_value}"
+            message = (
+                f"{event.notification_message}\n\nTriggered by={trigger}\n\n"
+                "Device value={device_value}"
+            )
 
             self.invoke_notifications(
                 topic=event.notification_topic,
@@ -288,13 +298,11 @@ class ZigbeeMessage(BaseAbstractModel):
 
     def invoke_event_response(self):
         """ """
-        pass
 
     def invoke_notifications(self, topic, message, triggered_by):
         """Invoke all of user's enabled notifications"""
         if not self.user:
-            logger.info(
-                "invoke_notifications(): no user object - cannot proceed")
+            logger.info("invoke_notifications(): no user object - cannot proceed")
             return
 
         user_notifications = get_user_model().objects.get_active_notifications(

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% debug %}
+{% block content %}
+<h1><i class="fas fa-sliders-h"></i> Create Device State</h1>
+
+<p>A <b>State</b> can be thought of as the
+    exact configuration required for the device to function as you would like it when an event is triggered, or
+    a <em>particular</em> event is triggered. An example is a generic light bulb, that can be switched on or off
+    - this means the light bulb has two states: on, and, off. But what if you have an LED bulb that can change
+    colours? Well now you have many state options, you may specify the RGB (Red Green Blue) value for each on
+    state.</p>
+
+<div class="row content-box">
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <input type="submit" class="btn btn-primary" value="Create State">
+    </form>
+</div>
+{% endblock %}
