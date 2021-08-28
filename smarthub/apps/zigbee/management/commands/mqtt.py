@@ -11,6 +11,7 @@ from django.core.management.base import CommandError
 
 import paho.mqtt.client as mqtt
 
+from apps.zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
 from smarthub.settings import (
     MQTT_BASE_TOPIC,
     MQTT_CLIENT_NAME,
@@ -19,9 +20,9 @@ from smarthub.settings import (
     MQTT_TOPICS,
 )
 
-from apps.zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
 
 logger = logging.getLogger("mqtt")
+logger.setLevel(level=logging.INFO)
 logging.basicConfig(level=logging.INFO)
 
 
@@ -86,7 +87,7 @@ class MQTTClient:
         topic = message.topic
         payload = message.payload.decode("utf-8")
 
-        logger.info(f"MQTT msg received: {now} - [{topic}] " + str(payload))
+        logger.info("MQTT msg received: %s - [%s] %s", now, topic, str(payload))
         MQTTMessage(topic=topic, payload=payload)
 
     def on_subscribe(self, client, user_data, mid, qos) -> None:
@@ -228,8 +229,10 @@ class MQTTMessage:
             zigbee_message.save()
 
             # TODO - add caching for latest values
-            # TODO - use latest cache values to check if notification should be invoked (i.e. has it changed)
-            # TODO - possibly set cache value for notify_user=True (if falls outside notification criteria) & False if it stays in criteria range
+            # TODO - use latest cache values to check if notification
+            #   should be invoked (i.e. has it changed)
+            # TODO - possibly set cache value for notify_user=True (if falls outside
+            #   notification criteria) & False if it stays in criteria range
             for field in mqtt_data:
                 field = str(field).lower()
                 value = mqtt_data[field]
@@ -259,8 +262,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
+            print("tests")
             MQTTClient(
                 MQTT_SERVER, MQTT_TOPICS, MQTT_CLIENT_NAME, MQTT_QOS, MQTT_BASE_TOPIC
             )
         except Exception:
-            raise CommandError("MQTT connection closed")
+            CommandError("MQTT connection closed")

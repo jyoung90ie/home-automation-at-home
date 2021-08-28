@@ -269,7 +269,10 @@ CACHES = {
 # debug toolbar
 # INTERNAL_IPS = ["192.168.*", "127.0.0.1"]
 def show_toolbar(request):
-    return DEBUG
+    """Show toolbar when user is superuser and debug mode is enabled"""
+    if request.user.is_superuser:
+        return DEBUG
+    return False
 
 
 DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": show_toolbar}
