@@ -173,7 +173,7 @@ nav .breadcrumb a:hover {
 }
 
 /* clickable row styling */
-.device-row:hover, .devicelocation-row:hover, .notification-row:hover, .event-row:hover, .event-trigger-row:hover {
+.device-row:hover, .devicelocation-row:hover, .notification-row:hover, .event-row:hover, .event-trigger-row:hover, .event-response-row:hover {
     cursor: pointer;
 }
 
