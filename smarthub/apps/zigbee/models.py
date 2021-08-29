@@ -35,6 +35,14 @@ class ZigbeeDeviceQuerySet(models.QuerySet):
             .distinct()
         )
 
+    def get_device_states(self, device):
+        """Return list of user created states for the specified device"""
+        return (
+            self.filter(device=device)
+            # .order_by("devices_states__name")
+            .values("device_states__uuid", "device_states__name")
+        )
+
 
 class ZigbeeDeviceManager(models.Manager.from_queryset(ZigbeeDeviceQuerySet)):
     """Custom manager"""
