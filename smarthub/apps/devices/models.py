@@ -343,9 +343,9 @@ class DeviceState(BaseAbstractModel):
     @property
     def hardware_device_obj(self):
         """Returns connected hardware device model instance (e.g. ZigbeeDevice)"""
-        return self.content_object.all()
+        return self.content_object
 
     @property
     def user_device_obj(self):
         """Returns connected user Device model instance"""
-        return self.content_object.device.all()
+        return self.content_object.device
