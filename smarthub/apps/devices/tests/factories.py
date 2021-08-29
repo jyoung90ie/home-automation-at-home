@@ -1,6 +1,5 @@
-from django.db.models.signals import post_save
-
 import factory
+from django.db.models.signals import post_save
 from factory import fuzzy
 
 from ...users.tests.factories import UserFactory

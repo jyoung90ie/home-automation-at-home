@@ -2,7 +2,6 @@
 import json
 import logging
 from json.decoder import JSONDecodeError
-
 from typing import TYPE_CHECKING, Union
 
 from django.apps import apps

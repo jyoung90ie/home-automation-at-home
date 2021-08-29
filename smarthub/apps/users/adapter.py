@@ -1,13 +1,12 @@
 import logging
 
-from django.contrib.auth import get_user_model
-from django.http import HttpResponse
-
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.models import EmailAddress
 from allauth.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.utils import SERIALIZED_DB_FIELD_PREFIX
+from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +31,7 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
 
         for email in email_addresses:
             try:
-                user_email = EmailAddress.objects.get(
-                    email__iexact=email.email)
+                user_email = EmailAddress.objects.get(email__iexact=email.email)
             except EmailAddress.DoesNotExist:
                 continue
 

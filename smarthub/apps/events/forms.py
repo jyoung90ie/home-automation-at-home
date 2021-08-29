@@ -2,17 +2,15 @@
 
 import logging
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Column, Field, Fieldset, Layout, Row, Submit
 from django import forms
 from django.apps import apps
 
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Column, Field, Fieldset, Layout, Row, Submit
-
+from ..events.defines import NON_NUMERIC_TRIGGER_TYPES, NUMERIC_TRIGGER_TYPES
+from ..forms import CustomChoiceField
 from ..zigbee.models import METADATA_TYPE_FIELD, ZigbeeDevice
 from . import models
-from ..events.defines import NUMERIC_TRIGGER_TYPES, NON_NUMERIC_TRIGGER_TYPES
-
-from ..forms import CustomChoiceField
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

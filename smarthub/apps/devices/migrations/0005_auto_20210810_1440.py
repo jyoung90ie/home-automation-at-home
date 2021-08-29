@@ -15,13 +15,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="device",
             name="uuid",
-            field=models.UUIDField(
-                default=uuid.uuid4, unique=True, editable=False),
+            field=models.UUIDField(default=uuid.uuid4, unique=True, editable=False),
         ),
         migrations.AlterField(
             model_name="devicelocation",
             name="uuid",
-            field=models.UUIDField(
-                default=uuid.uuid4, unique=True, editable=False),
+            field=models.UUIDField(default=uuid.uuid4, unique=True, editable=False),
         ),
     ]

@@ -31,8 +31,7 @@ class NotificationSetting(BaseAbstractModel):
         choices=NotificationMedium.choices,
         default=NotificationMedium.EMAIL,
     )
-    is_enabled = models.BooleanField(
-        verbose_name="Enable notifications", default=True)
+    is_enabled = models.BooleanField(verbose_name="Enable notifications", default=True)
 
     class Meta:
         """Only permit user to create one entry per notification method"""
@@ -64,8 +63,7 @@ class Notification(BaseAbstractModel):
 class PushbulletNotification(BaseAbstractModel):
     """Provider specific data fields"""
 
-    notification = models.OneToOneField(
-        NotificationSetting, on_delete=models.CASCADE)
+    notification = models.OneToOneField(NotificationSetting, on_delete=models.CASCADE)
     access_token = models.CharField(max_length=60, null=False, blank=False)
 
     def send(self, topic, message, triggered_by, notification_obj):
@@ -92,8 +90,7 @@ class PushbulletNotification(BaseAbstractModel):
 class EmailNotification(BaseAbstractModel):
     """Specifies email notification settings"""
 
-    notification = models.OneToOneField(
-        NotificationSetting, on_delete=models.CASCADE)
+    notification = models.OneToOneField(NotificationSetting, on_delete=models.CASCADE)
     from_email = models.EmailField(null=False, blank=False)
     to_email = models.EmailField(null=False, blank=False)
 

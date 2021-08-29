@@ -40,15 +40,13 @@ class TestListDevicesView(TestCase):
         self.assertTrue(response.url.startswith(login_url))
 
     def test_device_list_shows_no_devices_pass(self):
-        self.client.login(username=self.user.email,
-                          password=test_user_password)
+        self.client.login(username=self.user.email, password=test_user_password)
         response = self.client.get(self.url)
         self.assertTrue(b"You do not have any devices" in response.content)
 
     def test_user_devices_listed(self):
         devices = create_devices(user=self.user)
-        self.client.login(username=self.user.email,
-                          password=test_user_password)
+        self.client.login(username=self.user.email, password=test_user_password)
         response = self.client.get(self.url)
 
         get_response_for_devices(
@@ -58,8 +56,7 @@ class TestListDevicesView(TestCase):
     def test_user_cannot_see_other_user_devices(self):
         other_user = UserFactory()
         devices = create_devices(user=other_user)
-        self.client.login(username=self.user.email,
-                          password=test_user_password)
+        self.client.login(username=self.user.email, password=test_user_password)
         response = self.client.get(self.url)
 
         self.assertTrue(b"You do not have any devices" in response.content)
@@ -91,8 +88,7 @@ class TestAddDeviceView(TestCase):
 
         self.url = reverse("devices:add")
 
-        self.client.login(username=self.user.email,
-                          password=test_user_password)
+        self.client.login(username=self.user.email, password=test_user_password)
 
         return super().setUp()
 
@@ -115,8 +111,7 @@ class TestAddDeviceView(TestCase):
         device_location = DeviceLocationFactory(user=self.user)
         response = self.client.get(self.url)
 
-        self.assertTrue(device_location.location.encode(
-            "utf-8") in response.content)
+        self.assertTrue(device_location.location.encode("utf-8") in response.content)
         self.assertFalse(
             b"You must add at least one device location before you can add a device"
             in response.content
@@ -128,12 +123,10 @@ class TestAddDeviceView(TestCase):
         response = self.client.get(self.url)
 
         self.assertFalse(
-            other_user_device_location.location.encode(
-                "utf-8") in response.content
+            other_user_device_location.location.encode("utf-8") in response.content
         )
         self.assertTrue(
-            current_user_device_location.location.encode(
-                "utf-8") in response.content
+            current_user_device_location.location.encode("utf-8") in response.content
         )
 
 
@@ -148,11 +141,9 @@ class TestUpdateDeviceView(TestCase):
             friendly_name="Test Device",
             device_identifier="TEST1234",
         )
-        self.url = reverse("devices:device:update", kwargs={
-                           "uuid": self.device.uuid})
+        self.url = reverse("devices:device:update", kwargs={"uuid": self.device.uuid})
 
-        self.client.login(username=self.user.email,
-                          password=test_user_password)
+        self.client.login(username=self.user.email, password=test_user_password)
 
     def test_update_own_device_pass(self):
         response = self.client.get(self.url)
@@ -164,8 +155,7 @@ class TestUpdateDeviceView(TestCase):
 
     def test_update_other_users_device_fail(self):
         other_user_device = DeviceFactory()
-        url = reverse("devices:device:update", kwargs={
-                      "uuid": other_user_device.uuid})
+        url = reverse("devices:device:update", kwargs={"uuid": other_user_device.uuid})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 404)
@@ -202,8 +192,7 @@ class TestUpdateDeviceView(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             response.url,
-            reverse("devices:device:detail", kwargs={
-                    "uuid": self.device.uuid}),
+            reverse("devices:device:detail", kwargs={"uuid": self.device.uuid}),
         )
 
     def test_view_updates_other_user_device_fail(self):
@@ -215,8 +204,7 @@ class TestUpdateDeviceView(TestCase):
             "protocol": self.device.protocol,
         }
         response = self.client.post(
-            reverse("devices:device:update", kwargs={
-                    "uuid": other_user_device.uuid}),
+            reverse("devices:device:update", kwargs={"uuid": other_user_device.uuid}),
             updated_data,
             follow=True,
         )
@@ -241,11 +229,9 @@ class TestDeleteDeviceView(TestCase):
             friendly_name="Test Device",
             device_identifier="TEST1234",
         )
-        self.url = reverse("devices:device:delete", kwargs={
-                           "uuid": self.device.uuid})
+        self.url = reverse("devices:device:delete", kwargs={"uuid": self.device.uuid})
 
-        self.client.login(username=self.user.email,
-                          password=test_user_password)
+        self.client.login(username=self.user.email, password=test_user_password)
 
     def test_delete_own_device_pass(self):
         response = self.client.get(self.url)
@@ -258,8 +244,7 @@ class TestDeleteDeviceView(TestCase):
 
     def test_delete_other_users_device_fail(self):
         other_user_device = DeviceFactory()
-        url = reverse("devices:device:delete", kwargs={
-                      "uuid": other_user_device.uuid})
+        url = reverse("devices:device:delete", kwargs={"uuid": other_user_device.uuid})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 404)
@@ -289,8 +274,7 @@ class TestListDevicesView(TestCase):
 
         self.url = reverse("devices:list")
 
-        self.client.login(username=self.user.email,
-                          password=test_user_password)
+        self.client.login(username=self.user.email, password=test_user_password)
 
     def test_device_list_empty_pass(self):
         response = self.client.get(self.url)
@@ -306,10 +290,8 @@ class TestListDevicesView(TestCase):
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            device.friendly_name in response.content.decode("utf-8"))
-        self.assertTrue(
-            device.device_identifier in response.content.decode("utf-8"))
+        self.assertTrue(device.friendly_name in response.content.decode("utf-8"))
+        self.assertTrue(device.device_identifier in response.content.decode("utf-8"))
 
     def test_device_list_does_not_show_other_users_devices_pass(self):
         other_users_device = DeviceFactory(
@@ -320,12 +302,10 @@ class TestListDevicesView(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(
-            other_users_device.friendly_name in response.content.decode(
-                "utf-8")
+            other_users_device.friendly_name in response.content.decode("utf-8")
         )
         self.assertFalse(
-            other_users_device.device_identifier in response.content.decode(
-                "utf-8")
+            other_users_device.device_identifier in response.content.decode("utf-8")
         )
 
     def test_anonymous_user_is_redirected_pass(self):

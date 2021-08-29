@@ -5,22 +5,16 @@ import logging
 from json.decoder import JSONDecodeError
 from random import random
 
+import paho.mqtt.client as mqtt
 from django.core.cache import cache
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 
-import paho.mqtt.client as mqtt
-
+from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
+                               MQTT_SERVER, MQTT_TOPICS)
 
 from ...models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
 from .utils import get_cache_key
-from smarthub.settings import (
-    MQTT_BASE_TOPIC,
-    MQTT_CLIENT_NAME,
-    MQTT_QOS,
-    MQTT_SERVER,
-    MQTT_TOPICS,
-)
 
 logger = logging.getLogger("mqtt")
 logger.setLevel(level=logging.INFO)
@@ -46,12 +40,12 @@ def has_message_sufficiently_changed(message: str, cache_key: str) -> bool:
         parsed_cache = parse_message_for_comparison(cache_data)
 
         if parsed_message == parsed_cache:
-            logger.info("Message content has not changed")
+            logger.info("Message content unchanged - not processing event triggers")
             has_changed = False
 
     # device has no message or message is different from cached value
     if has_changed:
-        logger.info("Message content has changed")
+        logger.info("Message content changed")
 
     cache.set(key=cache_key, value=message, timeout=None)
     return has_changed
@@ -79,10 +73,10 @@ def parse_message_for_comparison(message: str):
 
             parsed_message[field] = json_message[field]
 
-        logger.info("Parsed message", parsed_message)
+        logger.info("Parsed message %s", parsed_message)
         return json.dumps(parsed_message)
     except JSONDecodeError:
-        logger.debug("Could not parse message", message)
+        logger.debug("Could not parse message %s", message)
         return None
 
 

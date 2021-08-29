@@ -1,10 +1,9 @@
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericInlineModelAdmin
-
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 
-from . import models
 from ..devices.models import DeviceState
+from . import models
 
 
 def truncate_string(string_val, length=50):

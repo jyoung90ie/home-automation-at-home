@@ -1,5 +1,6 @@
 """Handles user requests to devices app"""
 
+from csv_export.views import CSVExportView
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,29 +10,16 @@ from django.http.response import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.urls.base import reverse
-from django.views.generic import (
-    CreateView,
-    DeleteView,
-    DetailView,
-    ListView,
-    RedirectView,
-    UpdateView,
-)
+from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
+                                  RedirectView, UpdateView)
 from django.views.generic.detail import BaseDetailView
 
-from csv_export.views import CSVExportView
-
-from ..mixins import (
-    AddUserToFormMixin,
-    FormSuccessMessageMixin,
-    LimitResultsToUserMixin,
-    MakeRequestObjectAvailableInFormMixin,
-)
-
-from .mixins import PermitDeviceOwnerOnly, DeviceStateFormMixin
-
+from ..mixins import (AddUserToFormMixin, FormSuccessMessageMixin,
+                      LimitResultsToUserMixin,
+                      MakeRequestObjectAvailableInFormMixin)
 from ..views import UUIDView
 from . import forms, mixins, models
+from .mixins import DeviceStateFormMixin, PermitDeviceOwnerOnly
 
 
 class AddDeviceLocation(LoginRequiredMixin, CreateView):

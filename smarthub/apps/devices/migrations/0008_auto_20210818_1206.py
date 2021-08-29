@@ -17,8 +17,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="devicelocation",
             name="location",
-            field=models.CharField(
-                max_length=100, verbose_name="location name"),
+            field=models.CharField(max_length=100, verbose_name="location name"),
         ),
         migrations.AddConstraint(
             model_name="device",

@@ -1,25 +1,17 @@
 """Handles user requests to events app"""
+from django.apps import apps
 from django.contrib import messages
 from django.db.models.deletion import ProtectedError
 from django.http.response import HttpResponseRedirect
 from django.urls.base import reverse, reverse_lazy
-from django.views.generic import (
-    CreateView,
-    DeleteView,
-    DetailView,
-    ListView,
-    UpdateView,
-)
+from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
+                                  UpdateView)
 from django.views.generic.base import RedirectView
-from django.apps import apps
 
-from ..mixins import (
-    AddUserToFormMixin,
-    FormSuccessMessageMixin,
-    LimitResultsToUserMixin,
-    MakeRequestObjectAvailableInFormMixin,
-    UserHasLinkedDevice,
-)
+from ..mixins import (AddUserToFormMixin, FormSuccessMessageMixin,
+                      LimitResultsToUserMixin,
+                      MakeRequestObjectAvailableInFormMixin,
+                      UserHasLinkedDevice)
 from ..views import UUIDView
 from . import forms, models
 from .mixins import FormsRelatedToUserEventsMixin, LimitResultsToEventOwner
