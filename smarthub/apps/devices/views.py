@@ -484,3 +484,52 @@ class DeleteDeviceState(UUIDView, PermitDeviceOwnerOnly, DeleteView):
                 "There was a problem deleting this device state - please try again.",
             )
             return HttpResponseRedirect(request.path)
+
+
+class DeviceStatesJson(UUIDView, BaseDetailView):
+    """Return list of device states - for user in event response form with AJAX"""
+
+    http_method_names = [
+        "get",
+    ]
+
+    def __init__(self) -> None:
+        self.request = None
+        super().__init__()
+
+    def get_object(self, queryset=None):
+        """Prevent user from accessing devices that aren't theirs"""
+        return get_object_or_404(
+            models.Device, uuid=self.kwargs["uuid"], user=self.request.user
+        )
+
+    def get(self, request, *args, **kwargs):
+        """Create JSON response with list of metadata fields from logs"""
+        self.request = request
+        device = self.get_object()
+
+        default_return = (
+            "",
+            "Device does not have any states",
+        )
+
+        try:
+            hardware_device = device.get_linked_device().first()
+            device_obj = type(hardware_device)
+
+            device_states = device_obj.objects.get_device_states(device=device)
+
+            device_states = [
+                (
+                    state["device_states__uuid"],
+                    state["device_states__name"].capitalize(),
+                )
+                for state in device_states
+            ]
+            # json removes tuple - needs to be handled in JS to ensure correct data rendered
+            json_data = device_states
+        except Exception as ex:
+            metadata_on_error = default_return
+            json_data = list(metadata_on_error)
+
+        return JsonResponse({"data": json_data}, safe=False)
