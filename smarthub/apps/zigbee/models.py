@@ -15,6 +15,7 @@ from ..notifications.models import NotificationMedium
 
 if TYPE_CHECKING:
     from ..devices.models import Device
+    from ..events.models import EventTrigger
 
 logger = logging.getLogger("mqtt")
 logging.basicConfig(level=logging.INFO)
@@ -228,14 +229,13 @@ class ZigbeeMessage(BaseAbstractModel):
             ).first()
 
             self.zigbee_device = zigbee_device
-            # self.save()
         except ZigbeeDevice.DoesNotExist:
             pass
 
     def __str__(self):
         return str(self.topic)
 
-    def save(self, check_triggers=False, *args, **kwargs) -> None:
+    def save(self, check_triggers=False, last_message=None, *args, **kwargs) -> None:
         """
         Parameters:
             check_triggers - when True will perform event trigger checks & invoke event
@@ -254,10 +254,10 @@ class ZigbeeMessage(BaseAbstractModel):
         # methods accessing object attributes that need to be perform post-save
         if check_triggers:
             logger.info("Checking event triggers...")
-            self.check_event_triggers()
+            self.check_event_triggers(last_message=last_message)
             logger.info("End of event trigger checks.")
 
-    def check_event_triggers(self):
+    def check_event_triggers(self, last_message=None):
         """Checks if linked device is attached to event trigger - if so, values check and event
         triggered if necessary"""
 
@@ -283,14 +283,32 @@ class ZigbeeMessage(BaseAbstractModel):
 
         # return self.process_event_trigger(triggers=triggers)
         for trigger in triggers:
-            self.process_event_trigger(parsed_message=parsed_message, trigger=trigger)
+            self.process_event_trigger(
+                parsed_message=parsed_message,
+                trigger=trigger,
+                last_message=last_message,
+            )
 
-    def process_event_trigger(self, parsed_message, trigger):
+    def process_event_trigger(
+        self, parsed_message: dict, trigger: "EventTrigger", last_message=None
+    ):
         """Processes event triggers and invokes notifications/event responses if criteria met"""
         field = getattr(trigger, "metadata_field")
         device_value = parsed_message.get(field, None)
 
         if not device_value:
+            return
+
+        last_message = json.loads(last_message)
+
+        cached_value = last_message.get(field, None)
+        if device_value == cached_value:
+            logger.info(
+                "process_event_trigger(): device field value is unchanged - ignoring [last: %s, curr: %s]",
+                cached_value,
+                device_value,
+            )
+            # the actual trigger value hasn't changed
             return
 
         event = getattr(trigger, "event")

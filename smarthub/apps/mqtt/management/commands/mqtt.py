@@ -24,7 +24,7 @@ from ... import defines
 
 logger = logging.getLogger("mqtt")
 logger.setLevel(level=logging.INFO)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig()
 
 
 def has_message_sufficiently_changed(message: str, cache_key: str) -> bool:
@@ -33,7 +33,7 @@ def has_message_sufficiently_changed(message: str, cache_key: str) -> bool:
     message, with little to no content change."""
 
     cache_data = cache.get(key=cache_key)
-    has_changed = False
+    has_changed = True
 
     if cache_data:
         # parsing both messages so that the raw message is retained in cache for debugging if needed
@@ -41,7 +41,7 @@ def has_message_sufficiently_changed(message: str, cache_key: str) -> bool:
         parsed_cache = parse_message_for_comparison(cache_data)
 
         if parsed_message == parsed_cache:
-            logger.info("Message content unchanged - not processing event triggers")
+            logger.info("Message content unchanged - skipping event triggers")
             has_changed = False
 
     # device has no message or message is different from cached value
@@ -175,10 +175,6 @@ class MQTTClient:
             topics_for_subscribing.append((new_topic, self.qos))
 
         self.subscribed_topics = topics_for_subscribing
-
-    def publish(self, topic, payload, qos=1):
-        """Send messages to MQTT broker"""
-        self.client.publish(topic, payload)
 
 
 class MQTTMessage:
