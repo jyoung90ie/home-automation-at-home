@@ -113,7 +113,7 @@
                 <tbody>
                     {% endif %}
                     <tr class="event-response-row"
-                        onclick='window.location={% url "events:event:responses:response:update" uuid=event.uuid ruuid=response.uuid %}";'>
+                        onclick='window.location="{% url "events:event:responses:response:update" uuid=event.uuid ruuid=response.uuid %}";'>
                         <td>{{ forloop.counter }}</td>
                         <td>{{ response.device_state.friendly_name|title }}</td>
                         <td>{{ response.device_state.name|capfirst }}</td>
