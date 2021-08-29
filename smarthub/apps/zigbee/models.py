@@ -236,18 +236,27 @@ class ZigbeeMessage(BaseAbstractModel):
     def __str__(self):
         return str(self.topic)
 
-    def save(self, *args, **kwargs) -> None:
+    def save(self, check_triggers=False, *args, **kwargs) -> None:
         """
+        Parameters:
+            check_triggers - when True will perform event trigger checks & invoke event
+             response(s) if necessary
+
         Provides additional logic for:
         1) Linking ZigbeeMessage (self) to ZigbeeDevice via link_to_zigbee_device()
         1) Checks if Device is linked to an EventTrigger
+
+
         """
         # methods modifying object that need to be performed pre-save
         self.link_to_zigbee_device()
         super().save(*args, **kwargs)
 
         # methods accessing object attributes that need to be perform post-save
-        self.check_event_triggers()
+        if check_triggers:
+            logger.info("Checking event triggers...")
+            self.check_event_triggers()
+            logger.info("End of event trigger checks.")
 
     def check_event_triggers(self):
         """Checks if linked device is attached to event trigger - if so, values check and event

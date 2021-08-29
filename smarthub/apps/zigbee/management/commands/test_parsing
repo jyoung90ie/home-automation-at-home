@@ -1,0 +1,37 @@
+import json
+
+MESSAGE_FIELDS_TO_IGNORE = [
+    "last_seen",
+    # "linkquality",
+    # "voltage",
+]
+
+
+def parse_message_for_cache(message: str):
+    """Parses the MQTT message, comparing the content against that stored in the cache.
+    Importantly, it ignores all fields list in MESSAGE_FIELDS_TO_IGNORE as these are deemed to
+    have immaterial value in terms of triggering events.
+
+    This ensures that when comparing message content, only the important fields can invoke
+    an event."""
+    if not message:
+        return None
+
+    json_message = json.loads(message)
+
+    parsed_message = {}
+
+    for field in json_message:
+        if field in MESSAGE_FIELDS_TO_IGNORE:
+            continue  # ignore
+
+        parsed_message[field] = json_message[field]
+
+    return json.dumps(parsed_message)
+
+
+print(
+    parse_message_for_cache(
+        '{"battery":100,"battery_low":false,"last_seen":"2021-08-29T17:50:27+01:00","linkquality":0,"occupancy":false,"tamper":false,"voltage":3100}'
+    )
+)

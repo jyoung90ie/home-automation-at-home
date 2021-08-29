@@ -5,13 +5,15 @@ import logging
 from json.decoder import JSONDecodeError
 from random import random
 
-from django.core import cache
+from django.core.cache import cache
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 
 import paho.mqtt.client as mqtt
 
-from apps.zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
+
+from ...models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
+from .utils import get_cache_key
 from smarthub.settings import (
     MQTT_BASE_TOPIC,
     MQTT_CLIENT_NAME,
@@ -20,10 +22,68 @@ from smarthub.settings import (
     MQTT_TOPICS,
 )
 
-
 logger = logging.getLogger("mqtt")
 logger.setLevel(level=logging.INFO)
 logging.basicConfig(level=logging.INFO)
+
+MESSAGE_FIELDS_TO_IGNORE = [
+    "last_seen",
+    "linkquality",
+]
+
+
+def has_message_sufficiently_changed(message: str, cache_key: str) -> bool:
+    """Compares the message against the last cached message to see if it has changed -
+    excluding ignored fields. This helps prevent event triggers when a device rebroadcasts a
+    message, with little to no content change."""
+
+    cache_data = cache.get(key=cache_key)
+    has_changed = False
+
+    if cache_data:
+        # parsing both messages so that the raw message is retained in cache for debugging if needed
+        parsed_message = parse_message_for_comparison(message)
+        parsed_cache = parse_message_for_comparison(cache_data)
+
+        if parsed_message == parsed_cache:
+            logger.info("Message content has not changed")
+            has_changed = False
+
+    # device has no message or message is different from cached value
+    if has_changed:
+        logger.info("Message content has changed")
+
+    cache.set(key=cache_key, value=message, timeout=None)
+    return has_changed
+
+
+def parse_message_for_comparison(message: str):
+    """Parses the MQTT message, comparing the content against that stored in the cache.
+    Importantly, it ignores all fields list in MESSAGE_FIELDS_TO_IGNORE as these are deemed to
+    have immaterial value in terms of triggering events.
+
+    This ensures that when comparing message content, only the important fields can invoke
+    an event."""
+    if not message:
+        return None
+
+    try:
+
+        json_message = json.loads(message)
+
+        parsed_message = {}
+
+        for field in json_message:
+            if field in MESSAGE_FIELDS_TO_IGNORE:
+                continue  # ignore
+
+            parsed_message[field] = json_message[field]
+
+        logger.info("Parsed message", parsed_message)
+        return json.dumps(parsed_message)
+    except JSONDecodeError:
+        logger.debug("Could not parse message", message)
+        return None
 
 
 class MQTTClient:
@@ -225,8 +285,13 @@ class MQTTMessage:
                 )
                 return
 
+            cache_key = get_cache_key(device_identifier=self.topic)
+            has_message_changed = has_message_sufficiently_changed(
+                message=self.raw_payload, cache_key=cache_key
+            )
+
             # updates zigbeedevice field and saves object
-            zigbee_message.save()
+            zigbee_message.save(check_triggers=has_message_changed)
 
             # TODO - add caching for latest values
             # TODO - use latest cache values to check if notification
