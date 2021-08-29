@@ -361,11 +361,13 @@ class LogsForDevice(UUIDView, mixins.PermitDeviceOwnerOnly, ListView):
         super().__init__()
 
     def get_context_data(self, **kwargs):
+        """Passes through device object to the template"""
         context = super().get_context_data(**kwargs)
         context["device"] = self.device
         return context
 
     def get_queryset(self):
+        """Queryset used to populate form"""
         uuid = self.kwargs.pop("uuid")
         self.device = models.Device.objects.get(uuid=uuid)
 
@@ -390,11 +392,29 @@ class DeviceRedirectView(RedirectView):
 
 
 class AddDeviceState(
-    FormSuccessMessageMixin, DeviceStateFormMixin, PermitDeviceOwnerOnly, CreateView
+    FormSuccessMessageMixin,
+    DeviceStateFormMixin,
+    PermitDeviceOwnerOnly,
+    UUIDView,
+    CreateView,
 ):
+    """Handles create form - including injection of user devices"""
+
     form_class = forms.DeviceStateForm
     template_name = "devices/device_state_form.html"
     success_message = "New state added for this device"
+
+    def get_initial(self):
+        """Populate update form with stored data"""
+        initial = super().get_initial()
+        device = self.get_object()
+        initial["_device"] = device.friendly_name
+
+        return initial
+
+    def get_queryset(self):
+        """Queryset used to populate form - using device to pull device info from URL"""
+        return models.Device.objects.filter(uuid=self.kwargs["uuid"])
 
 
 class UpdateDeviceState(
@@ -404,25 +424,63 @@ class UpdateDeviceState(
     UUIDView,
     UpdateView,
 ):
+    """Handles data and rendering for update form"""
+
     form_class = forms.DeviceStateForm
     template_name = "devices/device_state_update_form.html"
     slug_url_kwarg = "suuid"
     success_message = "State values have been updated"
 
-    def get_queryset(self):
-        return models.DeviceState.objects.filter(uuid=self.kwargs["suuid"])
-
     def get_initial(self):
         """Populate update form with stored data"""
         initial = super().get_initial()
-        obj = self.get_object()
-        print("form loaded:", obj, dir(obj))
-        hardware_device = getattr(obj, "content_object", "")
-
-        initial["_device"] = (
-            (hardware_device.device.uuid, hardware_device.device.friendly_name)
-            if hardware_device
-            else ""
-        )
+        device_state = self.get_object()
+        initial["_device"] = device_state.friendly_name
 
         return initial
+
+    def get_queryset(self):
+        """Queryset used to populate form"""
+        return models.DeviceState.objects.filter(uuid=self.kwargs["suuid"])
+
+
+class DeleteDeviceState(UUIDView, PermitDeviceOwnerOnly, DeleteView):
+    """Enables user to delete any of their own device states"""
+
+    model = models.DeviceState
+    slug_url_kwarg = "suuid"
+    template_name = "devices/device_state_confirm_delete.html"
+
+    def __init__(self) -> None:
+        self.object = None
+        super().__init__()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["device_uuid"] = self.kwargs.get("uuid")
+        return context
+
+    def get_success_url(self) -> str:
+        return reverse_lazy(
+            "devices:device:detail", kwargs={"uuid": self.kwargs.get("uuid")}
+        )
+
+    def delete(self, request, *args, **kwargs):
+
+        try:
+            self.object = self.get_object()
+            success_url = self.get_success_url()
+            self.object.delete()
+
+            messages.success(
+                request,
+                "The device state has been deleted.",
+            )
+
+            return HttpResponseRedirect(success_url)
+        except Exception:
+            messages.error(
+                request,
+                "There was a problem deleting this device state - please try again.",
+            )
+            return HttpResponseRedirect(request.path)

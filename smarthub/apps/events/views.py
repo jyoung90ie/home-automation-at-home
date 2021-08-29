@@ -105,7 +105,7 @@ class DeleteEvent(LimitResultsToEventOwner, UUIDView, DeleteView):
         except ProtectedError as ex:
             messages.error(
                 request,
-                f"Could not delete the event - please try again.",
+                "Could not delete the event - please try again.",
             )
             return HttpResponseRedirect(request.path)
 

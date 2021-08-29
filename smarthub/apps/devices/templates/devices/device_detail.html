@@ -31,7 +31,7 @@
         {% include "devices/partials/_user_options_add_device_state.html" %}
         {% endif %}
         <p class="m-2 mb-3">When an event has been triggered, the device state associated with that event will be
-            communicated to the device. What does this mean? It means if you want your device to react a particular way
+            communicated to the device. This means if you want your device to react a particular way
             to an event, you can create a state here, with the configuration settings (see your device manual for
             relevant options) and your device will react accordingly.
         </p>
@@ -42,9 +42,9 @@
                 <thead>
                     <tr>
                         <th scope="col">#</th>
-                        <th scope="col">Name</th>
+                        <th scope="col" style="min-width: 20%">Name</th>
                         <th scope="col">Command</th>
-                        <th scope="col">Value</th>
+                        <th scope="col" style="min-width: 30%">Value</th>
                         <th scope="col">Number of Events</th>
                         <th scope="col">Options</th>
 
@@ -59,9 +59,7 @@
                         <td>{{ state.command|upper }}</td>
                         <td>{{ state.command_value|upper }}</td>
                         <td>TBC</td>
-                        <td>
-
-                        </td>
+                        <td>{% include "devices/partials/_user_options_device_state.html" %}</td>
                     </tr>
                     {% if forloop.last %}
                 </tbody>

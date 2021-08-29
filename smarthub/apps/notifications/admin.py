@@ -4,18 +4,24 @@ from . import models
 
 
 class EmailInline(admin.TabularInline):
+    """Creates an inline for email notifications"""
+
     model = models.EmailNotification
     extra = 0
     fields = ("from_email", "to_email")
 
 
 class PushbulletInline(admin.TabularInline):
+    """Creates an inline for pushbullet notifications"""
+
     model = models.PushbulletNotification
     extra = 0
     fields = ("access_token",)
 
 
 class UserNotificationSettingAdmin(admin.ModelAdmin):
+    """Displays user notification settings in one view - including email & pushbullet"""
+
     list_display = (
         "notification_medium",
         "is_enabled",
@@ -37,6 +43,8 @@ class UserNotificationSettingAdmin(admin.ModelAdmin):
 
 
 class NotificationAdmin(admin.ModelAdmin):
+    """Customises notification list & detail view on admin"""
+
     list_display = (
         "medium",
         "topic",

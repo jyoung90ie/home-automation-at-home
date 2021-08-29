@@ -262,7 +262,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            print("tests")
             MQTTClient(
                 MQTT_SERVER, MQTT_TOPICS, MQTT_CLIENT_NAME, MQTT_QOS, MQTT_BASE_TOPIC
             )

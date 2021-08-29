@@ -330,3 +330,22 @@ class DeviceState(BaseAbstractModel):
         max_length=100,
         blank=False,
     )
+
+    def __str__(self) -> str:
+        """String representation of object"""
+        return f"{self.name} [{self.command} = {self.command_value}]"
+
+    @property
+    def friendly_name(self):
+        """Returns friendly_name field from connected Device model"""
+        return self.content_object.device.friendly_name
+
+    @property
+    def hardware_device_obj(self):
+        """Returns connected hardware device model instance (e.g. ZigbeeDevice)"""
+        return self.content_object.all()
+
+    @property
+    def user_device_obj(self):
+        """Returns connected user Device model instance"""
+        return self.content_object.device.all()

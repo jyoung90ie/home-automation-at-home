@@ -58,5 +58,14 @@ class UserHasLinkedDevice:
 class FormSuccessMessageMixin:
     def form_valid(self, form):
         """Overrides default to add user message on success"""
-        messages.success(self.request, self.success_message)
-        return super().form_valid(form)
+        try:
+            messages.success(self.request, self.success_message)
+            return super().form_valid(form)
+        except TypeError as ex:
+            print(ex)
+            print("form self", self, dir(self))
+            messages.error(
+                self.request,
+                "There was an error processing this form - please try again.",
+            )
+            return self.form_invalid(self)

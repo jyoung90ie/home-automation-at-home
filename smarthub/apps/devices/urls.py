@@ -57,7 +57,7 @@ urlpatterns = [
                                                     ),
                                                     path(
                                                         "delete/",
-                                                        views.AddDeviceState.as_view(),
+                                                        views.DeleteDeviceState.as_view(),
                                                         name="delete",
                                                     ),
                                                     path(

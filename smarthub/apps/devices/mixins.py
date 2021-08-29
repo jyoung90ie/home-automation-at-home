@@ -28,19 +28,8 @@ class DeviceStateFormMixin:
         kwargs["device_uuid"] = self.kwargs["uuid"]
         return kwargs
 
-    def get_form(self, form_class=None):
-        """Override the default device queryset to constrain options to only those
-        that belong to the user and have been linked to a hardware device (and thus
-        have metadata)"""
-        form = super().get_form(form_class)
-        form.fields["_device"].choices = [
-            (device.uuid, device.friendly_name.title())
-            for device in self.request.user.get_user_devices
-        ]
-
-        return form
-
     def get_success_url(self) -> str:
+        """Redirect URL on successful submission of form"""
         return reverse(
             "devices:device:detail",
             kwargs={"uuid": self.get_form_kwargs()["device_uuid"]},

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Delete Device State?</h1>
+<p>Are you sure you want to delete the following state for device <strong>{{ object.friendly_name|title }}</strong>?</p>
+<div class="table-responsive row">
+    <div class="col-lg-6">
+        <table class="table">
+            <tr>
+                <th scope="row">State Name</th>
+                <td>{{object.name|capfirst}}</td>
+            </tr>
+            <tr>
+                <th scope="row">Command</th>
+                <td>{{object.command|upper}}</td>
+            </tr>
+            <tr>
+                <th scope="row">Command Settings</th>
+                <td>{{object.command_value|upper}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<form method="post">
+    {% csrf_token %}
+    <input type="submit" class="btn btn-danger" value="Delete">
+    <a href="{% url 'devices:device:detail' uuid=device_uuid %}" class="btn btn-secondary" role="button">Cancel</a>
+</form>
+{% endblock %}
