@@ -19,6 +19,19 @@ class EventTriggerInline(admin.TabularInline):
     readonly_fields = ("created_at", "updated_at")
 
 
+class EventResponseInline(admin.TabularInline):
+    """Attach event triggers directly to related event object"""
+
+    model = models.EventResponse
+    extra = 0
+    fields = (
+        "device_state",
+        "device",
+        "is_enabled",
+    )
+    readonly_fields = ("device_name", "created_at", "updated_at")
+
+
 class EventAdmin(admin.ModelAdmin):
     """Display event model in admin"""
 
@@ -33,7 +46,7 @@ class EventAdmin(admin.ModelAdmin):
     def get_inlines(self, request, obj):
         """Custom logic for displaying inlines"""
 
-        inlines = [EventTriggerInline]
+        inlines = [EventTriggerInline, EventResponseInline]
 
         return inlines
 

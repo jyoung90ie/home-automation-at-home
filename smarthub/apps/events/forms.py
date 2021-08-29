@@ -3,7 +3,7 @@
 import logging
 
 from django import forms
-from django.core.exceptions import ValidationError
+from django.apps import apps
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Column, Field, Fieldset, Layout, Row, Submit
@@ -172,3 +172,95 @@ class EventTriggerForm(forms.ModelForm):
 
         super().save(commit=commit)
         logger.info("Finish EventTriggerForm save()")
+
+
+class EventResponseForm(forms.ModelForm):
+    """Custom form for creating and updating EventResponse objects"""
+
+    _device = CustomChoiceField(label="Device", required=True, choices=[("", "-----")])
+    _state = CustomChoiceField(
+        label="Device state", required=True, choices=[("", "-----")]
+    )
+
+    class Meta:
+        model = models.EventResponse
+        fields = [
+            "_device",
+            "_state",
+            "is_enabled",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        self.event_uuid = kwargs.pop("event_uuid", None)
+        self.device = kwargs.pop("device", None)
+        self.state_uuid = None
+        self.is_update_form = False
+
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        """Validate manual fields - raise form errors if unexpected values found"""
+        clean = super().clean()
+        error_message = (
+            "Select a valid choice. The value you selected is not one of the"
+            " available choices."
+        )
+        # form field names
+        device_field_name = "_device"
+        state_field = "_state"
+        try:
+            # form values
+            form_device = clean[device_field_name]
+            form_state = clean[state_field]
+
+            # device validation
+            if not self.is_update_form:
+                device = self.request.user.get_linked_devices.filter(uuid=form_device)
+
+                if form_device and not device.exists():
+                    self.add_error(
+                        device_field_name,
+                        error_message,
+                    )
+                device = device.get()
+            else:
+                device = self.device
+
+            hardware_device = device.get_linked_device().first()
+            hardware_device_obj = type(hardware_device)
+
+            device_state = hardware_device_obj.objects.filter(
+                device_states__uuid=form_state
+            ).first()
+
+            if form_state and not device_state:
+                self.add_error(
+                    state_field,
+                    error_message,
+                )
+
+            self.state_uuid = form_state
+        except Exception:
+            pass
+
+        return clean
+
+    def save(self, commit=True):
+        """Attached custom field values and link to source event"""
+        self.instance.event = models.Event.objects.get(uuid=self.event_uuid)
+        self.instance.device_state = apps.get_model(
+            "devices", "DeviceState"
+        ).objects.get(uuid=self.state_uuid)
+        super().save(commit=commit)
+
+
+class EventResponseUpdateForm(EventResponseForm):
+    """Overrides device form field to only show the name - user cannot select"""
+
+    _device = forms.Field(label="Device", disabled=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # this lets super() know to disable device validation and take device from form kwargs
+        self.is_update_form = True

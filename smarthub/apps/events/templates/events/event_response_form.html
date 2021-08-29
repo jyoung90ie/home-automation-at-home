@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% debug %}
+{% block content %}
+<h1><i class="fas fa-plus-square"></i> Add Event Response</h1>
+
+<div class="row content-box">
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <input type="submit" class="btn btn-primary" value="Add Response">
+    </form>
+</div>
+{% endblock %}
+{% block extra_body %}
+<script>
+    // setup vars
+    var base_url = "{% url 'devices:list' %}"
+    var end_url = "/states"
+
+    var device_field = $("#id__device")
+    var uuid = device_field.val()
+
+    var metadata_element = $("#id__state")
+
+    // functions
+    function getDeviceStates(uuid) {
+        const req = new XMLHttpRequest();
+        req.responseType = "json";
+        req.open("GET", base_url + uuid + end_url)
+        req.onload = () => {
+            processResponseData(req.response.data);
+        }
+
+        req.send();
+    }
+
+    function clearOptions(element) {
+        element.find("option").remove()
+    }
+
+    function processResponseData(data) {
+        clearOptions(metadata_element)
+
+        data.forEach((entry) => {
+            option = createOption(entry)
+            metadata_element.append(option)
+        })
+    }
+
+    function createOption(value) {
+        if (value) {
+            var option = document.createElement("option")
+            if (typeof (value) == "object") {
+                option.value = value[0]
+                option.text = value[1]
+            } else {
+                option.value = ""
+                option.text = value
+            }
+
+            return option
+        }
+    }
+
+    // event listeners
+    $(document).ready(function (event) {
+        getDeviceStates(uuid)
+    })
+
+    $(document).change("", function (event) {
+        if (event.target.id === device_field.attr("id")) {
+            uuid = device_field.val()
+            getDeviceStates(uuid)
+        }
+    })
+</script>
+{% endblock %}

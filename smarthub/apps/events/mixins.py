@@ -7,7 +7,7 @@ from django.urls.base import reverse
 from . import models
 
 
-class EventTriggerFormMixins:
+class FormsRelatedToUserEventsMixin:
     """Form overrides to enable fields populated by javascript to be used"""
 
     def get_form_kwargs(self):
@@ -22,10 +22,12 @@ class EventTriggerFormMixins:
         that belong to the user and have been linked to a hardware device (and thus
         have metadata)"""
         form = super().get_form(form_class)
-        form.fields["_device"].choices = [
-            (device.uuid, device.friendly_name)
-            for device in self.request.user.get_linked_devices
-        ]
+
+        if not getattr(self, "is_update_form", False):
+            form.fields["_device"].choices = [
+                (device.uuid, device.friendly_name.title())
+                for device in self.request.user.get_linked_devices
+            ]
 
         return form
 

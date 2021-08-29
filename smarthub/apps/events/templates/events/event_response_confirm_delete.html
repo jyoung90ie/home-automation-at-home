@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Delete Event Response?</h1>
+<p>Are you sure you want to delete the following event response?</p>
+<div class="table-responsive row">
+    <div class="col-lg-6">
+        <table class="table">
+            <tr>
+                <th scope="row">Device</th>
+                <td>{{object.device_state.friendly_name|title}}</td>
+            </tr>
+            <tr>
+                <th scope="row">State</th>
+                <td>{{object.device_state.name|capfirst}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<form method="post">
+    {% csrf_token %}
+    <input type="submit" class="btn btn-danger" value="Delete">
+    <a href="{% url 'events:event:detail' uuid=event_uuid %}" class="btn btn-secondary" role="button">Cancel</a>
+</form>
+{% endblock %}

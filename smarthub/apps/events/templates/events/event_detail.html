@@ -88,16 +88,18 @@
             <i class="fas fa-cogs me-2"></i>Event Responses
         </h2>
         {% if user.total_linked_devices > 0 %}
-        {% include "events/partials/_user_options_add_event_trigger.html" %}
+        {% include "events/partials/_user_options_add_event_response.html" %}
         {% endif %}
         <p class="m-2">Event Responses are automatically invoked when an Event has been triggered by any of the Event
             Triggers. For example, if you would like a device to be turned on (or off) in response to some external
             trigger (e.g. motion in a room), then you would add the Device here and select the Device State that
-            corresponds to what you wish for. NOTE: You must have at least one Device State created (see <a
-                href="{% url 'devices:list' %}">Devices</a> for more information).
+            corresponds to what you wish for. <em><strong>NOTE:</strong> You must have at least one Device State
+                created (see <a href="{% url 'devices:list' %}">Devices</a> for more information).</em>
         </p>
         <div class="row content-box table-responsive">
             {% if user.total_linked_devices > 0 %}
+            {% for response in event.eventresponse_set.all %}
+            {% if forloop.first %}
             <table class="table table-hover">
                 <thead>
                     <tr>
@@ -106,24 +108,30 @@
                         <th scope="col">State when triggered</th>
                         <th scope="col">Enabled?</th>
                         <th scope="col">Options</th>
-
                     </tr>
                 </thead>
                 <tbody>
-
-                    <tr class="event-response-row" onclick='window.location="";'>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
+                    {% endif %}
+                    <tr class="event-response-row"
+                        onclick='window.location={% url "events:event:responses:response:update" uuid=event.uuid ruuid=response.uuid %}";'>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ response.device_state.friendly_name|title }}</td>
+                        <td>{{ response.device_state.name|capfirst }}</td>
+                        <td>{{ response.is_enabled|to_status_icon }}</td>
+                        <td>
+                            {% include "events/partials/_user_options_event_response.html" %}
+                        </td>
                     </tr>
-
+                    {% if forloop.last %}
                 </tbody>
             </table>
-            <p>This event does not yet have any responses - begin the transistion to an easier life by adding some!</p>
+            {% endif %}
+            {% empty %}
+            <p class="m-0">This event does not yet have any triggers - add some triggers to kick the automation in to
+                gear!</p>
+            {% endfor %}
             {% else %}
-            <p>You cannot create an event response until you have a linked device - see <a
+            <p class="m-0">You cannot create an event response until you have a linked device - see <a
                     href="{% url 'help' %}">Help</a>
                 {% endif %}
         </div>
@@ -135,5 +143,5 @@
 
 
 {% block extra_body %}
-<script src=" https://cdn.jsdelivr.net/npm/chart.js@3.5.0/dist/chart.min.js"></script>
+<!-- <script src=" https://cdn.jsdelivr.net/npm/chart.js@3.5.0/dist/chart.min.js"></script> -->
 {% endblock %}

@@ -21,8 +21,7 @@ urlpatterns = [
                         include(
                             (
                                 [
-                                    path(
-                                        "", views.EventDetailRedirectView.as_view()),
+                                    path("", views.EventDetailRedirectView.as_view()),
                                     path(
                                         "add/",
                                         views.AddEventTrigger.as_view(),
@@ -52,13 +51,48 @@ urlpatterns = [
                                             ),
                                         ),
                                     ),
-                                    path(
-                                        "add/",
-                                        views.AddEventTrigger.as_view(),
-                                        name="add",
-                                    ),
                                 ],
                                 "triggers",
+                            )
+                        ),
+                    ),
+                    path(
+                        "response/",
+                        include(
+                            (
+                                [
+                                    path("", views.EventDetailRedirectView.as_view()),
+                                    path(
+                                        "add/",
+                                        views.AddEventResponse.as_view(),
+                                        name="add",
+                                    ),
+                                    path(
+                                        "<uuid:ruuid>/",
+                                        include(
+                                            (
+                                                [
+                                                    path(
+                                                        "",
+                                                        views.EventResponseRedirectView.as_view(),
+                                                    ),
+                                                    path(
+                                                        "update/",
+                                                        views.UpdateEventResponse.as_view(),
+                                                        name="update",
+                                                    ),
+                                                    path(
+                                                        "delete/",
+                                                        views.DeleteEventResponse.as_view(),
+                                                        name="delete",
+                                                    ),
+                                                ],
+                                                "response",
+                                            ),
+                                        ),
+                                    ),
+                                ],
+                                "responses",
                             )
                         ),
                     ),
