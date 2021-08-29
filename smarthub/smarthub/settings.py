@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "apps.zigbee",
     "apps.events",
     "apps.notifications",
+    "apps.mqtt",
     # "apps.api",
 ]
 

@@ -10,20 +10,21 @@ from django.core.cache import cache
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 
-from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
-                               MQTT_SERVER, MQTT_TOPICS)
+from smarthub.settings import (
+    MQTT_BASE_TOPIC,
+    MQTT_CLIENT_NAME,
+    MQTT_QOS,
+    MQTT_SERVER,
+    MQTT_TOPICS,
+)
 
-from ...models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
-from .utils import get_cache_key
+from ....zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
+from ...utils import get_cache_key
+from ... import defines
 
 logger = logging.getLogger("mqtt")
 logger.setLevel(level=logging.INFO)
 logging.basicConfig(level=logging.INFO)
-
-MESSAGE_FIELDS_TO_IGNORE = [
-    "last_seen",
-    "linkquality",
-]
 
 
 def has_message_sufficiently_changed(message: str, cache_key: str) -> bool:
@@ -68,7 +69,7 @@ def parse_message_for_comparison(message: str):
         parsed_message = {}
 
         for field in json_message:
-            if field in MESSAGE_FIELDS_TO_IGNORE:
+            if field in defines.MESSAGE_FIELDS_TO_IGNORE:
                 continue  # ignore
 
             parsed_message[field] = json_message[field]
@@ -183,16 +184,6 @@ class MQTTClient:
 class MQTTMessage:
     """Handles storing and processing for messages received through MQTT topic subscriptions"""
 
-    DEVICE_LIST_TOPIC = "zigbee2mqtt/bridge/devices"
-    TOPIC_IGNORE_LIST = [
-        "zigbee2mqtt/bridge/info",
-        "zigbee2mqtt/bridge/logging",
-        # "zigbee2mqtt/bridge/devices",
-        "zigbee2mqtt/bridge/groups",
-        # "zigbee2mqtt/bridge/config",
-    ]
-    ZIGBEE_DEVICE_IDENTIFIER_FIELD = "ieee_address"
-
     topic = None
     raw_payload = None
     parsed_payload = None
@@ -208,11 +199,11 @@ class MQTTMessage:
         except JSONDecodeError:
             return
 
-        if self.topic in self.TOPIC_IGNORE_LIST:
-            return
-
-        if self.topic == self.DEVICE_LIST_TOPIC:
+        if self.topic == defines.MQTT_DEVICE_LIST_TOPIC:
             self.parse_devices()
+        elif self.topic in defines.MQTT_TOPIC_IGNORE_LIST:
+            logger.info("MQTT - msg received on topic %s - ignoring", self.topic)
+            return
         else:
             self.parse_message()
 
@@ -220,7 +211,7 @@ class MQTTMessage:
         """Loops through devices listed by MQTT broker and creates ZigbeeDevice objects for those
         that don't already exist in the DB."""
         current_devices = ZigbeeDevice.objects.all().values_list(
-            self.ZIGBEE_DEVICE_IDENTIFIER_FIELD, flat=True
+            defines.ZIGBEE_DEVICE_IDENTIFIER_FIELD, flat=True
         )
         devices = self.parsed_payload
 
@@ -280,18 +271,18 @@ class MQTTMessage:
                 return
 
             cache_key = get_cache_key(device_identifier=self.topic)
+            # take a copy of the last cache value and pass it through for comparison
+            last_message = cache.get(cache_key, "")
+
             has_message_changed = has_message_sufficiently_changed(
                 message=self.raw_payload, cache_key=cache_key
             )
 
             # updates zigbeedevice field and saves object
-            zigbee_message.save(check_triggers=has_message_changed)
+            zigbee_message.save(
+                check_triggers=has_message_changed, last_message=last_message
+            )
 
-            # TODO - add caching for latest values
-            # TODO - use latest cache values to check if notification
-            #   should be invoked (i.e. has it changed)
-            # TODO - possibly set cache value for notify_user=True (if falls outside
-            #   notification criteria) & False if it stays in criteria range
             for field in mqtt_data:
                 field = str(field).lower()
                 value = mqtt_data[field]
