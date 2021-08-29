@@ -4,14 +4,22 @@ from django.contrib import messages
 from django.db.models.deletion import ProtectedError
 from django.http.response import HttpResponseRedirect
 from django.urls.base import reverse, reverse_lazy
-from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
-                                  UpdateView)
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 from django.views.generic.base import RedirectView
 
-from ..mixins import (AddUserToFormMixin, FormSuccessMessageMixin,
-                      LimitResultsToUserMixin,
-                      MakeRequestObjectAvailableInFormMixin,
-                      UserHasLinkedDevice)
+from ..mixins import (
+    AddUserToFormMixin,
+    FormSuccessMessageMixin,
+    LimitResultsToUserMixin,
+    MakeRequestObjectAvailableInFormMixin,
+    UserHasLinkedDevice,
+)
 from ..views import UUIDView
 from . import forms, models
 from .mixins import FormsRelatedToUserEventsMixin, LimitResultsToEventOwner
@@ -41,12 +49,6 @@ class DetailEvent(LimitResultsToUserMixin, UUIDView, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        print("context", context["event"], dir(context["event"]))
-        print(
-            "response set",
-            context["event"].eventresponse_set.first().device_state,
-            dir(context["event"].eventresponse_set.first().device_state),
-        )
         return context
 
 
