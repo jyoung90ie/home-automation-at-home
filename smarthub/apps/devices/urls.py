@@ -17,6 +17,7 @@ urlpatterns = [
                     path("update/", views.UpdateDevice.as_view(), name="update"),
                     path("delete/", views.DeleteDevice.as_view(), name="delete"),
                     path("metadata/", views.DeviceMetadata.as_view(), name="metadata"),
+                    path("states/", views.DeviceStatesJson.as_view(), name="states"),
                     path(
                         "logs/",
                         include(
