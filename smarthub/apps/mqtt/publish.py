@@ -6,12 +6,14 @@ from random import random
 
 import paho.mqtt.client as mqtt
 
-# from smarthub.settings import (
-#     MQTT_BASE_TOPIC,
-#     MQTT_CLIENT_NAME,
-#     MQTT_QOS,
-#     MQTT_SERVER,
-# )
+from smarthub.settings import (
+    MQTT_BASE_TOPIC,
+    MQTT_CLIENT_NAME,
+    MQTT_QOS,
+    MQTT_SERVER,
+)
+
+from .defines import MQTT_DEVICE_STATE_ENDPOINT, MQTT_STATE_COMMAND
 
 logger = logging.getLogger("mqtt")
 logger.setLevel(level=logging.INFO)
@@ -42,7 +44,7 @@ class MQTTPublish:
         # client to connect with the same name. To prevent a loop cycle, change name each
         # connection
         rand_num = int(random() * 1000)
-        self.client_name = f"Smart Hub-{rand_num}"
+        self.client_name = f"{MQTT_CLIENT_NAME} - publisher -{rand_num}"
         self.qos = qos
 
         self.connect()
@@ -102,9 +104,45 @@ class MQTTPublish:
         self.client = None
 
 
-if __name__ == "__main__":
-    server = "192.168.178.58"
-    topic = "zigbee2mqtt/0x84fd27fffe922027/set"
-    message = {"state": "TOGGLE"}
-    message = json.dumps(message)
-    MQTTPublish(server=server, topic=topic, message=message, qos=1)
+def send_message(
+    mqtt_topic,
+    command=MQTT_STATE_COMMAND,
+    command_value="",
+    base_topic=MQTT_BASE_TOPIC,
+    state_endpoint=MQTT_DEVICE_STATE_ENDPOINT,
+):
+    """Publish message to MQTT broker.
+
+    Parameters:
+        mqtt_topic      - where you want the command to be pushlished on the mqtt broker -
+                            typically this is the hardware device friendly_name
+        command         - the device command for changing state - default is "state"
+        command_value   - the new value you want the device to take. If empty, the device
+                            will return it's current value.
+        base_topic      - the parent topic that device topics sit under - defaults to
+                            MQTT_BASE_TOPIC
+        state_endpoint  - the device topic endpoint for changing device state -
+                            e.g. [base_topic]/[device_topic]/[state_endpoint]
+    """
+
+    if not mqtt_topic:
+        logger.info("%s - device friendly_name empty - cannot proceed", __name__)
+        return
+
+    device_state_topic = "/".join([base_topic, mqtt_topic, state_endpoint])
+    command = json.dumps({str(command): str(command_value)})
+
+    logger.info("Publishing to MQTT topic %s: %s", device_state_topic, command)
+    mqtt_response = MQTTPublish(
+        server=MQTT_SERVER, topic=device_state_topic, message=command, qos=MQTT_QOS
+    )
+
+    logger.info("MQTT response: %s", mqtt_response)
+
+
+# if __name__ == "__main__":
+#     server = "192.168.178.58"
+#     topic = "zigbee2mqtt/0x84fd27fffe922027/set"
+#     message = {"state": "TOGGLE"}
+#     message = json.dumps(message)
+#     MQTTPublish(server=server, topic=topic, message=message, qos=1)

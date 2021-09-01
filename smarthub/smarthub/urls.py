@@ -11,6 +11,7 @@ urlpatterns = [
     path("notifications/", include("apps.notifications.urls")),
     path("devices/", include("apps.devices.urls")),
     path("events/", include("apps.events.urls")),
+    path("mqtt/", include("apps.mqtt.urls")),
     path("admin/", admin.site.urls),
     path("__debug__/", include(debug_toolbar.urls)),
 ]

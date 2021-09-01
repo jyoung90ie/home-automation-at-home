@@ -4,3 +4,13 @@
 <a class="btn btn-sm btn-danger" href="{% url 'devices:device:delete' uuid=device.uuid %}">
     <i class="fas fa-trash-alt" title="Delete device"></i>
 </a>
+
+{% if device.is_linked %}
+<form method="post" class="d-inline ">
+    {% csrf_token %}
+    <button type="submit" class="change-device-state d-inline btn btn-sm btn-info"
+        href="{% url 'mqtt:publish:toggle' duuid=device.uuid %}">
+        <i class="fas fa-toggle-on" title="Toggle device state"></i>
+    </button>
+</form>
+{% endif %}

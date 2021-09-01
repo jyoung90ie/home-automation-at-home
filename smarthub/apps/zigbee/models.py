@@ -235,7 +235,7 @@ class ZigbeeMessage(BaseAbstractModel):
     def __str__(self):
         return str(self.topic)
 
-    def save(self, check_triggers=False, last_message=None, *args, **kwargs) -> None:
+    def save(self, *args, check_triggers=None, last_message=None, **kwargs) -> None:
         """
         Parameters:
             check_triggers - when True will perform event trigger checks & invoke event
@@ -293,10 +293,11 @@ class ZigbeeMessage(BaseAbstractModel):
         self, parsed_message: dict, trigger: "EventTrigger", last_message=None
     ):
         """Processes event triggers and invokes notifications/event responses if criteria met"""
+        print("process_event_trigger() start")
         field = getattr(trigger, "metadata_field")
         device_value = parsed_message.get(field, None)
 
-        if not device_value:
+        if not device_value or device_value is None:
             return
 
         last_message = json.loads(last_message)
@@ -304,7 +305,8 @@ class ZigbeeMessage(BaseAbstractModel):
         cached_value = last_message.get(field, None)
         if device_value == cached_value:
             logger.info(
-                "process_event_trigger(): device field value is unchanged - ignoring [last: %s, curr: %s]",
+                "process_event_trigger(): device field value is unchanged - ignoring "
+                "[last: %s, curr: %s]",
                 cached_value,
                 device_value,
             )
@@ -313,6 +315,9 @@ class ZigbeeMessage(BaseAbstractModel):
 
         event = getattr(trigger, "event")
         if not event.is_enabled or not event.send_notification:
+            logger.info(
+                "process_event_trigger - event has no triggers or notifications enabled"
+            )
             return
 
         trigger_result = trigger.is_triggered(device_value)
@@ -329,6 +334,8 @@ class ZigbeeMessage(BaseAbstractModel):
                 message=message,
                 triggered_by=trigger,
             )
+
+        logger.info("process_event_trigger() end")
 
     def invoke_event_response(self):
         """ """

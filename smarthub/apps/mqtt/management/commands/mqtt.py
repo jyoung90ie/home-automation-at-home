@@ -37,8 +37,8 @@ def has_message_sufficiently_changed(message: str, cache_key: str) -> bool:
 
     if cache_data:
         # parsing both messages so that the raw message is retained in cache for debugging if needed
-        parsed_message = parse_message_for_comparison(message)
-        parsed_cache = parse_message_for_comparison(cache_data)
+        parsed_message = parse_message_for_comparison(message=message)
+        parsed_cache = parse_message_for_comparison(message=cache_data, is_cache=True)
 
         if parsed_message == parsed_cache:
             logger.info("Message content unchanged - skipping event triggers")
@@ -52,13 +52,18 @@ def has_message_sufficiently_changed(message: str, cache_key: str) -> bool:
     return has_changed
 
 
-def parse_message_for_comparison(message: str):
+def parse_message_for_comparison(message: str, is_cache: bool = False):
     """Parses the MQTT message, comparing the content against that stored in the cache.
     Importantly, it ignores all fields list in MESSAGE_FIELDS_TO_IGNORE as these are deemed to
     have immaterial value in terms of triggering events.
 
     This ensures that when comparing message content, only the important fields can invoke
-    an event."""
+    an event.
+
+    Parameters:
+        message:    raw MQTT message
+        is_cache:   is this a cached message - if so, turn off log message to avoid duplication
+    """
     if not message:
         return None
 
@@ -74,10 +79,11 @@ def parse_message_for_comparison(message: str):
 
             parsed_message[field] = json_message[field]
 
-        logger.info("Parsed message %s", parsed_message)
+        if not is_cache:
+            logger.info("Parsed message %s", parsed_message)
         return json.dumps(parsed_message)
     except JSONDecodeError:
-        logger.debug("Could not parse message %s", message)
+        logger.debug("Could not parse message %s - is_cache=%s", message, is_cache)
         return None
 
 
