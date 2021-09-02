@@ -140,9 +140,21 @@ def send_message(
     logger.info("MQTT response: %s", mqtt_response)
 
 
-# if __name__ == "__main__":
-#     server = "192.168.178.58"
-#     topic = "zigbee2mqtt/0x84fd27fffe922027/set"
-#     message = {"state": "TOGGLE"}
-#     message = json.dumps(message)
-#     MQTTPublish(server=server, topic=topic, message=message, qos=1)
+def send_messages(
+    message_list: dict,
+    base_topic=MQTT_BASE_TOPIC,
+    state_endpoint=MQTT_DEVICE_STATE_ENDPOINT,
+):
+    """Handles publishing multiple messages - only needs one broker connection"""
+    try:
+        for message in message_list:
+            assert message["mqtt_topic"]
+            assert message["command"]
+            assert message["command_value"]
+            assert len(message) == 3
+
+            send_message(
+                **message, base_topic=base_topic, state_endpoint=state_endpoint
+            )
+    except Exception as ex:
+        logger.error("%s - send_messages - %s", __name__, ex)

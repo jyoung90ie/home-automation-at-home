@@ -279,11 +279,14 @@ class MQTTMessage:
             has_message_changed = has_message_sufficiently_changed(
                 message=self.raw_payload, cache_key=cache_key
             )
+            logger.info("%s - Creating ZigbeeMessage: %s", __name__, zigbee_message)
 
             # updates zigbeedevice field and saves object
             zigbee_message.save(
                 check_triggers=has_message_changed, last_message=last_message
             )
+
+            logger.info("%s - ZigbeeMessage saved", __name__)
 
             for field in mqtt_data:
                 field = str(field).lower()

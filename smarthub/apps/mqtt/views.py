@@ -50,8 +50,6 @@ class ToggleDeviceState(UUIDView, View):
                 "message": f"{device.friendly_name.title()} has been toggled",
             }
 
-            # response_status_code = HTTPStatus.NO_CONTENT  # success - no content
-
         except Exception as ex:
             logger.info("%s - there was a problem sending toggle command", __name__)
             response = {
@@ -60,7 +58,6 @@ class ToggleDeviceState(UUIDView, View):
             }
 
         return JsonResponse(response)
-        # return HttpResponse(status=response_status_code)
 
 
 class TriggerDeviceState(UUIDView, View):

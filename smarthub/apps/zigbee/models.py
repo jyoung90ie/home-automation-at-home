@@ -12,6 +12,7 @@ from django.db.models.query_utils import Q
 
 from ..models import BaseAbstractModel
 from ..notifications.models import NotificationMedium
+from ..mqtt.publish import send_messages
 
 if TYPE_CHECKING:
     from ..devices.models import Device
@@ -177,7 +178,7 @@ class ZigbeeDevice(BaseAbstractModel):
                     obj.friendly_name,
                 )
         except Exception as ex:
-            logger.error("ERROR: ZigbeeDevice link_to_user_device() - %s", ex)
+            logger.error("ERROR: ZigbeeDevice link_to_user_device - %s", ex)
         return False
 
     def __str__(self) -> str:
@@ -253,9 +254,9 @@ class ZigbeeMessage(BaseAbstractModel):
 
         # methods accessing object attributes that need to be perform post-save
         if check_triggers:
-            logger.info("Checking event triggers...")
+            logger.info("%s - Checking event triggers...", __name__)
             self.check_event_triggers(last_message=last_message)
-            logger.info("End of event trigger checks.")
+            logger.info("%s - End of event trigger checks.", __name__)
 
     def check_event_triggers(self, last_message=None):
         """Checks if linked device is attached to event trigger - if so, values check and event
@@ -270,18 +271,21 @@ class ZigbeeMessage(BaseAbstractModel):
         triggers = self.user_device.get_event_triggers()
 
         if not triggers:
-            logger.info("ZigbeeMessage - check_event_triggers - no event triggers")
+            logger.info(
+                "%s - ZigbeeMessage - check_event_triggers - no event triggers",
+                __name__,
+            )
             return
 
         try:
             parsed_message = json.loads(self.raw_message)
         except JSONDecodeError:
             logger.info(
-                "ZigbeeMessage - check_event_triggers - could not parse message JSON"
+                "%s - ZigbeeMessage - check_event_triggers - could not parse message JSON",
+                __name__,
             )
             return
 
-        # return self.process_event_trigger(triggers=triggers)
         for trigger in triggers:
             self.process_event_trigger(
                 parsed_message=parsed_message,
@@ -293,25 +297,27 @@ class ZigbeeMessage(BaseAbstractModel):
         self, parsed_message: dict, trigger: "EventTrigger", last_message=None
     ):
         """Processes event triggers and invokes notifications/event responses if criteria met"""
-        print("process_event_trigger() start")
+        logger.info("%s - process_event_trigger - start", __name__)
         field = getattr(trigger, "metadata_field")
         device_value = parsed_message.get(field, None)
 
         if not device_value or device_value is None:
             return
 
-        last_message = json.loads(last_message)
+        if last_message:
+            # only check if last_message has a value
+            last_message = json.loads(last_message)
 
-        cached_value = last_message.get(field, None)
-        if device_value == cached_value:
-            logger.info(
-                "process_event_trigger(): device field value is unchanged - ignoring "
-                "[last: %s, curr: %s]",
-                cached_value,
-                device_value,
-            )
-            # the actual trigger value hasn't changed
-            return
+            cached_value = last_message.get(field, None)
+            if device_value == cached_value:
+                logger.info(
+                    "process_event_trigger: device field value is unchanged - ignoring "
+                    "[last: %s, curr: %s]",
+                    cached_value,
+                    device_value,
+                )
+                # the actual trigger value hasn't changed
+                return
 
         event = getattr(trigger, "event")
         if not event.is_enabled or not event.send_notification:
@@ -329,30 +335,90 @@ class ZigbeeMessage(BaseAbstractModel):
                 "Device value={device_value}"
             )
 
+            self.invoke_event_response(triggered_by=trigger)
+
             self.invoke_notifications(
                 topic=event.notification_topic,
                 message=message,
                 triggered_by=trigger,
             )
 
-        logger.info("process_event_trigger() end")
+        logger.info("process_event_trigger end")
 
-    def invoke_event_response(self):
+    def invoke_event_response(self, triggered_by: "EventTrigger"):
         """ """
+        if not self.user:
+            logger.info("invoke_event_response: no user object - cannot proceed")
+            return
 
-    def invoke_notifications(self, topic, message, triggered_by):
+        event = getattr(triggered_by, "event", None)
+
+        if not event:
+            logger.error(
+                "invoke_event_response: trigger is not attached to event - %s",
+                triggered_by,
+            )
+            return
+
+        event_responses = getattr(event, "eventresponse_set", None)
+        if not event_responses:
+            logger.error(
+                "invoke_event_response: no event responses attached to event - %s",
+                event,
+            )
+            return
+
+        enabled_event_responses = event_responses.filter(is_enabled=True)
+
+        cmd_list = []
+
+        for response in enabled_event_responses:
+            # invoke device states
+            state = getattr(response, "device_state")
+            cmd = getattr(state, "command")
+            val = getattr(state, "command_value")
+            device = getattr(state, "content_object")
+
+            if not cmd or not val:
+                logger.info(
+                    "invoke_event_response: no command and/or value - cmd: %s - val: %s",
+                    cmd,
+                    val,
+                )
+                return
+
+            cmd_dict = {
+                "mqtt_topic": device.friendly_name,
+                "command": cmd,
+                "command_value": val,
+            }
+            cmd_list.append(cmd_dict)
+
+        # cmd list is built, send to MQTT broker\
+        try:
+            logger.info(
+                "%s - publishing messages to MQTT broker - %s", __name__, cmd_list
+            )
+            send_messages(cmd_list)
+        except Exception:
+            logger.error(
+                "%s - there was an error publishing to MQTT broker - operation failed",
+                __name__,
+            )
+
+    def invoke_notifications(
+        self, topic: str, message: str, triggered_by: "EventTrigger"
+    ):
         """Invoke all of user's enabled notifications"""
         if not self.user:
-            logger.info("invoke_notifications(): no user object - cannot proceed")
+            logger.info("invoke_notifications: no user object - cannot proceed")
             return
 
         user_notifications = get_user_model().objects.get_active_notifications(
             user=self.user
         )
         if not user_notifications:
-            logger.info(
-                "invoke_notifications(): user has no active notification mediums"
-            )
+            logger.info("invoke_notifications: user has no active notification mediums")
 
             return
 
