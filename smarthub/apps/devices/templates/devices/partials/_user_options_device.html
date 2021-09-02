@@ -6,10 +6,9 @@
 </a>
 
 {% if device.is_linked %}
-<form method="post" class="d-inline ">
+<form method="post" class="d-inline change-device-state" action="{% url 'mqtt:publish:toggle' duuid=device.uuid %}">
     {% csrf_token %}
-    <button type="submit" class="change-device-state d-inline btn btn-sm btn-info"
-        href="{% url 'mqtt:publish:toggle' duuid=device.uuid %}">
+    <button type="submit" class="d-inline btn btn-sm btn-info">
         <i class="fas fa-toggle-on" title="Toggle device state"></i>
     </button>
 </form>
