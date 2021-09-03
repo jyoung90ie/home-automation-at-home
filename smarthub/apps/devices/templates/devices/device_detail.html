@@ -56,8 +56,8 @@
                         onclick='window.location="{% url "devices:device:states:state:update" uuid=device.uuid suuid=state.uuid %}";'>
                         <td>{{ forloop.counter }}</td>
                         <td>{{ state.name|capfirst }}</td>
-                        <td>{{ state.command|upper }}</td>
-                        <td>{{ state.command_value|upper }}</td>
+                        <td>{{ state.command|lower }}</td>
+                        <td>{{ state.command_value|lower }}</td>
                         <td>TBC</td>
                         <td>{% include "devices/partials/_user_options_device_state.html" %}</td>
                     </tr>

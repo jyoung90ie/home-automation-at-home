@@ -312,7 +312,9 @@ class DeviceState(BaseAbstractModel):
 
     device_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     device_object_id = models.PositiveBigIntegerField()
-    content_object = GenericForeignKey("device_type", "device_object_id")
+    content_object = GenericForeignKey(
+        "device_type", "device_object_id"
+    )  # hardware device
 
     name = models.CharField(
         verbose_name="Name you want to save this state under",
@@ -349,3 +351,10 @@ class DeviceState(BaseAbstractModel):
     def user_device_obj(self):
         """Returns connected user Device model instance"""
         return self.content_object.device
+
+    def save(self, *args, **kwargs):
+        # device will only recognise lowercase commands
+        self.command = self.command.lower()
+        self.command_value = self.command_value.lower()
+
+        super().save(*args, **kwargs)

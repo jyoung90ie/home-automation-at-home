@@ -6,6 +6,10 @@
     href="{% url 'events:event:responses:response:delete' uuid=event.uuid ruuid=response.uuid %}">
     <i class="fas fa-trash-alt" title="Delete event response"></i>
 </a>
-<a class="btn btn-sm btn-info" href="">
-    <i class="fas fa-toggle-on" title="Activate device state"></i>
-</a>
+<form method="post" class="d-inline change-device-state"
+    action="{% url 'mqtt:publish:trigger' suuid=response.device_state.uuid %}">
+    {% csrf_token %}
+    <button type="submit" class="d-inline btn btn-sm btn-info">
+        <i class="fas fa-toggle-on" title="Activate device state"></i>
+    </button>
+</form>

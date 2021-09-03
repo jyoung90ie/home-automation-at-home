@@ -204,7 +204,7 @@ nav .breadcrumb a:hover {
     border-color: var(--colour-one);
 }
 
-.btn-primary:hover, .btn-secondary:hover, .btn-success:hover, .btn-info:hover {
+.btn-primary:hover, .btn-secondary:hover, .btn-success:hover, .btn-info:hover, .btn-info:active {
     opacity: 80%;
 }
 
@@ -218,7 +218,7 @@ nav .breadcrumb a:hover {
     border-color: var(--colour-three);
 }
 
-.btn-info, .btn-info:hover, .bg-info {
+.btn-info, .btn-info:hover, .btn-info:active, .bg-info {
     background-color: var(--colour-four);
     border-color: var(--colour-four);
     color: var(--font-primary);

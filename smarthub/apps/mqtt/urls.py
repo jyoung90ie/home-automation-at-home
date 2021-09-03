@@ -7,13 +7,19 @@ app_name = "mqtt"
 
 urlpatterns = [
     path(
-        "publish/<uuid:duuid>/",  # device uuid
+        "publish/",  # device uuid
         include(
             (
                 [
-                    path("toggle/", views.ToggleDeviceState.as_view(), name="toggle"),
                     path(
-                        "trigger/", views.TriggerDeviceState.as_view(), name="trigger"
+                        "<uuid:duuid>/toggle/",
+                        views.ToggleDeviceState.as_view(),
+                        name="toggle",
+                    ),
+                    path(
+                        "<uuid:suuid>/trigger/",
+                        views.TriggerDeviceState.as_view(),
+                        name="trigger",
                     ),
                 ],
                 "publish",

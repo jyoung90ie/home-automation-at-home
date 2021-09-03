@@ -1,6 +1,6 @@
-from http import HTTPStatus
+from ..devices.models import DeviceState
 from .defines import MQTT_STATE_COMMAND, MQTT_STATE_TOGGLE_VALUE
-from django.http.response import Http404, HttpResponse, JsonResponse
+from django.http.response import Http404, JsonResponse
 from django.views.generic.base import View
 from django.shortcuts import get_object_or_404
 from ..views import UUIDView
@@ -27,7 +27,6 @@ class ToggleDeviceState(UUIDView, View):
         """Handle post request"""
 
         device_uuid = self.kwargs.pop("duuid", None)
-
         device = get_object_or_404(Device, user=self.request.user, uuid=device_uuid)
 
         if device and not device.is_linked():
@@ -63,4 +62,62 @@ class ToggleDeviceState(UUIDView, View):
 class TriggerDeviceState(UUIDView, View):
     """Trigger a device state in response to an event trigger"""
 
-    pass
+    http_method_names = [
+        "post",
+    ]
+
+    def post(self, request, *args, **kwargs):
+        """Handle post request"""
+
+        state_uuid = self.kwargs.pop("suuid", None)
+
+        try:
+            state = get_object_or_404(
+                DeviceState,
+                uuid=state_uuid,
+                zigbee__device__user=self.request.user,
+                # TODO - needs updated to reference any related_query_names from GenericRelations
+            )
+        except Exception as ex:
+            print("Error: ", ex)
+
+        state_name = getattr(state, "name")
+        cmd = getattr(state, "command")
+        val = getattr(state, "command_value")
+        hardware_device = getattr(state, "content_object")
+
+        if not cmd or not val:
+            logger.info(
+                "invoke_event_response: no command and/or value - cmd: %s - val: %s",
+                cmd,
+                val,
+            )
+            return
+
+        mqtt_topic = hardware_device.friendly_name
+        user_device_name = hardware_device.device.friendly_name.title()
+
+        logger.info("%s - publish topic = %s", __name__, mqtt_topic)
+
+        try:
+            send_message(
+                mqtt_topic=mqtt_topic,
+                command=cmd,
+                command_value=val,
+            )
+            logger.info("%s - toggle command sent", __name__)
+
+            response = {
+                "status": "success",
+                "message": f"{user_device_name} state updated with configuration from device state '{state_name.title()}'",
+            }
+
+        except Exception as ex:
+            logger.info("%s - there was a problem sending trigger command", __name__)
+            response = {
+                "status": "error",
+                "message": f"{user_device_name} state could not be changed - check the device settings and try again",
+            }
+
+        print(response)
+        return JsonResponse(response)

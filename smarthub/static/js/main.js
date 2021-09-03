@@ -21,7 +21,7 @@ const createAlertElement = (alertMessage, alertType) => {
     $(mainBodyContainer).prepend(alertElement);
 
     clearTimeout();
-    setTimeout(() => $(alertElement).remove(), 5000);
+    setTimeout(() => $(alertElement).remove(), 7000);
 }
 
 const deviceStateClass = ".change-device-state"
@@ -47,12 +47,14 @@ if ($(deviceStateClass).length > 0) {
         })
             .then(response => response.json())
             .then(response => {
-
-                if (response.status == "error") {
-                    status = "alert-danger"
-                } else {
+                var status;
+                if (response.status == "success") {
                     status = "alert-success"
+                } else {
+                    status = "alert-danger"
                 }
+
+                console.log(response)
 
                 createAlertElement(response.message, status);
             })
