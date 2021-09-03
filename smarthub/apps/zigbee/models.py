@@ -11,8 +11,8 @@ from django.db import models
 from django.db.models.query_utils import Q
 
 from ..models import BaseAbstractModel
-from ..notifications.models import NotificationMedium
 from ..mqtt.publish import send_messages
+from ..notifications.models import NotificationMedium
 
 if TYPE_CHECKING:
     from ..devices.models import Device

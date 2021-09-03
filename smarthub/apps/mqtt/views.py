@@ -1,12 +1,13 @@
-from ..devices.models import DeviceState
-from .defines import MQTT_STATE_COMMAND, MQTT_STATE_TOGGLE_VALUE
-from django.http.response import Http404, JsonResponse
-from django.views.generic.base import View
-from django.shortcuts import get_object_or_404
-from ..views import UUIDView
-from ..devices.models import Device
-from .publish import send_message
 import logging
+
+from django.http.response import Http404, JsonResponse
+from django.shortcuts import get_object_or_404
+from django.views.generic.base import View
+
+from ..devices.models import Device, DeviceState
+from ..views import UUIDView
+from .defines import MQTT_STATE_COMMAND, MQTT_STATE_TOGGLE_VALUE
+from .publish import send_message
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
