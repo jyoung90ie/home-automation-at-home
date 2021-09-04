@@ -346,7 +346,9 @@ class ZigbeeMessage(BaseAbstractModel):
         logger.info("process_event_trigger end")
 
     def invoke_event_response(self, triggered_by: "EventTrigger"):
-        """ """
+        """Invokes all EventResponse objects for a triggered Event.
+
+        An event response essentially maps an event to a device state."""
         if not self.user:
             logger.info("invoke_event_response: no user object - cannot proceed")
             return
@@ -394,7 +396,7 @@ class ZigbeeMessage(BaseAbstractModel):
             }
             cmd_list.append(cmd_dict)
 
-        # cmd list is built, send to MQTT broker\
+        # cmd list is built and sent to MQTT broker
         try:
             logger.info(
                 "%s - publishing messages to MQTT broker - %s", __name__, cmd_list

@@ -1,5 +1,4 @@
 import logging
-from re import L
 
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail

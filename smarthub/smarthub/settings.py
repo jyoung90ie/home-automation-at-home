@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "dynamic_breadcrumbs",
     "debug_toolbar",
     "django_admin_inline_paginator",
+    "django_extensions",
     # user added apps
     "apps.devices",
     "apps.pages",
@@ -278,3 +279,17 @@ def show_toolbar(request):
 
 
 DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": show_toolbar}
+
+# graphs
+GRAPH_MODELS = {
+    "app_labels": [
+        "devices",
+        "events",
+        "notifications",
+        "users",
+        "zigbee",
+        "pages",
+        "mqtt",
+    ],
+    "group_models": True,
+}
