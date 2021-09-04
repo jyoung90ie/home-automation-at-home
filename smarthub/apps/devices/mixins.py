@@ -1,19 +1,25 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404
+from django.contrib.auth.mixins import AccessMixin
 from django.urls.base import reverse
 
-from . import models
+from .models import Device
 
 
-class PermitDeviceOwnerOnly(LoginRequiredMixin):
-    """Override queryset to only show results for current user. This prevents user from
-    accessing objects they do not own."""
+class PermitObjectOwnerOnly(AccessMixin):
+    """Anonymous users will be redirected to login and already authenticated users that are not
+    the object (e.g. device) owner will be shown a 403 message."""
 
     def dispatch(self, request, *args, **kwargs):
         uuid = kwargs.pop("uuid")
-        device = get_object_or_404(models.Device, uuid=uuid, user=self.request.user)
-        if not device:
-            return device
+
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+
+        user = getattr(request, "user", None)
+        obj = type(self.get_object())
+        qs = obj.objects.filter(uuid=uuid, user=user)
+
+        if not qs:
+            return self.handle_no_permission()
 
         return super().dispatch(request, *args, **kwargs)
 

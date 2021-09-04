@@ -10,16 +10,25 @@ from django.http.response import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.urls.base import reverse
-from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
-                                  RedirectView, UpdateView)
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    RedirectView,
+    UpdateView,
+)
 from django.views.generic.detail import BaseDetailView
 
-from ..mixins import (AddUserToFormMixin, FormSuccessMessageMixin,
-                      LimitResultsToUserMixin,
-                      MakeRequestObjectAvailableInFormMixin)
+from ..mixins import (
+    AddUserToFormMixin,
+    FormSuccessMessageMixin,
+    LimitResultsToUserMixin,
+    MakeRequestObjectAvailableInFormMixin,
+)
 from ..views import UUIDView
-from . import forms, mixins, models
-from .mixins import DeviceStateFormMixin, PermitDeviceOwnerOnly
+from . import forms, models
+from .mixins import DeviceStateFormMixin, PermitObjectOwnerOnly
 
 
 class AddDeviceLocation(LoginRequiredMixin, CreateView):
@@ -76,7 +85,7 @@ class DetailDeviceLocation(LimitResultsToUserMixin, UUIDView, DetailView):
         return context
 
 
-class UpdateDeviceLocation(UUIDView, LimitResultsToUserMixin, UpdateView):
+class UpdateDeviceLocation(UUIDView, PermitObjectOwnerOnly, UpdateView):
     """Handles updating of a specific device"""
 
     model = models.DeviceLocation
@@ -244,8 +253,8 @@ class AddDevice(
 
 class UpdateDevice(
     UUIDView,
+    PermitObjectOwnerOnly,
     MakeRequestObjectAvailableInFormMixin,
-    LimitResultsToUserMixin,
     UpdateView,
 ):
     """Handles updating of an existing device for the specified user"""
@@ -278,7 +287,7 @@ class UpdateDevice(
             return self.form_invalid(form)
 
 
-class DeleteDevice(UUIDView, LimitResultsToUserMixin, DeleteView):
+class DeleteDevice(UUIDView, PermitObjectOwnerOnly, DeleteView):
     """Enables user to delete any of their own devices"""
 
     model = models.Device
@@ -323,7 +332,7 @@ class ListDevices(UUIDView, LimitResultsToUserMixin, ListView):
         return context
 
 
-class DetailDevice(UUIDView, mixins.PermitDeviceOwnerOnly, DetailView):
+class DetailDevice(UUIDView, PermitObjectOwnerOnly, DetailView):
     """Enables user to view detailed information on their own device"""
 
     model = models.Device
@@ -335,7 +344,7 @@ class DetailDevice(UUIDView, mixins.PermitDeviceOwnerOnly, DetailView):
         return context
 
 
-class LogsForDevice(UUIDView, mixins.PermitDeviceOwnerOnly, ListView):
+class LogsForDevice(UUIDView, PermitObjectOwnerOnly, ListView):
     """Enables user to view hardware device logs - if their device has been linked to a
     hadware device"""
 
@@ -382,7 +391,7 @@ class DeviceRedirectView(RedirectView):
 class AddDeviceState(
     FormSuccessMessageMixin,
     DeviceStateFormMixin,
-    PermitDeviceOwnerOnly,
+    PermitObjectOwnerOnly,
     UUIDView,
     CreateView,
 ):
@@ -408,7 +417,7 @@ class AddDeviceState(
 class UpdateDeviceState(
     FormSuccessMessageMixin,
     DeviceStateFormMixin,
-    PermitDeviceOwnerOnly,
+    PermitObjectOwnerOnly,
     UUIDView,
     UpdateView,
 ):
@@ -432,7 +441,7 @@ class UpdateDeviceState(
         return models.DeviceState.objects.filter(uuid=self.kwargs["suuid"])
 
 
-class DeleteDeviceState(UUIDView, PermitDeviceOwnerOnly, DeleteView):
+class DeleteDeviceState(UUIDView, PermitObjectOwnerOnly, DeleteView):
     """Enables user to delete any of their own device states"""
 
     model = models.DeviceState

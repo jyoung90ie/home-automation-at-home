@@ -94,8 +94,9 @@ class DeviceLocation(BaseAbstractModel):
         try:
             users_linked_devices: QuerySet = self.user.get_linked_devices
 
-            location_linked_devices = users_linked_devices.filter(location=self)
-            total = location_linked_devices.count()
+            if users_linked_devices:
+                location_linked_devices = users_linked_devices.filter(location=self)
+                total = location_linked_devices.count()
         except (EmptyResultSet, ObjectDoesNotExist):
             pass
         return total

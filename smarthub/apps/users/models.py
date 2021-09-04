@@ -50,14 +50,15 @@ class CustomUserManager(BaseUserManager):
 
     def get_linked_devices(self, user) -> QuerySet:
         """Return list of device objects for user"""
-        user_devices = self.get_user_devices(user=user)
-        if not user_devices:
-            return []
-
-        return user_devices.filter(
+        user_devices = self.get_user_devices(user=user).filter(
             Q(zigbeedevice__uuid__isnull=False)
             # | Q(apidevice_set__uuid__isnull=False) # not yet active
         )
+
+        if not user_devices:
+            return []
+
+        return user_devices
 
     def total_linked_devices(self, user) -> int:
         """Return the number of linked devices for user object"""
