@@ -167,9 +167,8 @@ class Device(BaseAbstractModel):
 
     def get_zigbee_messages(
         self, latest_only=False, field_name="zigbeemessage_set"
-    ) -> Union[QuerySet["ZigbeeMessage"], bool]:
+    ) -> QuerySet["ZigbeeMessage"]:
         """Return all raw messages for zigbee device"""
-        messages = False
         zb_device: QuerySet["ZigbeeDevice"] = self.get_zigbee_device()
 
         if zb_device:
@@ -178,6 +177,9 @@ class Device(BaseAbstractModel):
 
             try:
                 messages = getattr(zb_device, field_name).all()
+
+                if not messages:
+                    return []
 
                 if latest_only:
                     messages = [messages.order_by("-created_at").first()]
@@ -194,11 +196,12 @@ class Device(BaseAbstractModel):
         If latest_only is True, returns only the most recent log entry based on created_at field.
         If message_obj is specified, returns logs for specified message_obj ONLY.
         """
+        logs = []
         messages = self.get_zigbee_messages(latest_only)
 
-        if not messages:
+        if not messages or len(messages) == 0:
             logger.info("ZigbeeDevice has no messages - %s", self)
-            return False
+            return logs
 
         if message_obj:
             if not isinstance(message_obj, apps.get_model("zigbee", "ZigbeeMessage")):
@@ -209,8 +212,6 @@ class Device(BaseAbstractModel):
                 )
                 return False
             return messages.filter(message=message_obj)
-
-        logs = []
 
         for message in messages:
             try:

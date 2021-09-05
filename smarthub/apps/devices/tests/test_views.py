@@ -1,17 +1,20 @@
-from django.test import TestCase
 from django.urls import reverse
 
+import factory
 from .factories import DeviceFactory, DeviceLocationFactory, UserFactory
-from .helpers import (
-    assert_object_values_in_response,
-    assert_values_in_reponse,
-    create_objects,
+from ...zigbee.tests.factories import (
+    ZigbeeDeviceFactory,
+    ZigbeeLogFactory,
+    ZigbeeMessageFactory,
 )
+from ...zigbee.models import ZigbeeLog
+
+from .helpers import TestCaseWithHelpers
 
 login_url = reverse("account_login")
 
 
-class TestListDevices(TestCase):
+class TestListDevices(TestCaseWithHelpers):
     def setUp(self) -> None:
         self.user = UserFactory()
         self.client.force_login(self.user)
@@ -35,13 +38,13 @@ class TestListDevices(TestCase):
         ]
 
         self.assertEqual(response.status_code, 200)
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
     def test_user_devices_listed(self):
-        devices = create_objects(user=self.user, object_factory=DeviceFactory)
+        devices = self.create_objects(user=self.user, object_factory=DeviceFactory)
         response = self.client.get(self.url)
 
-        assert_object_values_in_response(
+        self.assert_object_values_in_response(
             response=response,
             objects=devices,
             field="friendly_name",
@@ -50,7 +53,7 @@ class TestListDevices(TestCase):
 
     def test_user_cannot_see_other_user_devices(self):
         other_user = UserFactory()
-        other_user_devices = create_objects(
+        other_user_devices = self.create_objects(
             user=other_user, object_factory=DeviceFactory
         )
         response = self.client.get(self.url)
@@ -58,9 +61,9 @@ class TestListDevices(TestCase):
         values = [
             {"value": "you do not have any devices", "exists": True},
         ]
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
-        assert_object_values_in_response(
+        self.assert_object_values_in_response(
             response=response,
             objects=other_user_devices,
             field="friendly_name",
@@ -76,9 +79,9 @@ class TestListDevices(TestCase):
         values = [
             {"value": "you do not have any devices", "exists": False},
         ]
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
-        assert_object_values_in_response(
+        self.assert_object_values_in_response(
             response=response,
             objects=other_user_devices,
             field="friendly_name",
@@ -86,7 +89,7 @@ class TestListDevices(TestCase):
         )
 
 
-class TestDetailDevice(TestCase):
+class TestDetailDevice(TestCaseWithHelpers):
     def setUp(self) -> None:
         self.user = UserFactory()
         self.client.force_login(user=self.user)
@@ -145,7 +148,7 @@ class TestDetailDevice(TestCase):
             },
         ]
         self.assertEqual(response.status_code, 200)
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
     def test_device_is_not_linked_and_no_state_by_default(self):
         device = DeviceFactory(user=self.user)
@@ -164,20 +167,106 @@ class TestDetailDevice(TestCase):
         ]
 
         self.assertEqual(response.status_code, 200)
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
     def test_detail_shows_linked_device(self):
-        pass
+        device = DeviceFactory(user=self.user)
+        zigbee_device = ZigbeeDeviceFactory(device=device)
+
+        response = self.get_url_response(uuid=device.uuid)
+
+        values = [
+            {
+                "value": """<div class="fw-bold col-6">Status</div>
+                <div class="col-6 fs-3">
+                    <i class="fas fa-check text-success" title="enabled icon"></i>
+                </div>""",
+                "exists": True,
+            },
+            {
+                "value": f"""<div class="fw-bold col-4 mb-2">ID</div>
+                <div class="col-8 mb-2">{zigbee_device.id}</div>""",
+                "exists": True,
+            },
+            {
+                "value": f"""<div class="fw-bold col-4 mb-2">UUID</div>
+                <div class="col-8 mb-2">{zigbee_device.uuid}</div>""",
+                "exists": True,
+            },
+            {
+                "value": f"""<div class="fw-bold col-4 mb-2">DEVICE_ID</div>
+                <div class="col-8 mb-2">{zigbee_device.device.id}</div>""",
+                "exists": True,
+            },
+            {
+                "value": f"""<div class="fw-bold col-4 mb-2">FRIENDLY_NAME</div>
+                <div class="col-8 mb-2">{zigbee_device.friendly_name}</div>""",
+                "exists": True,
+            },
+            {
+                "value": f"""<div class="fw-bold col-4 mb-2">IEEE_ADDRESS</div>
+                <div class="col-8 mb-2">{zigbee_device.ieee_address}</div>""",
+                "exists": True,
+            },
+            {
+                "value": f"""<div class="fw-bold col-4 mb-2">DESCRIPTION</div>
+                <div class="col-8 mb-2">{zigbee_device.description}</div>""",
+                "exists": True,
+            },
+            {
+                "value": f"""<div class="fw-bold col-4 mb-2">VENDOR</div>
+                <div class="col-8 mb-2">{zigbee_device.vendor}</div>""",
+                "exists": True,
+            },
+            {
+                "value": f"""<div class="fw-bold col-4 mb-2">MODEL</div>
+                <div class="col-8 mb-2">{zigbee_device.model}</div>""",
+                "exists": True,
+            },
+            {
+                "value": f"""<div class="fw-bold col-4 mb-2">MODEL_ID</div>
+                <div class="col-8 mb-2">{zigbee_device.model_id}</div>""",
+                "exists": True,
+            },
+            {
+                "value": f"""<div class="fw-bold col-4 mb-2">POWER_SOURCE</div>
+                <div class="col-8 mb-2">{zigbee_device.power_source}</div>""",
+                "exists": True,
+            },
+            {
+                "value": "<p>No data received from the device.</p>",
+                "exists": True,
+            },
+        ]
+
+        self.assertEqual(response.status_code, 200)
+        self.assert_values_in_reponse(response=response, values=values)
+
+    def test_that_last_device_message_is_displayed(self):
+        json_message = {""}
+        user_device = DeviceFactory(user=self.user)
+        zigbee_device = ZigbeeDeviceFactory(device=user_device)
+        zigbee_message = ZigbeeMessageFactory(
+            zigbee_device=zigbee_device, raw_message="{'test': '1234'}"
+        )
+        zigbee_logs = factory.create_batch(
+            klass=ZigbeeLog,
+            size=6,
+            FACTORY_CLASS=ZigbeeLogFactory,
+            broker_message=zigbee_message,
+        )
+
+        print(zigbee_logs, dir(zigbee_logs))
+
+        assert 1 == 2
 
 
-class TestAddDevice(TestCase):
+class TestAddDevice(TestCaseWithHelpers):
     def setUp(self) -> None:
         self.user = UserFactory()
         self.client.force_login(self.user)
 
         self.url = reverse("devices:add")
-
-        return super().setUp()
 
     def test_anonymous_user_cannot_access_view_pass(self):
         self.client.logout()  # user is logged in as part of setup - need to logout before testing
@@ -196,18 +285,18 @@ class TestAddDevice(TestCase):
             },
             {"value": '<form method="post">', "exists": False},
         ]
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
     def test_that_user_can_create_a_device_when_they_have_device_locations(self):
         # device_location = DeviceLocationFactory(user=self.user)
-        device_locations = create_objects(
+        device_locations = self.create_objects(
             user=self.user, object_factory=DeviceLocationFactory
         )
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
 
-        assert_object_values_in_response(
+        self.assert_object_values_in_response(
             response=response,
             objects=device_locations,
             field="location",
@@ -220,27 +309,27 @@ class TestAddDevice(TestCase):
                 "exists": False,
             },
         ]
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
     def test_other_user_locations_not_shown_to_current_user_in_create_device(self):
-        current_user_device_locations = create_objects(
+        current_user_device_locations = self.create_objects(
             user=self.user, object_factory=DeviceLocationFactory
         )
 
         other_user = UserFactory()
-        other_user_device_locations = create_objects(
+        other_user_device_locations = self.create_objects(
             user=other_user, object_factory=DeviceLocationFactory
         )
 
         response = self.client.get(self.url)
 
-        assert_object_values_in_response(
+        self.assert_object_values_in_response(
             response=response,
             objects=current_user_device_locations,
             field="location",
             exists=True,
         )
-        assert_object_values_in_response(
+        self.assert_object_values_in_response(
             response=response,
             objects=other_user_device_locations,
             field="location",
@@ -248,7 +337,7 @@ class TestAddDevice(TestCase):
         )
 
 
-class TestUpdateDevice(TestCase):
+class TestUpdateDevice(TestCaseWithHelpers):
     def setUp(self) -> None:
         self.user = UserFactory()
         self.client.force_login(self.user)
@@ -278,7 +367,7 @@ class TestUpdateDevice(TestCase):
                 "exists": True,
             },
         ]
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
     def test_that_current_user_cannot_view_update_form_for_another_users_device(self):
         other_user_device = DeviceFactory()
@@ -347,7 +436,7 @@ class TestUpdateDevice(TestCase):
         self.assertTrue(response.url.startswith(login_url))
 
 
-class TestDeleteDevice(TestCase):
+class TestDeleteDevice(TestCaseWithHelpers):
     def setUp(self) -> None:
         self.user = UserFactory()
         self.client.force_login(self.user)
@@ -369,7 +458,7 @@ class TestDeleteDevice(TestCase):
                 "exists": True,
             },
         ]
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
     def test_delete_other_users_device_fail(self):
         other_user_device = DeviceFactory()
@@ -395,7 +484,7 @@ class TestDeleteDevice(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class TestDeviceMetadata(TestCase):
+class TestDeviceMetadata(TestCaseWithHelpers):
     def test_no_results_when_device_is_not_linked(self):
         pass
 
@@ -412,7 +501,7 @@ class TestDeviceMetadata(TestCase):
         pass
 
 
-class TestDeviceStatesJson(TestCase):
+class TestDeviceStatesJson(TestCaseWithHelpers):
     def test_cannot_view_other_users_device_state(self):
         pass
 
@@ -429,31 +518,31 @@ class TestDeviceStatesJson(TestCase):
         pass
 
 
-class TestLogsForDevice(TestCase):
+class TestLogsForDevice(TestCaseWithHelpers):
     pass
 
 
-class TestExportCSVDeviceLogs(TestCase):
+class TestExportCSVDeviceLogs(TestCaseWithHelpers):
     pass
 
 
-class TestDeviceRedirectView(TestCase):
+class TestDeviceRedirectView(TestCaseWithHelpers):
     pass
 
 
-class TestAddDeviceState(TestCase):
+class TestAddDeviceState(TestCaseWithHelpers):
     pass
 
 
-class TestDeleteDeviceState(TestCase):
+class TestDeleteDeviceState(TestCaseWithHelpers):
     pass
 
 
-class TestUpdateDeviceState(TestCase):
+class TestUpdateDeviceState(TestCaseWithHelpers):
     pass
 
 
-class TestListDeviceLocations(TestCase):
+class TestListDeviceLocations(TestCaseWithHelpers):
     def setUp(self) -> None:
         self.user = UserFactory()
         self.client.force_login(self.user)
@@ -475,7 +564,7 @@ class TestListDeviceLocations(TestCase):
         ]
 
         self.assertEqual(response.status_code, 200)
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
     def test_anonymous_users_are_redirected_to_login_page(self):
         self.client.logout()
@@ -485,22 +574,22 @@ class TestListDeviceLocations(TestCase):
         self.assertTrue(response.url.startswith(login_url))
 
     def test_location_appears_in_list_when_added(self):
-        device_locations = create_objects(
+        device_locations = self.create_objects(
             user=self.user, object_factory=DeviceLocationFactory
         )
 
         response = self.client.get(self.url)
 
-        assert_object_values_in_response(
+        self.assert_object_values_in_response(
             response=response, objects=device_locations, field="location"
         )
 
     def test_that_another_users_locations_do_not_appear(self):
-        current_user_device_locations = create_objects(
+        current_user_device_locations = self.create_objects(
             user=self.user, object_factory=DeviceLocationFactory
         )
         other_user = UserFactory()
-        other_user_device_locations = create_objects(
+        other_user_device_locations = self.create_objects(
             user=other_user, object_factory=DeviceLocationFactory
         )
 
@@ -508,13 +597,13 @@ class TestListDeviceLocations(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        assert_object_values_in_response(
+        self.assert_object_values_in_response(
             response=response,
             objects=current_user_device_locations,
             field="location",
             exists=True,
         )
-        assert_object_values_in_response(
+        self.assert_object_values_in_response(
             response=response,
             objects=other_user_device_locations,
             field="location",
@@ -522,11 +611,11 @@ class TestListDeviceLocations(TestCase):
         )
 
 
-class TestDetailDeviceLocation(TestCase):
+class TestDetailDeviceLocation(TestCaseWithHelpers):
     pass
 
 
-class TestUpdateDeviceLocation(TestCase):
+class TestUpdateDeviceLocation(TestCaseWithHelpers):
     def setUp(self) -> None:
         self.user = UserFactory()
         self.client.force_login(user=self.user)
@@ -578,10 +667,10 @@ class TestUpdateDeviceLocation(TestCase):
         ]
 
         self.assertEqual(response.status_code, 200)
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
 
-class TestDeleteDeviceLocation(TestCase):
+class TestDeleteDeviceLocation(TestCaseWithHelpers):
     def setUp(self) -> None:
         self.user = UserFactory()
         self.client.force_login(user=self.user)
@@ -624,7 +713,7 @@ class TestDeleteDeviceLocation(TestCase):
         ]
 
         self.assertEqual(response.status_code, 200)
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
     def test_user_cannot_delete_other_user_location(self):
         other_user = UserFactory()
@@ -648,7 +737,7 @@ class TestDeleteDeviceLocation(TestCase):
                 "exists": True,
             },
         ]
-        assert_values_in_reponse(response, values=values)
+        self.assert_values_in_reponse(response, values=values)
 
         # submit post request to delete object
         response = self.client.post(
@@ -675,7 +764,7 @@ class TestDeleteDeviceLocation(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(redirect_url, reverse("devices:locations:list"))
-        assert_values_in_reponse(response, values=values)
+        self.assert_values_in_reponse(response, values=values)
 
     def test_user_cannot_delete_another_users_location_by_posting_form(self):
         device_location = DeviceLocationFactory()
@@ -690,7 +779,7 @@ class TestDeleteDeviceLocation(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class TestAddDeviceLocation(TestCase):
+class TestAddDeviceLocation(TestCaseWithHelpers):
     def setUp(self) -> None:
         self.user = UserFactory()
         self.url = reverse("devices:locations:add")
@@ -719,7 +808,7 @@ class TestAddDeviceLocation(TestCase):
         ]
 
         self.assertEqual(response.status_code, 200)
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
 
     def test_that_submitting_form_results_in_success_message(self):
         form_data = {"location": "Super Duper Test Location"}
@@ -734,4 +823,4 @@ class TestAddDeviceLocation(TestCase):
         ]
 
         self.assertEqual(response.status_code, 200)
-        assert_values_in_reponse(response=response, values=values)
+        self.assert_values_in_reponse(response=response, values=values)
