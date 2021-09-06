@@ -27,7 +27,7 @@ METADATA_TYPE_FIELD = "zigbeemessage__zigbeelog__metadata_type"
 class ZigbeeDeviceQuerySet(models.QuerySet):
     """Custom queries"""
 
-    def get_metadata_fields(self, device):
+    def get_metadata_fields(self, device) -> models.QuerySet:
         """Return list of unique metadata values for the specified device"""
         return (
             self.filter(device=device)
@@ -36,7 +36,7 @@ class ZigbeeDeviceQuerySet(models.QuerySet):
             .distinct()
         )
 
-    def get_device_states(self, device):
+    def get_device_states(self, device) -> models.QuerySet:
         """Return list of user created states for the specified device"""
         return (
             self.filter(device=device)
@@ -446,4 +446,4 @@ class ZigbeeLog(BaseAbstractModel):
     metadata_value = models.JSONField(max_length=100)
 
     def __str__(self):
-        return str(self.broker_message)
+        return f"{self.metadata_type}={self.metadata_value}"

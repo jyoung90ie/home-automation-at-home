@@ -1,11 +1,13 @@
 """Handles user requests to devices app"""
 
+import logging
 from csv_export.views import CSVExportView
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.deletion import ProtectedError
 from django.db.utils import IntegrityError
+from django.http import response
 from django.http.response import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
@@ -29,6 +31,9 @@ from ..mixins import (
 from ..views import UUIDView
 from . import forms, models
 from .mixins import DeviceStateFormMixin, PermitObjectOwnerOnly
+
+logger = logging.getLogger("mqtt")
+logging.basicConfig(level=logging.INFO)
 
 
 class AddDeviceLocation(LoginRequiredMixin, CreateView):
@@ -154,7 +159,7 @@ class DeleteDeviceLocation(UUIDView, LimitResultsToUserMixin, DeleteView):
             return HttpResponseRedirect(request.path)
 
 
-class DeviceMetadata(UUIDView, BaseDetailView):
+class DeviceMetadata(UUIDView, PermitObjectOwnerOnly, BaseDetailView):
     """Return distinct list of device's metadata - for user in event trigger form with AJAX"""
 
     http_method_names = [
@@ -176,14 +181,18 @@ class DeviceMetadata(UUIDView, BaseDetailView):
         self.request = request
         device = self.get_object()
 
-        try:
-            zigbee_device = apps.get_model("zigbee", "ZigbeeDevice")
-            metadata_fields = zigbee_device.objects.get_metadata_fields(device)
-            json_data = list(metadata_fields)
-        except Exception as ex:
-            metadata_on_error = ("", "-----")
-            json_data = list(metadata_on_error)
+        response_data = ("", "-----")
 
+        try:
+            zb_model = apps.get_model("zigbee", "ZigbeeDevice")
+            metadata = zb_model.objects.get_metadata_fields(device)
+
+            if metadata.first():
+                response_data = metadata
+        except (AssertionError, TypeError) as ex:
+            logger.info("Device has no metadata - %s - %s", device, ex)
+
+        json_data = list(response_data)
         return JsonResponse({"data": json_data}, safe=False)
 
 

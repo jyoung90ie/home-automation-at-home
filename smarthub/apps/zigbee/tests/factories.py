@@ -55,6 +55,11 @@ class ZigbeeLogFactory(factory.django.DjangoModelFactory):
             "off",
             "true",
             "false",
-            fuzzy.FuzzyInteger(low=0, high=100),
+            "100",
+            "80",
+            "60",
+            "40",
+            "20",
+            "0",
         ]
     )

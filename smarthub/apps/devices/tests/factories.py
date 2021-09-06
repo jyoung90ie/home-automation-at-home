@@ -35,7 +35,7 @@ class DeviceLocationFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
 
 
-class DeviceStateFactory(factory.django.DjangoModelFactory):
+class AbstractDeviceStateFactory(factory.django.DjangoModelFactory):
     class Meta:
         exclude = ["content_object"]
         abstract = True
@@ -50,7 +50,7 @@ class DeviceStateFactory(factory.django.DjangoModelFactory):
     command_value = fuzzy.FuzzyChoice(["on", "off", "toggle"])
 
 
-class DeviceStateZigbeeFactory(factory.django.DjangoModelFactory):
+class ZigbeeDeviceStateFactory(AbstractDeviceStateFactory):
     class Meta:
         model = models.DeviceState
 

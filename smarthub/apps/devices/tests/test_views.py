@@ -1,13 +1,20 @@
 from django.urls import reverse
-
+from unittest import mock
+import json
 import factory
-from .factories import DeviceFactory, DeviceLocationFactory, UserFactory
+from .factories import (
+    DeviceFactory,
+    DeviceLocationFactory,
+    UserFactory,
+    ZigbeeDeviceStateFactory,
+)
 from ...zigbee.tests.factories import (
     ZigbeeDeviceFactory,
     ZigbeeLogFactory,
     ZigbeeMessageFactory,
 )
 from ...zigbee.models import ZigbeeLog
+from ...devices.models import DeviceState
 
 from .helpers import TestCaseWithHelpers
 
@@ -122,7 +129,7 @@ class TestDetailDevice(TestCaseWithHelpers):
 
         response = self.get_url_response(uuid=other_user_device.uuid)
 
-        self.assertTrue(other_user_device.user != self.user)
+        self.assertTrue(other_user_device.user is not self.user)
         self.assertEqual(response.status_code, 403)
 
     def test_device_attributes_listed(self):
@@ -243,22 +250,136 @@ class TestDetailDevice(TestCaseWithHelpers):
         self.assert_values_in_reponse(response=response, values=values)
 
     def test_that_last_device_message_is_displayed(self):
-        json_message = {""}
+        json_message = "{'test': '1234'}"
         user_device = DeviceFactory(user=self.user)
         zigbee_device = ZigbeeDeviceFactory(device=user_device)
-        zigbee_message = ZigbeeMessageFactory(
-            zigbee_device=zigbee_device, raw_message="{'test': '1234'}"
+
+        # create two zigbee messages and confirm only the last appears
+        first_zb_msg = ZigbeeMessageFactory(
+            zigbee_device=zigbee_device, raw_message=json_message
         )
-        zigbee_logs = factory.create_batch(
+
+        first_msg_logs = factory.create_batch(
+            klass=ZigbeeLog,
+            size=3,
+            FACTORY_CLASS=ZigbeeLogFactory,
+            broker_message=first_zb_msg,
+        )
+
+        # load page and check contents
+        response = self.get_url_response(uuid=user_device.uuid)
+
+        for log in first_msg_logs:
+            values = [
+                {
+                    "value": f"""<tr>
+                            <td>{log.metadata_type}</td>
+                            <td><em>{log.metadata_value}</em></td>
+                        </tr>""",
+                    "exists": True,
+                },
+            ]
+
+            self.assert_values_in_reponse(response=response, values=values)
+
+        # create new logs and confirm they replace the previous version on page
+        last_zb_message = ZigbeeMessageFactory(
+            zigbee_device=zigbee_device, raw_message=json_message
+        )
+        last_msg_logs = factory.create_batch(
             klass=ZigbeeLog,
             size=6,
             FACTORY_CLASS=ZigbeeLogFactory,
-            broker_message=zigbee_message,
+            broker_message=last_zb_message,
         )
 
-        print(zigbee_logs, dir(zigbee_logs))
+        response = self.get_url_response(uuid=user_device.uuid)
 
-        assert 1 == 2
+        for log in last_msg_logs:
+            values = [
+                {
+                    "value": f"""<tr>
+                            <td>{log.metadata_type}</td>
+                            <td><em>{log.metadata_value}</em></td>
+                        </tr>""",
+                    "exists": True,
+                },
+            ]
+
+            self.assert_values_in_reponse(response=response, values=values)
+
+    @mock.patch(
+        "django.template.context_processors.get_token",
+        mock.Mock(return_value="csrf-token"),
+    )
+    def test_adding_device_state_appears_on_detail_view(self):
+        user_device = DeviceFactory(user=self.user)
+        zigbee_device = ZigbeeDeviceFactory(device=user_device)
+
+        device_states = factory.create_batch(
+            klass=DeviceState,
+            size=3,
+            FACTORY_CLASS=ZigbeeDeviceStateFactory,
+            content_object=zigbee_device,
+        )
+
+        response = self.get_url_response(uuid=user_device.uuid)
+
+        counter = 1
+        for state in device_states:
+            values = [
+                {
+                    "value": f"""<tr class="device-state-row"
+                        onclick='window.location="/devices/{user_device.uuid}/state/{state.uuid}/update/";'>""",
+                    "exists": True,
+                },
+                {
+                    "value": f"""<td>{counter}</td>""",
+                    "exists": True,
+                },
+                {
+                    "value": f"""<td>{state.name}</td>""",
+                    "exists": True,
+                },
+                {
+                    "value": f"""<td>{state.command}</td>""",
+                    "exists": True,
+                },
+                {
+                    "value": f"""<td>{state.command_value}</td>""",
+                    "exists": True,
+                },
+                {
+                    "value": f"""<td>TBC</td>""",
+                    "exists": True,
+                },
+                {
+                    "value": f"""<a class="btn btn-sm btn-primary"
+    href="/devices/{user_device.uuid}/state/{state.uuid}/update/">
+    <i class="far fa-edit" title="Update device state"></i>
+</a>""",
+                    "exists": True,
+                },
+                {
+                    "value": f"""<a class="btn btn-sm btn-danger"
+    href="/devices/{user_device.uuid}/state/{state.uuid}/delete/">
+    <i class="fas fa-trash-alt" title="Delete device state"></i>
+</a>""",
+                    "exists": True,
+                },
+                {
+                    "value": f"""<form method="post" class="d-inline change-device-state" action="/mqtt/publish/{state.uuid}/trigger/">
+    <input type="hidden" name="csrfmiddlewaretoken" value="csrf-token">
+    <button type="submit" class="d-inline btn btn-sm btn-info">
+        <i class="fas fa-toggle-on" title="Activate device state"></i>
+    </button>
+</form>""",
+                    "exists": True,
+                },
+            ]
+
+            self.assert_values_in_reponse(response=response, values=values)
+            counter += 1
 
 
 class TestAddDevice(TestCaseWithHelpers):
@@ -375,7 +496,7 @@ class TestUpdateDevice(TestCaseWithHelpers):
         url = reverse("devices:device:update", kwargs={"uuid": other_user_device.uuid})
         response = self.client.get(url)
 
-        self.assertFalse(other_user_device.user == self.user)
+        self.assertFalse(other_user_device.user is self.user)
         self.assertEqual(response.status_code, 403)
 
     def test_update_device_with_invalid_uuid_pass(self):
@@ -425,7 +546,7 @@ class TestUpdateDevice(TestCaseWithHelpers):
             updated_data,
             follow=True,
         )
-        self.assertFalse(other_user_device.user == self.user)
+        self.assertFalse(other_user_device.user is self.user)
         self.assertEqual(response.status_code, 403)
 
     def test_that_anonymous_users_are_redirected_to_login(self):
@@ -485,20 +606,92 @@ class TestDeleteDevice(TestCaseWithHelpers):
 
 
 class TestDeviceMetadata(TestCaseWithHelpers):
-    def test_no_results_when_device_is_not_linked(self):
-        pass
+    def setUp(self):
+        self.user = UserFactory()
+        self.client.force_login(self.user)
+
+        self.device = DeviceFactory(user=self.user)
+
+    def get_url_response(self, uuid=None, url=None):
+        if not url:
+            url = reverse("devices:device:metadata", kwargs={"uuid": uuid})
+
+        return self.client.get(url)
+
+    def test_when_no_device_metadata_returns_default_response(self):
+        response = self.get_url_response(uuid=self.device.uuid)
+        expected_json_response = json.dumps({"data": ["", "-----"]})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode("utf-8"), expected_json_response)
 
     def test_cannot_view_other_users_device_metadata(self):
-        pass
+        other_user_device = DeviceFactory()
 
-    def test_nothing_displayed_when_device_is_linked_but_has_no_data(self):
-        pass
+        response = self.get_url_response(uuid=other_user_device.uuid)
 
-    def test_only_unique_metadata_is_returned(self):
-        pass
+        self.assertTrue(self.user is not other_user_device.user)
+        self.assertTrue(response.status_code, 404)
 
-    def test_anonymous_users_are_redirected_to_login(self):
-        pass
+        # change user and try again
+        self.client.logout()
+        self.client.force_login(user=other_user_device.user)
+
+        response = self.get_url_response(uuid=other_user_device.uuid)
+        self.assertTrue(response.status_code, 200)
+
+    def test_when_linked_device_has_no_metadata_returns_default_response(self):
+        zb_device = ZigbeeDeviceFactory(device=self.device)
+
+        response = self.get_url_response(uuid=self.device.uuid)
+        expected_json_response = json.dumps({"data": ["", "-----"]})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode("utf-8"), expected_json_response)
+
+    def test_metadata_is_returned_ordered_alphabetically_and_unique_values_only(self):
+        zb_device = ZigbeeDeviceFactory(device=self.device)
+        zb_message = ZigbeeMessageFactory(
+            zigbee_device=zb_device, raw_message="{'test': '1234'}"
+        )
+        # create metadata
+        ZigbeeLogFactory(
+            broker_message=zb_message, metadata_type="state", metadata_value="on"
+        )
+        ZigbeeLogFactory(
+            broker_message=zb_message, metadata_type="state", metadata_value="off"
+        )
+        ZigbeeLogFactory(
+            broker_message=zb_message, metadata_type="occupancy", metadata_value="false"
+        )
+        ZigbeeLogFactory(
+            broker_message=zb_message,
+            metadata_type="temperature",
+            metadata_value="21.2",
+        )
+        ZigbeeLogFactory(
+            broker_message=zb_message, metadata_type="humidity", metadata_value="61.3"
+        )
+        ZigbeeLogFactory(
+            broker_message=zb_message, metadata_type="occupancy", metadata_value="true"
+        )
+
+        ordered_values = ["humidity", "occupancy", "state", "temperature"]
+        expected_json_response = json.dumps({"data": ordered_values})
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode("utf-8"), expected_json_response)
+
+    def test_anonymous_users_are_redirected_to_login_page(self):
+        self.client.logout()
+
+        ZigbeeDeviceFactory(device=self.device)
+
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith(login_url))
 
 
 class TestDeviceStatesJson(TestCaseWithHelpers):
@@ -639,7 +832,7 @@ class TestUpdateDeviceLocation(TestCaseWithHelpers):
     ):
         other_user_location = DeviceLocationFactory()
 
-        self.assertTrue(self.user != other_user_location.user)
+        self.assertTrue(self.user is not other_user_location.user)
 
         new_url = reverse(
             "devices:locations:update", kwargs={"uuid": other_user_location.uuid}
@@ -775,7 +968,7 @@ class TestDeleteDeviceLocation(TestCaseWithHelpers):
             follow=True,
         )
 
-        self.assertTrue(device_location.user != self.user)
+        self.assertTrue(device_location.user is not self.user)
         self.assertEqual(response.status_code, 404)
 
 
