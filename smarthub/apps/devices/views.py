@@ -30,7 +30,7 @@ from ..mixins import (
 )
 from ..views import UUIDView
 from . import forms, models
-from .mixins import DeviceStateFormMixin, PermitObjectOwnerOnly
+from .mixins import DeviceStateFormMixin, PermitObjectOwnerOnly, PermitDeviceOwnerOnly
 
 logger = logging.getLogger("mqtt")
 logging.basicConfig(level=logging.INFO)
@@ -424,10 +424,10 @@ class AddDeviceState(
 
 
 class UpdateDeviceState(
+    UUIDView,
+    PermitDeviceOwnerOnly,
     FormSuccessMessageMixin,
     DeviceStateFormMixin,
-    PermitObjectOwnerOnly,
-    UUIDView,
     UpdateView,
 ):
     """Handles data and rendering for update form"""
@@ -436,6 +436,10 @@ class UpdateDeviceState(
     template_name = "devices/device_state_update_form.html"
     slug_url_kwarg = "suuid"
     success_message = "State values have been updated"
+
+    def __init__(self) -> None:
+        self.perm_obj = models.Device
+        super().__init__()
 
     def get_initial(self):
         """Populate update form with stored data"""
@@ -450,7 +454,7 @@ class UpdateDeviceState(
         return models.DeviceState.objects.filter(uuid=self.kwargs["suuid"])
 
 
-class DeleteDeviceState(UUIDView, PermitObjectOwnerOnly, DeleteView):
+class DeleteDeviceState(UUIDView, PermitDeviceOwnerOnly, DeleteView):
     """Enables user to delete any of their own device states"""
 
     model = models.DeviceState
@@ -492,7 +496,7 @@ class DeleteDeviceState(UUIDView, PermitObjectOwnerOnly, DeleteView):
             return HttpResponseRedirect(request.path)
 
 
-class DeviceStatesJson(UUIDView, BaseDetailView):
+class DeviceStatesJson(UUIDView, PermitObjectOwnerOnly, BaseDetailView):
     """Return list of device states - for user in event response form with AJAX"""
 
     http_method_names = [

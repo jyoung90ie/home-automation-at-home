@@ -350,7 +350,7 @@ class TestDetailDevice(TestCaseWithHelpers):
                     "exists": True,
                 },
                 {
-                    "value": f"""<td>TBC</td>""",
+                    "value": """<td>TBC</td>""",
                     "exists": True,
                 },
                 {
@@ -608,7 +608,7 @@ class TestDeleteDevice(TestCaseWithHelpers):
 class TestDeviceMetadata(TestCaseWithHelpers):
     def setUp(self):
         self.user = UserFactory()
-        self.client.force_login(self.user)
+        self.client.force_login(user=self.user)
 
         self.device = DeviceFactory(user=self.user)
 
@@ -695,44 +695,143 @@ class TestDeviceMetadata(TestCaseWithHelpers):
 
 
 class TestDeviceStatesJson(TestCaseWithHelpers):
+    def setUp(self) -> None:
+        self.user = UserFactory()
+        self.client.force_login(user=self.user)
+
+        self.device = DeviceFactory(user=self.user)
+
+    def get_url_response(self, uuid=None, url=None):
+        if not url:
+            url = reverse("devices:device:states", kwargs={"uuid": uuid})
+
+        return self.client.get(url)
+
     def test_cannot_view_other_users_device_state(self):
+        device_state = ZigbeeDeviceStateFactory()
+        user_device = device_state.content_object.device
+
+        response = self.get_url_response(uuid=user_device.uuid)
+
+        self.assertTrue(self.user != user_device.user)
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_can_access_own_device_states(self):
+        zb_device = ZigbeeDeviceFactory(device=self.device)
+        device_state = ZigbeeDeviceStateFactory(content_object=zb_device)
+        device_state2 = ZigbeeDeviceStateFactory(content_object=zb_device)
+        user_device = device_state.content_object.device
+
+        response = self.get_url_response(uuid=user_device.uuid)
+
+        expected_data = json.dumps(
+            {
+                "data": [
+                    (device_state.uuid, device_state.name.capitalize()),
+                    (device_state2.uuid, device_state2.name.capitalize()),
+                ]
+            }
+        )
+
+        self.assertTrue(self.user == user_device.user)
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content.decode("utf-8"), expected_data)
+
+    def test_anonymous_user_is_redirected(self):
+        self.client.logout()
+
+        device_state = ZigbeeDeviceStateFactory()
+        user_device = device_state.content_object.device
+
+        response = self.get_url_response(uuid=user_device.uuid)
+
+        self.assertTrue(self.user != user_device.user)
+        self.assertEqual(response.status_code, 302)
+
+
+class TestLogsForDevice(TestCaseWithHelpers):
+    def setUp(self) -> None:
+        self.user = UserFactory()
+        self.client.force_login(user=self.user)
+
+        self.device = DeviceFactory(user=self.user)
+        self.zb_device = ZigbeeDeviceFactory(device=self.device)
+        self.zb_msg = ZigbeeMessageFactory(zigbee_device=self.zb_device)
+
+        for _ in range(5):
+            ZigbeeLog(broker_message=self.zb_msg)
+
+    def test_user_can_access_device_logs(self):
         pass
 
-    def test_that_user_cannot_create_state_without_a_device(self):
+    def test_logs_cannot_be_accessed_by_any_other_user(self):
         pass
 
-    def test_that_all_device_states_listed_under_device(self):
+    def test_logs_cannot_be_accessed_by_anonymous(self):
         pass
 
-    def test_that_user_can_edit_device_state(self):
+    def test_logs_are_paginated(self):
         pass
+
+    def test_logs_are_structed_as_expected(self):
+        pass
+
+
+class TestExportCSVDeviceLogs(TestCaseWithHelpers):
+    def setUp(self) -> None:
+        self.user = UserFactory()
+        self.client.force_login(user=self.user)
+
+        self.device = DeviceFactory(user=self.user)
+
+
+class TestDeviceRedirectView(TestCaseWithHelpers):
+    def setUp(self) -> None:
+        self.user = UserFactory()
+        self.client.force_login(user=self.user)
+
+        self.device = DeviceFactory(user=self.user)
+
+
+class TestAddDeviceState(TestCaseWithHelpers):
+    def setUp(self) -> None:
+        self.user = UserFactory()
+        self.client.force_login(user=self.user)
+
+        self.device = DeviceFactory(user=self.user)
 
     def test_that_user_can_delete_device_state(self):
         pass
 
 
-class TestLogsForDevice(TestCaseWithHelpers):
-    pass
-
-
-class TestExportCSVDeviceLogs(TestCaseWithHelpers):
-    pass
-
-
-class TestDeviceRedirectView(TestCaseWithHelpers):
-    pass
-
-
-class TestAddDeviceState(TestCaseWithHelpers):
-    pass
-
-
 class TestDeleteDeviceState(TestCaseWithHelpers):
-    pass
+    def setUp(self) -> None:
+        self.user = UserFactory()
+        self.client.force_login(user=self.user)
+
+        self.device = DeviceFactory(user=self.user)
 
 
 class TestUpdateDeviceState(TestCaseWithHelpers):
-    pass
+    def setUp(self) -> None:
+        self.user = UserFactory()
+        self.client.force_login(user=self.user)
+
+        self.device = DeviceFactory(user=self.user)
+
+    def test_user_can_update_own_device_state(self):
+        zb_device = ZigbeeDeviceFactory(device=self.device)
+        device_state = ZigbeeDeviceStateFactory(content_object=zb_device)
+        user_device = device_state.content_object.device
+
+        response = self.get_url_response(
+            url=reverse(
+                "devices:device:states:state:update",
+                kwargs={"uuid": user_device.uuid, "suuid": device_state.uuid},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
 
 
 class TestListDeviceLocations(TestCaseWithHelpers):

@@ -40,3 +40,19 @@ class DeviceStateFormMixin:
             "devices:device:detail",
             kwargs={"uuid": self.get_form_kwargs()["device_uuid"]},
         )
+
+
+class PermitDeviceOwnerOnly(AccessMixin):
+    def dispatch(self, request, *args, **kwargs):
+        uuid = kwargs.pop("uuid")
+
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+
+        user = getattr(request, "user", None)
+        qs = Device.objects.filter(uuid=uuid, user=user)
+
+        if not qs:
+            return self.handle_no_permission()
+
+        return super().dispatch(request, *args, **kwargs)
