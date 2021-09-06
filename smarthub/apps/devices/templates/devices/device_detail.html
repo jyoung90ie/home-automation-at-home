@@ -52,7 +52,7 @@
                 </thead>
                 <tbody>
                     {% endif %}
-                    <tr class="event-trigger-row"
+                    <tr class="device-state-row"
                         onclick='window.location="{% url "devices:device:states:state:update" uuid=device.uuid suuid=state.uuid %}";'>
                         <td>{{ forloop.counter }}</td>
                         <td>{{ state.name|capfirst }}</td>
