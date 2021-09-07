@@ -1,6 +1,7 @@
 from django.urls import reverse
 from unittest import mock
 import json
+import math
 import factory
 from .factories import (
     DeviceFactory,
@@ -13,7 +14,7 @@ from ...zigbee.tests.factories import (
     ZigbeeLogFactory,
     ZigbeeMessageFactory,
 )
-from ...zigbee.models import ZigbeeLog
+from ...zigbee.models import ZigbeeLog, ZigbeeMessage, ZigbeeDevice
 from ...devices.models import DeviceState
 
 from .helpers import TestCaseWithHelpers
@@ -758,23 +759,91 @@ class TestLogsForDevice(TestCaseWithHelpers):
         self.zb_device = ZigbeeDeviceFactory(device=self.device)
         self.zb_msg = ZigbeeMessageFactory(zigbee_device=self.zb_device)
 
-        for _ in range(5):
-            ZigbeeLog(broker_message=self.zb_msg)
+    def get_url_response(self, uuid=None, url=None):
+        if not url:
+            url = reverse("devices:device:logs:view", kwargs={"uuid": uuid})
+
+        return self.client.get(url)
 
     def test_user_can_access_device_logs(self):
-        pass
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 200)
+
+        values = [
+            {
+                "value": "<h1>Showing device logs for...</h1>",
+                "exists": True,
+            },
+            {
+                "value": f"<strong>{self.device.friendly_name} [{self.device.device_identifier}]</strong>",
+                "exists": True,
+            },
+        ]
+        self.assert_values_in_reponse(response=response, values=values)
 
     def test_logs_cannot_be_accessed_by_any_other_user(self):
-        pass
+        new_user = UserFactory()
+        self.client.force_login(user=new_user)
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 403)
 
     def test_logs_cannot_be_accessed_by_anonymous(self):
-        pass
+        self.client.logout()
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 302)
 
     def test_logs_are_paginated(self):
-        pass
+        factory.create_batch(
+            klass=ZigbeeMessage,
+            size=60,
+            FACTORY_CLASS=ZigbeeMessageFactory,
+            zigbee_device=self.zb_device,
+        )
 
-    def test_logs_are_structed_as_expected(self):
-        pass
+        response = self.get_url_response(uuid=self.device.uuid)
+        # print(response.content.decode("utf-8"))
+
+        all_msgs = ZigbeeMessage.objects.all()
+        total_msgs = all_msgs.count()
+        expected_pages = math.ceil(total_msgs / 15)
+        expected_html = f"""<span class="page-link">1 of {expected_pages}</span>"""
+
+        self.assertContains(
+            response=response,
+            text=expected_html,
+            status_code=200,
+        )
+
+    def test_logs_are_rendered_with_correct_template(self):
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertTemplateUsed(
+            response=response, template_name="devices/device_logs.html"
+        )
+
+    def test_view_returns_404_when_device_is_not_linked(self):
+        # remove linked device
+        ZigbeeDevice.objects.filter(uuid=self.zb_device.uuid).delete()
+
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_view_returns_no_logs_message_when_there_are_no_zb_messages_for_device(
+        self,
+    ):
+        ZigbeeMessage.objects.all().delete()
+
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertContains(
+            response=response,
+            text="There are no logs for this device.",
+            status_code=200,
+        )
 
 
 class TestExportCSVDeviceLogs(TestCaseWithHelpers):
@@ -783,6 +852,49 @@ class TestExportCSVDeviceLogs(TestCaseWithHelpers):
         self.client.force_login(user=self.user)
 
         self.device = DeviceFactory(user=self.user)
+        self.zb_device = ZigbeeDeviceFactory(device=self.device)
+        factory.create_batch(
+            klass=ZigbeeMessage,
+            size=10,
+            FACTORY_CLASS=ZigbeeMessageFactory,
+            zigbee_device=self.zb_device,
+        )
+
+    def get_url_response(self, uuid=None, url=None):
+        if not url:
+            url = reverse("devices:device:logs:export", kwargs={"uuid": uuid})
+
+        return self.client.get(url)
+
+    def test_that_csv_file_is_served_to_valid_user_for_valid_device(self):
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get("Content-Type"), "text/csv")
+        self.assertEqual(
+            response.get("Content-Disposition"),
+            'attachment; filename="zigbee-messages.csv"',
+        )
+
+    def test_view_returns_404_when_there_are_no_messages(self):
+        ZigbeeMessage.objects.all().delete()
+
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_logs_cannot_be_accessed_by_any_other_user(self):
+        new_user = UserFactory()
+        self.client.force_login(user=new_user)
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_logs_cannot_be_accessed_by_anonymous(self):
+        self.client.logout()
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 302)
 
 
 class TestDeviceRedirectView(TestCaseWithHelpers):

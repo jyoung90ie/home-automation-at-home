@@ -29,6 +29,7 @@ class ZigbeeMessageFactory(factory.django.DjangoModelFactory):
     uuid = factory.Faker("uuid4")
     zigbee_device = factory.SubFactory(ZigbeeDeviceFactory)
     topic = factory.SelfAttribute("zigbee_device.friendly_name")
+    raw_message = factory.Faker("sentence")
 
 
 @factory.django.mute_signals(post_save)
