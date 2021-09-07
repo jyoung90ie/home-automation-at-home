@@ -353,7 +353,7 @@ class DetailDevice(UUIDView, PermitObjectOwnerOnly, DetailView):
         return context
 
 
-class LogsForDevice(UUIDView, PermitObjectOwnerOnly, ListView):
+class LogsForDevice(UUIDView, PermitDeviceOwnerOnly, ListView):
     """Enables user to view hardware device logs - if their device has been linked to a
     hadware device"""
 
@@ -377,9 +377,13 @@ class LogsForDevice(UUIDView, PermitObjectOwnerOnly, ListView):
         uuid = self.kwargs.pop("uuid")
         self.device = models.Device.objects.get(uuid=uuid)
 
-        queryset = self.device.get_zigbee_messages()
-        if not queryset:
-            raise Http404("Could not find device logs")
+        if not self.device.is_linked():
+            raise Http404("Device is not linked")
+
+        try:
+            queryset = self.device.get_zigbee_messages()
+        except UnboundLocalError as ex:
+            queryset = None
 
         return queryset
 
@@ -388,6 +392,14 @@ class ExportCSVDeviceLogs(CSVExportView, LogsForDevice):
     """Exports logs for specified device"""
 
     exclude = ("id", "uuid", "zigbee_device", "updated_at", "topic")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if not qs:
+            raise Http404("No device logs to export")
+
+        return qs
 
 
 class DeviceRedirectView(RedirectView):
