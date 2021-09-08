@@ -4,14 +4,20 @@ import json
 import logging
 from json.decoder import JSONDecodeError
 from random import random
+from ....devices.models import DeviceState
 
 import paho.mqtt.client as mqtt
 from django.core.cache import cache
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 
-from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
-                               MQTT_SERVER, MQTT_TOPICS)
+from smarthub.settings import (
+    MQTT_BASE_TOPIC,
+    MQTT_CLIENT_NAME,
+    MQTT_QOS,
+    MQTT_SERVER,
+    MQTT_TOPICS,
+)
 
 from ....zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
 from ... import defines
@@ -198,6 +204,7 @@ class MQTTMessage:
 
         if self.topic == defines.MQTT_DEVICE_LIST_TOPIC:
             self.parse_devices()
+            self.parse_device_attributes()
         elif self.topic in defines.MQTT_TOPIC_IGNORE_LIST:
             logger.info("MQTT - msg received on topic %s - ignoring", self.topic)
             return
@@ -220,12 +227,100 @@ class MQTTMessage:
                     new_device = ZigbeeDevice.create_device(device)
 
                     logger.info("MQTT - new device added - %s", new_device.ieee_address)
+
+                    self.parse_device_attributes(
+                        zb_device=new_device, device_data=device
+                    )
                 except Exception as ex:
                     logger.error(
                         "Exception creating new Zigbee Device (%s) %s", device, ex
                     )
             else:
-                logger.info("Device already exists [%s]", ieee_address)
+                logger.info(
+                    "Device already exists - %s",
+                    ieee_address,
+                )
+
+    def parse_device_attributes(
+        self, zb_device: "ZigbeeDevice", device_data: dict
+    ) -> None:
+        """Parses device capabilities - this will determine whether a device can be controlled or is a sensor"""
+        logger.info("Parsing device attributes...")
+        # try:
+        #     devices = self.parsed_payload
+        #     logger.info("Devices= %s", devices)
+        #     for device in devices:
+        #         ieee_address = device.get("ieee_address")
+        #         if not ieee_address:
+        #             continue
+
+        #         try:
+        #             zb_device = ZigbeeDevice.objects.get(ieee_address=ieee_address)
+        #         except (
+        #             ZigbeeDevice.DoesNotExist,
+        #             ZigbeeDevice.MultipleObjectsReturned,
+        #         ) as ex:
+        #             logger.info(ex)
+        #             continue
+
+        logger.info("Checking device attributes for - %s", zb_device)
+
+        definitions = device_data.get("definition")
+
+        if definitions:
+            attributes = definitions.get("exposes")
+
+            for attribute in attributes:
+                features = attribute.get("features")
+
+                if features:
+                    logger.info("Found attributes for - %s", zb_device)
+                    for feature in features:
+                        state_command = feature.get("property")
+                        value_on = feature.get("value_on")
+                        value_off = feature.get("value_off")
+                        value_toggle = feature.get("value_toggle")
+
+                        if state_command:
+                            logger.info(
+                                "Updating device is_controllable - %s",
+                                zb_device,
+                            )
+                            zb_device.is_controllable = True
+                            zb_device.save()
+
+                            command_values = [value_off, value_on, value_toggle]
+
+                            for cmd_val in command_values:
+                                if not cmd_val:
+                                    continue
+
+                                if zb_device.device_states.filter(name=cmd_val).first():
+                                    logger.info(
+                                        "Device state already exists [%s=%s] - %s",
+                                        state_command,
+                                        cmd_val,
+                                        zb_device,
+                                    )
+                                    continue
+
+                                logger.info(
+                                    "Adding device state [%s=%s] - %s",
+                                    state_command,
+                                    cmd_val,
+                                    zb_device,
+                                )
+                                try:
+                                    DeviceState.objects.create(
+                                        content_object=zb_device,
+                                        name=cmd_val,
+                                        command=state_command,
+                                        command_value=cmd_val,
+                                    )
+                                    logger.info("DeviceState created - %s", zb_device)
+                                except Exception as ex:
+                                    logger.info(ex)
+        logger.info("Finished parsing device attributes...")
 
     def parse_message(self):
         """Parses MQTT messages - linking to a ZigbeeDevice (if possible) - and

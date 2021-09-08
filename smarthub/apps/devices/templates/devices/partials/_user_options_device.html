@@ -5,7 +5,7 @@
     <i class="fas fa-trash-alt" title="Delete device"></i>
 </a>
 
-{% if device.is_linked %}
+{% if device.is_linked and device.is_controllable %}
 <form method="post" class="d-inline change-device-state" action="{% url 'mqtt:publish:toggle' duuid=device.uuid %}">
     {% csrf_token %}
     <button type="submit" class="d-inline btn btn-sm btn-info">

@@ -7,7 +7,7 @@ from django.views.generic.base import View
 from ..devices.models import Device, DeviceState
 from ..views import UUIDView
 from .defines import MQTT_STATE_COMMAND, MQTT_STATE_TOGGLE_VALUE
-from .publish import send_message
+from .publish import MQTTPublishError, send_message
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
@@ -50,13 +50,17 @@ class ToggleDeviceState(UUIDView, View):
                 "message": f"{device.friendly_name.title()} has been toggled",
             }
 
-        except Exception as ex:
+        except MQTTPublishError as ex:
             logger.info("%s - there was a problem sending toggle command", __name__)
             response = {
                 "status": "error",
-                "message": f"{device.friendly_name.title()} could not be toggled - check the device settings and try again",
+                "message": f"Error: {device.friendly_name.title()} could not be toggled - check the device settings and try again.",
             }
-
+        except Exception as ex:
+            response = {
+                "status": "error",
+                "message": f"Error: There was a system error - please try again later. If this persists please contact the administrator",
+            }
         return JsonResponse(response)
 
 
@@ -77,7 +81,6 @@ class TriggerDeviceState(UUIDView, View):
                 DeviceState,
                 uuid=state_uuid,
                 zigbee__device__user=self.request.user,
-                # TODO - needs updated to reference any related_query_names from GenericRelations
             )
         except Exception as ex:
             print("Error: ", ex)
@@ -113,7 +116,7 @@ class TriggerDeviceState(UUIDView, View):
                 "message": f"{user_device_name} state updated with configuration from device state '{state_name.title()}'",
             }
 
-        except Exception as ex:
+        except MQTTPublishError as ex:
             logger.info("%s - there was a problem sending trigger command", __name__)
             response = {
                 "status": "error",

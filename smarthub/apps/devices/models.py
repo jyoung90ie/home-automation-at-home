@@ -281,6 +281,16 @@ class Device(BaseAbstractModel):
         """Returns true if user device is linked to a hardware device"""
         return self.get_linked_device() is not None
 
+    def is_controllable(self) -> bool:
+        """Returns if the underlying hardware device can be controlled"""
+        if self.is_linked:
+            try:
+                linked_device = self.get_linked_device().first()
+                return getattr(linked_device, "is_controllable", False)
+            except AttributeError as ex:
+                pass
+        return False
+
     def get_absolute_url(self):
         """Default redirect url"""
         return reverse("devices:device:detail", kwargs={"uuid": self.uuid})

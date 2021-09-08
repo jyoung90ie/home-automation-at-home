@@ -6,8 +6,7 @@ from random import random
 
 import paho.mqtt.client as mqtt
 
-from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
-                               MQTT_SERVER)
+from smarthub.settings import MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS, MQTT_SERVER
 
 from .defines import MQTT_DEVICE_STATE_ENDPOINT, MQTT_STATE_COMMAND
 
@@ -17,6 +16,10 @@ logging.basicConfig()
 
 
 # PUBLISH_CLIENT_NAME = MQTT_CLIENT_NAME + " - Publisher"
+
+
+class MQTTPublishError(Exception):
+    """Custom exception to indicate error publishing to MQTT"""
 
 
 class MQTTPublish:
@@ -60,22 +63,28 @@ class MQTTPublish:
             logger.info(ex)
             self.disconnect()
 
+            raise MQTTPublishError("Could not connect to server") from ex
+
     def on_connect(
         self, client, user_data, flags, result_code, properties=None
     ) -> None:
         """Called when client connects to broker"""
         if result_code == 0:
             logger.info("Connected to MQTT Broker")
+            # timer = threading.Timer(interval=10.0, function=self.disconnect)
+            # timer.start()
 
-            # TODO - publish message here
             self.publish(topic=self.topic, payload=self.message, qos=self.qos)
+
+            # set non-blocking timer to disconnect
 
         else:
             logger.error("Could not connect to MQTT broker")
 
     def on_publish(self, client, user_data, mid):
-        logger.info("Message published - can disconnect now")
-        logger.info("User Data: %s, Mid: %s", user_data, mid)
+        logger.info("Message published - disconnecting...")
+        if mid > 0:
+            self.success = True
         self.disconnect()
 
     def publish(self, topic, payload, qos=1, retain=False, properties=None):
@@ -129,11 +138,11 @@ def send_message(
     command = json.dumps({str(command): str(command_value)})
 
     logger.info("Publishing to MQTT topic %s: %s", device_state_topic, command)
-    mqtt_response = MQTTPublish(
+
+    # exceptions are handled in view
+    MQTTPublish(
         server=MQTT_SERVER, topic=device_state_topic, message=command, qos=MQTT_QOS
     )
-
-    logger.info("MQTT response: %s", mqtt_response)
 
 
 def send_messages(
@@ -142,15 +151,10 @@ def send_messages(
     state_endpoint=MQTT_DEVICE_STATE_ENDPOINT,
 ):
     """Handles publishing multiple messages - only needs one broker connection"""
-    try:
-        for message in message_list:
-            assert message["mqtt_topic"]
-            assert message["command"]
-            assert message["command_value"]
-            assert len(message) == 3
+    for message in message_list:
+        assert message["mqtt_topic"]
+        assert message["command"]
+        assert message["command_value"]
+        assert len(message) == 3
 
-            send_message(
-                **message, base_topic=base_topic, state_endpoint=state_endpoint
-            )
-    except Exception as ex:
-        logger.error("%s - send_messages - %s", __name__, ex)
+        send_message(**message, base_topic=base_topic, state_endpoint=state_endpoint)

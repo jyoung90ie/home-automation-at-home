@@ -80,6 +80,7 @@ class ZigbeeDevice(BaseAbstractModel):
     model = models.CharField(max_length=100, blank=True, null=True)
     model_id = models.CharField(max_length=100, blank=True, null=True)
     power_source = models.CharField(max_length=100, blank=True, null=True)
+    is_controllable = models.BooleanField(default=False)
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

@@ -6,9 +6,11 @@
     href="{% url 'devices:device:states:state:delete' uuid=device.uuid suuid=state.uuid %}">
     <i class="fas fa-trash-alt" title="Delete device state"></i>
 </a>
+{% if device.is_controllable %}
 <form method="post" class="d-inline change-device-state" action="{% url 'mqtt:publish:trigger' suuid=state.uuid %}">
     {% csrf_token %}
     <button type="submit" class="d-inline btn btn-sm btn-info">
         <i class="fas fa-toggle-on" title="Activate device state"></i>
     </button>
 </form>
+{% endif %}

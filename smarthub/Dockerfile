@@ -14,5 +14,4 @@ RUN mkdir -p /docker-entrypoint-initdb.d
 COPY requirements.txt /code
 RUN pip install -r requirements.txt
 
-# COPY ./init-database.sh /docker-entrypoint-initdb.d/01_init-database.sh
 COPY . /code

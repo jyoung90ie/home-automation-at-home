@@ -66,7 +66,12 @@
             </table>
             {% endif %}
             {% empty %}
+            {% if not device.is_controllable %}
+            This device is not controllable and as a result you cannot create device states for it - it is likely this
+            is a sensor.
+            {% else %}
             <p class="m-0">This device does not yet have any states - you can add some using the button above.</p>
+            {% endif %}
             {% endfor %}
         </div>
     </div>
