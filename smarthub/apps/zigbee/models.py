@@ -300,7 +300,7 @@ class ZigbeeMessage(BaseAbstractModel):
         """Processes event triggers and invokes notifications/event responses if criteria met"""
         logger.info("%s - process_event_trigger - start", __name__)
         field = getattr(trigger, "metadata_field")
-        device_value = parsed_message.get(field, None)
+        device_value = str(parsed_message.get(field, None)).lower()
 
         if not device_value or device_value is None:
             return
@@ -309,7 +309,8 @@ class ZigbeeMessage(BaseAbstractModel):
             # only check if last_message has a value
             last_message = json.loads(last_message)
 
-            cached_value = last_message.get(field, None)
+            cached_value = str(last_message.get(field, None)).lower()
+
             if device_value == cached_value:
                 logger.info(
                     "process_event_trigger: device field value is unchanged - ignoring "
@@ -321,9 +322,10 @@ class ZigbeeMessage(BaseAbstractModel):
                 return
 
         event = getattr(trigger, "event")
-        if not event.is_enabled or not event.send_notification:
+        if not event.is_enabled:
             logger.info(
-                "process_event_trigger - event has no triggers or notifications enabled"
+                "process_event_trigger - event is disabled (triggers and notifications will "
+                "not be processed)"
             )
             return
 
@@ -338,11 +340,12 @@ class ZigbeeMessage(BaseAbstractModel):
 
             self.invoke_event_response(triggered_by=trigger)
 
-            self.invoke_notifications(
-                topic=event.notification_topic,
-                message=message,
-                triggered_by=trigger,
-            )
+            if event.send_notification:
+                self.invoke_notifications(
+                    topic=event.notification_topic,
+                    message=message,
+                    triggered_by=trigger,
+                )
 
         logger.info("process_event_trigger end")
 
