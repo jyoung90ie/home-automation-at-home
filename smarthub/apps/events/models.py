@@ -45,6 +45,9 @@ class Event(BaseAbstractModel):
     def __str__(self):
         return self.description
 
+    class Meta:
+        ordering = ["created_at"]
+
 
 class EventTriggerType(models.TextChoices):
     """Accepted conditional types used for triggering events"""
@@ -141,12 +144,14 @@ class EventResponse(BaseAbstractModel):
     device_state = models.ForeignKey("devices.DeviceState", on_delete=models.CASCADE)
     is_enabled = models.BooleanField(verbose_name="Enable?", default=True)
 
-    # TODO - add __str__
 
+class EventTriggerLog(BaseAbstractModel):
+    """Stores information on when an event was triggered, what triggered it, and any response
+    to the trigger."""
 
-# class EventTriggerLog(BaseAbstractModel):
-#     """Stores information on when an event was triggered, what triggered it, and any response
-#     to the trigger."""
-#     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-#     TODO - attach to notification log
-#     TODO - attach event responses
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    triggered_by = models.CharField(max_length=200, blank=False, null=False)
+    response_command = models.CharField(max_length=1000, blank=False, null=False)
+
+    class Meta:
+        ordering = ["created_at"]
