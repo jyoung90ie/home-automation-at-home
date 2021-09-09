@@ -14,21 +14,26 @@
         <thead>
             <tr>
                 <th scope="col">#</th>
-                <th scope="col" style="width: 50%">Description</th>
+                <th scope="col" style="width: 30%">Description</th>
+                <th scope="col">Triggers</th>
+                <th scope="col">Responses</th>
                 <th scope="col">Enabled?</th>
-                <th scope="col">Notifications Enabled?</th>
+                <th scope="col">Total Triggered</th>
                 <th scope="col">Last Triggered</th>
                 <th scope="col">Options</th>
             </tr>
         </thead>
         <tbody>
             {% for event in events %}
-            <tr class="event-row" onclick='window.location="{% url "events:event:detail" uuid=event.uuid %}";'>
+            <tr class="event-row text-center"
+                onclick='window.location="{% url "events:event:detail" uuid=event.uuid %}";'>
                 <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
-                <td>{{ event.description|capfirst }}</td>
+                <td class="text-start">{{ event.description|capfirst }}</td>
+                <td>{{ event.eventtrigger_set.all.count }}</td>
+                <td>{{ event.eventresponse_set.all.count }}</td>
                 <td>{{ event.is_enabled|to_status_icon }}</td>
-                <td>{{ event.send_notification|to_status_icon }}</td>
-                <td>LAST TRIGGERED</td>
+                <td>{{ event.eventtriggerlog_set.all.count }}</td>
+                <td>{{ event.eventtriggerlog_set.last.created_at }}</td>
                 <td>
                     {% include "events/partials/_user_options_view_event.html" %}
                     {% include "events/partials/_user_options_event.html" %}

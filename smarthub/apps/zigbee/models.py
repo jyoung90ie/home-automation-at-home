@@ -12,11 +12,10 @@ from django.db.models.query_utils import Q
 
 from ..models import BaseAbstractModel
 from ..mqtt.publish import send_messages
-from ..notifications.models import NotificationMedium
 
 if TYPE_CHECKING:
     from ..devices.models import Device
-    from ..events.models import EventTrigger
+    from ..events.models import EventTrigger, EventTriggerLog
 
 logger = logging.getLogger("mqtt")
 logging.basicConfig(level=logging.INFO)
@@ -338,13 +337,14 @@ class ZigbeeMessage(BaseAbstractModel):
                 "Device value={device_value}"
             )
 
-            self.invoke_event_response(triggered_by=trigger)
+            trigger_log = self.invoke_event_response(triggered_by=trigger)
 
             if event.send_notification:
                 self.invoke_notifications(
                     topic=event.notification_topic,
                     message=message,
                     triggered_by=trigger,
+                    trigger_log=trigger_log,
                 )
 
         logger.info("process_event_trigger end")
@@ -406,6 +406,14 @@ class ZigbeeMessage(BaseAbstractModel):
                 "%s - publishing messages to MQTT broker - %s", __name__, cmd_list
             )
             send_messages(cmd_list)
+
+            trigger_log = apps.get_model("events", "EventTriggerLog")
+
+            log = trigger_log.objects.create(
+                event=event, triggered_by=triggered_by, response_command=cmd_list
+            )
+
+            return log
         except Exception:
             logger.error(
                 "%s - there was an error publishing to MQTT broker - operation failed",
@@ -413,7 +421,11 @@ class ZigbeeMessage(BaseAbstractModel):
             )
 
     def invoke_notifications(
-        self, topic: str, message: str, triggered_by: "EventTrigger"
+        self,
+        topic: str,
+        message: str,
+        triggered_by: "EventTrigger",
+        trigger_log: "EventTriggerLog" = None,
     ):
         """Invoke all of user's enabled notifications"""
         if not self.user:
@@ -434,11 +446,14 @@ class ZigbeeMessage(BaseAbstractModel):
                 "message": message,
                 "triggered_by": triggered_by,
                 "notification_obj": notification,
+                "trigger_log": trigger_log,
             }
 
-            if notification.notification_medium == NotificationMedium.PUSHBULLET:
+            notification_medium = apps.get_model("notifications", "NotificationMedium")
+
+            if notification.notification_medium == notification_medium.PUSHBULLET:
                 notification.pushbulletnotification.send(**notification_data)
-            elif notification.notification_medium == NotificationMedium.EMAIL:
+            elif notification.notification_medium == notification_medium.EMAIL:
                 notification.emailnotification.send(**notification_data)
 
 

@@ -7,6 +7,7 @@ from django.db.models.constraints import UniqueConstraint
 from django.urls.base import reverse
 
 from ..models import BaseAbstractModel
+from ..events.models import EventTriggerLog
 from .utils import Pushbullet
 
 logger = logging.getLogger("mqtt")
@@ -47,6 +48,10 @@ class NotificationSetting(BaseAbstractModel):
     def __str__(self) -> str:
         return self.notification_medium
 
+    @property
+    def total_sent(self):
+        return Notification.objects.filter(medium=self).count()
+
 
 class Notification(BaseAbstractModel):
     """Records all notifications sent to user including medium"""
@@ -57,6 +62,9 @@ class Notification(BaseAbstractModel):
     topic = models.CharField(max_length=100, null=False, blank=False)
     message = models.TextField(blank=False, null=False)
     triggered_by = models.CharField(max_length=200, blank=False, null=False)
+    trigger_log = models.ForeignKey(
+        EventTriggerLog, null=True, on_delete=models.CASCADE
+    )
 
 
 class PushbulletNotification(BaseAbstractModel):
@@ -65,7 +73,7 @@ class PushbulletNotification(BaseAbstractModel):
     notification = models.OneToOneField(NotificationSetting, on_delete=models.CASCADE)
     access_token = models.CharField(max_length=60, null=False, blank=False)
 
-    def send(self, topic, message, triggered_by, notification_obj):
+    def send(self, topic, message, triggered_by, notification_obj, trigger_log=None):
         """Invoke functionality to send notification"""
         pushbullet = Pushbullet(access_token=self.access_token)
 
@@ -83,6 +91,10 @@ class PushbulletNotification(BaseAbstractModel):
             message=message,
             triggered_by=triggered_by,
         )
+        try:
+            obj.trigger_log = trigger_log
+        except Exception:
+            pass
         obj.save()
 
 
@@ -93,7 +105,7 @@ class EmailNotification(BaseAbstractModel):
     from_email = models.EmailField(null=False, blank=False)
     to_email = models.EmailField(null=False, blank=False)
 
-    def send(self, topic, message, triggered_by, notification_obj):
+    def send(self, topic, message, triggered_by, notification_obj, trigger_log=None):
         """Invoke functionality to send notification"""
         email = send_mail(
             subject=topic,
@@ -112,4 +124,8 @@ class EmailNotification(BaseAbstractModel):
                 message=message,
                 triggered_by=triggered_by,
             )
+            try:
+                obj.trigger_log = trigger_log
+            except Exception:
+                pass
             obj.save()

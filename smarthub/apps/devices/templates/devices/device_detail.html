@@ -58,7 +58,7 @@
                         <td>{{ state.name|capfirst }}</td>
                         <td>{{ state.command|lower }}</td>
                         <td>{{ state.command_value|lower }}</td>
-                        <td>TBC</td>
+                        <td>{{ state.eventresponse_set.all.count }}</td>
                         <td>{% include "devices/partials/_user_options_device_state.html" %}</td>
                     </tr>
                     {% if forloop.last %}
