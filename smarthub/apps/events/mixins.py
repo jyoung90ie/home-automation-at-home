@@ -10,6 +10,8 @@ from . import models
 class FormsRelatedToUserEventsMixin:
     """Form overrides to enable fields populated by javascript to be used"""
 
+    controllabe_devices_only = False
+
     def get_form_kwargs(self):
         """Passes additional objects to form class to enable custom validation"""
         kwargs = super().get_form_kwargs()
@@ -23,10 +25,14 @@ class FormsRelatedToUserEventsMixin:
         have metadata)"""
         form = super().get_form(form_class)
 
+        if getattr(self, "controllable_devices_only", False):
+            devices = self.request.user.get_controllable_devices
+        else:
+            devices = self.request.user.get_linked_devices
+
         if not getattr(self, "is_update_form", False):
             form.fields["_device"].choices = [
-                (device.uuid, device.friendly_name.title())
-                for device in self.request.user.get_linked_devices
+                (device.uuid, device.friendly_name.title()) for device in devices
             ]
 
         return form

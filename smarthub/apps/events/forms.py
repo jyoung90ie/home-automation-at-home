@@ -214,7 +214,9 @@ class EventResponseForm(forms.ModelForm):
 
             # device validation
             if not self.is_update_form:
-                device = self.request.user.get_linked_devices.filter(uuid=form_device)
+                device = self.request.user.get_controllable_devices.filter(
+                    uuid=form_device
+                )
 
                 if form_device and not device.exists():
                     self.add_error(
