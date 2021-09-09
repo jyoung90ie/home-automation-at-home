@@ -60,6 +60,17 @@ class CustomUserManager(BaseUserManager):
 
         return user_devices
 
+    def get_controllable_devices(self, user) -> QuerySet:
+        """Return list of device objects which can be controlled"""
+        user_devices = self.get_linked_devices(user=user).filter(
+            zigbeedevice__is_controllable=True
+        )
+
+        if not user_devices:
+            return []
+
+        return user_devices
+
     def total_linked_devices(self, user) -> int:
         """Return the number of linked devices for user object"""
         linked_devices = self.get_linked_devices(user=user)
@@ -111,6 +122,11 @@ class CustomUser(AbstractUser):
     def get_linked_devices(self) -> QuerySet:
         """Return queryset containing users linked devices"""
         return CustomUser.objects.get_linked_devices(user=self)
+
+    @property
+    def get_controllable_devices(self) -> QuerySet:
+        """Return queryset containing users linked devices that are controllable devices"""
+        return CustomUser.objects.get_controllable_devices(user=self)
 
     @property
     def total_linked_devices(self) -> int:
