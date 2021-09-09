@@ -23,7 +23,7 @@
                 <th scope="col">#</th>
                 <th scope="col">Method</th>
                 <th scope="col">Status</th>
-                <th scope="col">Total Notifications</th>
+                <th scope="col">Total Sent</th>
                 <th scope="col">Options</th>
             </tr>
         </thead>
@@ -33,7 +33,7 @@
                 <td>{{ forloop.counter }}</td>
                 <td>{{ notification.notification_medium }}</td>
                 <td>{{ notification.is_enabled|to_status_icon }}</td>
-                <td>TBC</td>
+                <td>{{ notification.total_sent }}</td>
 
                 <td>
                     {% include "notifications/partials/_user_options.html" %}
