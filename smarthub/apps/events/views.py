@@ -237,6 +237,7 @@ class AddEventResponse(
     form_class = forms.EventResponseForm
     template_name = "events/event_response_form.html"
     success_message = "A new Response has been added to this Event."
+    controllable_devices_only = True
 
 
 class EventResponseRedirectView(RedirectView):
@@ -262,6 +263,7 @@ class UpdateEventResponse(
     template_name = "events/event_response_update_form.html"
     slug_url_kwarg = "ruuid"
     success_message = "The event response has been updated."
+    controllable_devices_only = True
 
     def get_queryset(self):
         return models.EventResponse.objects.filter(uuid=self.kwargs["ruuid"])
