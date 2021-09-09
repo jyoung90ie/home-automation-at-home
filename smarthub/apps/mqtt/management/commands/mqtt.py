@@ -203,8 +203,7 @@ class MQTTMessage:
             return
 
         if self.topic == defines.MQTT_DEVICE_LIST_TOPIC:
-            self.parse_devices()
-            self.parse_device_attributes()
+            self.parse_devices()  # also parses capabilities
         elif self.topic in defines.MQTT_TOPIC_IGNORE_LIST:
             logger.info("MQTT - msg received on topic %s - ignoring", self.topic)
             return
@@ -244,25 +243,8 @@ class MQTTMessage:
     def parse_device_attributes(
         self, zb_device: "ZigbeeDevice", device_data: dict
     ) -> None:
-        """Parses device capabilities - this will determine whether a device can be controlled or is a sensor"""
-        logger.info("Parsing device attributes...")
-        # try:
-        #     devices = self.parsed_payload
-        #     logger.info("Devices= %s", devices)
-        #     for device in devices:
-        #         ieee_address = device.get("ieee_address")
-        #         if not ieee_address:
-        #             continue
-
-        #         try:
-        #             zb_device = ZigbeeDevice.objects.get(ieee_address=ieee_address)
-        #         except (
-        #             ZigbeeDevice.DoesNotExist,
-        #             ZigbeeDevice.MultipleObjectsReturned,
-        #         ) as ex:
-        #             logger.info(ex)
-        #             continue
-
+        """Parses device capabilities - this will determine whether a device can be controlled
+        or is a sensor"""
         logger.info("Checking device attributes for - %s", zb_device)
 
         definitions = device_data.get("definition")
