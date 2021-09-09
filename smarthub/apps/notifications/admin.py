@@ -23,6 +23,7 @@ class UserNotificationSettingAdmin(admin.ModelAdmin):
     """Displays user notification settings in one view - including email & pushbullet"""
 
     list_display = (
+        "user",
         "notification_medium",
         "is_enabled",
         "created_at",
@@ -33,7 +34,7 @@ class UserNotificationSettingAdmin(admin.ModelAdmin):
         """Custom logic for displaying inlines dependent on notification medium"""
         inlines = []
 
-        notification_medium = getattr(obj, "notification_medium")
+        notification_medium = getattr(obj, "notification_medium", False)
         if notification_medium == models.NotificationMedium.EMAIL:
             inlines.append(EmailInline)
         elif notification_medium == models.NotificationMedium.PUSHBULLET:
