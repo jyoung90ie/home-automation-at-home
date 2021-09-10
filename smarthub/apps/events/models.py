@@ -43,7 +43,7 @@ class Event(BaseAbstractModel):
         return reverse("events:event:detail", kwargs={"uuid": self.uuid})
 
     def __str__(self):
-        return self.description
+        return f"{self.description} ({self.user})"
 
     class Meta:
         ordering = ["created_at"]
@@ -111,6 +111,11 @@ class EventTrigger(BaseAbstractModel):
                 if int(trigger_value) == float(trigger_value)
                 else float(trigger_value)
             )
+            device_value = (
+                int(device_value)
+                if int(device_value) == float(device_value)
+                else float(device_value)
+            )
         except ValueError:
             return False
 
@@ -128,7 +133,7 @@ class EventTrigger(BaseAbstractModel):
     def __str__(self) -> str:
         return (
             f"Trigger Settings [Device={self.device} - Field={self.metadata_field}"
-            " - Type={self.trigger_type} - Value={self.metadata_trigger_value}]"
+            f" - Type={self.trigger_type} - Value={self.metadata_trigger_value}]"
         )
 
 

@@ -354,14 +354,16 @@ class MQTTMessage:
             logger.info("%s - Creating ZigbeeMessage: %s", __name__, zigbee_message)
 
             # updates zigbeedevice field and saves object
-            zigbee_message.save(
-                check_triggers=has_message_changed, last_message=last_message
-            )
+            try:
+                zigbee_message.save(
+                    check_triggers=has_message_changed, last_message=last_message
+                )
+            except Exception as ex:
+                logger.info("Could not create ZigbeeMessage - %s", ex)
 
             logger.info("%s - ZigbeeMessage saved", __name__)
 
             for field in mqtt_data:
-                field = str(field).lower()
                 value = mqtt_data[field]
 
                 if len(str(value)) > 0:

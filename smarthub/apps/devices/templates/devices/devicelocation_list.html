@@ -1,12 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="header-container">
+<div>
     <h1 class="d-inline"><i class="fas fa-globe-europe"></i> Device Locations</h1>
     <a href="{% url 'devices:locations:add' %}" class="btn btn-success btn-sm">
         <i class="fas fa-plus" title="Add new device location"></i>
     </a>
+    <p class="m-2">Locations provide a way of grouping devices together by geographic location. However,
+        <em>location</em> is open to whatever intrepration you wish to use it for. Whilst locations are no more than a
+        reporting grouping at present, in future they will enable you to create triggers and event responses for
+        multiple devices at once.
+    </p>
 </div>
+
 
 {% if device_locations %}
 <div class="table-responsive">

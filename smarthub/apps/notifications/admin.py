@@ -60,4 +60,4 @@ class NotificationAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.NotificationSetting, UserNotificationSettingAdmin)
-admin.site.register(models.Notification, NotificationAdmin)
+admin.site.register(models.NotificationLog, NotificationAdmin)

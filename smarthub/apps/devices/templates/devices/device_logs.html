@@ -2,14 +2,18 @@
 {% load tz %}
 {% block content %}
 <div class="text-center">
-    <h1>Showing device logs for...</h1>
+    <h1><i class="fas fa-file-download me-2"></i>Device Logs</h1>
     <h2><strong>{{ device }}</strong></h2>
     {% include "devices/partials/_user_options_logs.html" %}
+    <p class="m-2 mt-4 text-start">This is a list of all communications from your device since it was synchronised with
+        Smart Hub. These logs areraw and unprocessed, what you see is exactly what was received and when. It can be
+        helpful to review these logs to see the typical value ranges before you create <strong>Event Triggers</strong>
+        and/or <strong>Device States</strong>.</p>
 </div>
 {% if logs %}
 
 
-<div class="mt-5 table-responsive">
+<div class="mt-4 table-responsive">
     <table class="table table-hover table-striped" id="device-list">
         <thead>
             <tr>

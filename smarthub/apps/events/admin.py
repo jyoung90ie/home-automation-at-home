@@ -51,4 +51,31 @@ class EventAdmin(admin.ModelAdmin):
         return inlines
 
 
+class EventTriggerLogAdmin(admin.ModelAdmin):
+    """Display event model in admin"""
+
+    list_display = (
+        "trunucate_event",
+        "user",
+        "triggered_by",
+        "response_command",
+        "created_at",
+    )
+    ordering = ("-created_at",)
+    readonly_fields = ("created_at", "updated_at")
+
+    def trunucate_event(self, obj):
+        event = str(obj.event)
+        truncated_event = event[:30]
+        truncated_event = (
+            f"{truncated_event}..." if len(event) > 30 else truncated_event
+        )
+        return truncated_event
+
+    def user(self, obj):
+        """Get user email to make it easier to identify logs"""
+        return getattr(obj.event, "user", "")
+
+
 admin.site.register(models.Event, EventAdmin)
+admin.site.register(models.EventTriggerLog, EventTriggerLogAdmin)

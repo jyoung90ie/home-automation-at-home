@@ -1,5 +1,7 @@
 import logging
 
+from typing import TYPE_CHECKING
+
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db import models
@@ -7,8 +9,12 @@ from django.db.models.constraints import UniqueConstraint
 from django.urls.base import reverse
 
 from ..models import BaseAbstractModel
-from ..events.models import EventTriggerLog
+
+# from ..events.models import EventTriggerLog
 from .utils import Pushbullet
+
+if TYPE_CHECKING:
+    from ..events.models import EventTrigger, EventTriggerLog
 
 logger = logging.getLogger("mqtt")
 logging.basicConfig(level=logging.INFO)
@@ -43,17 +49,20 @@ class NotificationSetting(BaseAbstractModel):
         ]
 
     def get_absolute_url(self):
+        """Default redirect url"""
         return reverse("notifications:list")
 
     def __str__(self) -> str:
-        return self.notification_medium
+        """Return string value when object is output"""
+        return f"{self.notification_medium} ({self.user.email})"
 
     @property
     def total_sent(self):
-        return Notification.objects.filter(medium=self).count()
+        """Return total notifications sent for specified user notification setting"""
+        return NotificationLog.objects.filter(medium=self).count()
 
 
-class Notification(BaseAbstractModel):
+class NotificationLog(BaseAbstractModel):
     """Records all notifications sent to user including medium"""
 
     medium = models.ForeignKey(
@@ -63,7 +72,7 @@ class Notification(BaseAbstractModel):
     message = models.TextField(blank=False, null=False)
     triggered_by = models.CharField(max_length=200, blank=False, null=False)
     trigger_log = models.ForeignKey(
-        EventTriggerLog, null=True, on_delete=models.CASCADE
+        "events.EventTriggerLog", null=True, on_delete=models.CASCADE
     )
 
 
@@ -73,7 +82,14 @@ class PushbulletNotification(BaseAbstractModel):
     notification = models.OneToOneField(NotificationSetting, on_delete=models.CASCADE)
     access_token = models.CharField(max_length=60, null=False, blank=False)
 
-    def send(self, topic, message, triggered_by, notification_obj, trigger_log=None):
+    def send(
+        self,
+        topic: str,
+        message: str,
+        triggered_by: "EventTrigger",
+        notification_obj: "NotificationSetting",
+        trigger_log: "EventTriggerLog" = None,
+    ):
         """Invoke functionality to send notification"""
         pushbullet = Pushbullet(access_token=self.access_token)
 
@@ -85,7 +101,7 @@ class PushbulletNotification(BaseAbstractModel):
         pushbullet.send_push(title=topic, body=message)
 
         # create notification record
-        obj = Notification(
+        obj = NotificationLog(
             medium=notification_obj,
             topic=topic,
             message=message,
@@ -105,7 +121,14 @@ class EmailNotification(BaseAbstractModel):
     from_email = models.EmailField(null=False, blank=False)
     to_email = models.EmailField(null=False, blank=False)
 
-    def send(self, topic, message, triggered_by, notification_obj, trigger_log=None):
+    def send(
+        self,
+        topic: str,
+        message: str,
+        triggered_by: "EventTrigger",
+        notification_obj: "NotificationSetting",
+        trigger_log: "EventTriggerLog" = None,
+    ):
         """Invoke functionality to send notification"""
         email = send_mail(
             subject=topic,
@@ -118,7 +141,7 @@ class EmailNotification(BaseAbstractModel):
         if email:
             # create notification record
             logger.info("Email sent for trigger %s", triggered_by)
-            obj = Notification(
+            obj = NotificationLog(
                 medium=notification_obj,
                 topic=topic,
                 message=message,

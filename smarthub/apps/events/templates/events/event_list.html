@@ -6,6 +6,10 @@
     <a href="{% url 'events:add' %}" class="btn btn-success btn-sm">
         <i class="fas fa-plus" title="Create new event"></i>
     </a>
+    <p class="m-2">Here you can create Events, which are automations defined using the devices you have added. The
+        automations use a trigger-response sequence, i.e. you define the device trigger condition(s), which when met,
+        activates the sequence of responses for the particular event. Notifications can be enabled/disabled on an
+        event-by-event basis. </p>
 </div>
 {% if events %}
 
@@ -14,10 +18,11 @@
         <thead>
             <tr>
                 <th scope="col">#</th>
-                <th scope="col" style="width: 30%">Description</th>
+                <th scope="col" style="width: 20%">Description</th>
                 <th scope="col">Triggers</th>
                 <th scope="col">Responses</th>
                 <th scope="col">Enabled?</th>
+                <th scope="col">Notifications?</th>
                 <th scope="col">Total Triggered</th>
                 <th scope="col">Last Triggered</th>
                 <th scope="col">Options</th>
@@ -32,6 +37,7 @@
                 <td>{{ event.eventtrigger_set.all.count }}</td>
                 <td>{{ event.eventresponse_set.all.count }}</td>
                 <td>{{ event.is_enabled|to_status_icon }}</td>
+                <td>{{ event.send_notification|to_status_icon }}</td>
                 <td>{{ event.eventtriggerlog_set.all.count }}</td>
                 <td>{{ event.eventtriggerlog_set.last.created_at }}</td>
                 <td>

@@ -5,9 +5,16 @@
     <a href="{% url 'devices:add' %}" class="btn btn-success btn-sm">
         <i class="fas fa-plus" title="Create new device"></i>
     </a>
+    <p class="m-2">Here you can find all the devices you have added to the system, with an indication as to whether the
+        system was able to detect the device based on the information you provided. If detected, you will see
+        <span class="badge bg-success">Linked</span> in the <strong>Status column</strong>. If the device is
+        controllable you will also have
+        the option to
+        toggle the device on and off.
+    </p>
 </div>
-{% if devices %}
 
+{% if devices %}
 <div class="pt-3 table-responsive">
     <table class="table table-hover table-striped" id="device-list">
         <thead>

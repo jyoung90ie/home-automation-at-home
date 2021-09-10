@@ -197,7 +197,7 @@ class Device(BaseAbstractModel):
         If message_obj is specified, returns logs for specified message_obj ONLY.
         """
         logs = []
-        messages = self.get_zigbee_messages(latest_only)
+        messages = self.get_zigbee_messages(latest_only=latest_only)
 
         if not messages or len(messages) == 0:
             logger.info("ZigbeeDevice has no messages - %s", self)

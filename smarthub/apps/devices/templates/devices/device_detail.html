@@ -13,14 +13,14 @@
 
 <div class="mt-3">
     <div class="row content-box">
-        <div class="fw-bold col-4 col-md-2">Friendly Name</div>
-        <div class="col-8 col-md-4">{{ device.friendly_name|title }}</div>
-        <div class="fw-bold col-4 col-md-2">Device Identifier</div>
-        <div class="col-8 col-md-4">{{ device.device_identifier|upper }}</div>
-        <div class="fw-bold col-4 col-md-2">Location</div>
-        <div class="col-8 col-md-4">{{ device.location|title }}</div>
-        <div class="fw-bold col-4 col-md-2">Protocol</div>
-        <div class="col-8 col-md-4">{{ device.protocol|upper }}</div>
+        <div class="fw-bold col-4 col-lg-2">Friendly Name</div>
+        <div class="col-8 col-lg-4">{{ device.friendly_name|title }}</div>
+        <div class="fw-bold col-4 col-lg-2">Device Identifier</div>
+        <div class="col-8 col-lg-4">{{ device.device_identifier|upper }}</div>
+        <div class="fw-bold col-4 col-lg-2">Location</div>
+        <div class="col-8 col-lg-4">{{ device.location|title }}</div>
+        <div class="fw-bold col-4 col-lg-2">Protocol</div>
+        <div class="col-8 col-lg-4">{{ device.protocol|upper }}</div>
     </div>
 
     <div class="mt-5 text-muted">
@@ -78,11 +78,31 @@
 
 
     <div class="row mt-5 text-muted">
-        <div class="col-md-7">
+        <div class="col-lg-6">
             <h2 class="h5 m-3">
                 <i class="fas fa-info me-3"></i> Hardware information
             </h2>
-            <div class="row content-box">
+            <p>This the processed version of the information broadcast by your device when it synchronised with Smart
+                Hub. The field <strong>is_controllable</strong> indicates whether this device can be controlled (e.g. a
+                light bulb is controllable, a sensor is not). Devices which are controllable have additional
+                functionality.</p>
+        </div>
+        {% if is_linked %}
+        <div class="col-lg-6">
+            <h2 class="h5 m-3">
+                <i class="fas fa-server me-3"></i>Last update from device
+            </h2>
+            <p>Outlined below is the most recent data communication form your device. The fields are automatically
+                detected and processed by the system. These fields can be used as event triggers - to see all device
+                communications, you can access the <strong><a
+                        href="{% url 'devices:device:logs:view' uuid=uuid %}">device logs</a></strong> using the button
+                at the top of the page.</p>
+        </div>
+        {% endif %}
+    </div>
+    <div class="row mt-0">
+        <div class="col-lg-6">
+            <div class="row content-box mt-0">
                 <div class="fw-bold col-6">Status</div>
                 <div class="col-6 fs-3">
                     {{ is_linked|to_status_icon }}
@@ -95,25 +115,21 @@
                 <div class="fw-bold col-4 mb-2">{{ type|upper }}</div>
                 <div class="col-8 mb-2">{{ value }}</div>
                 {% empty %}
-                Hardware device data has not been captured.
+                Device data has not been captured.
                 {% endfor %}
                 {% endfor %}
                 {% else %}
-                <span class="m-2">Your device has not yet been linked to a hardware device. Please ensure that the
-                    device identifier
-                    matches the hardware device <em>ieee_address</em> or the <em>friendly_name</em> matches the
-                    device's.
+                <span class="m-2">Smart Hub has been unable to detect this device, please ensure that the
+                    device identifier matches the hardware device <em>ieee_address</em> or the <em>friendly_name</em>
+                    matches the device's. If you are unsure, please see the <strong>Help section</strong>.
                 </span>
                 {% endif %}
             </div>
         </div>
-        {% if is_linked %}
-        <div class="col-md-5">
-            <h2 class="h5 m-3">
-                <i class="fas fa-server me-3"></i>Last update from device
-            </h2>
-            <div class="row content-box table-responsive">
 
+        {% if is_linked %}
+        <div class="col-lg-6">
+            <div class="row content-box mt-0 table-responsive">
                 {% with logs=device.get_lastest_zigbee_logs %}
                 {% if logs %}
                 {% for log in logs %}
@@ -124,7 +140,7 @@
                     </caption>
                     <thead>
                         <tr>
-                            <th scope="col">Data Type</th>
+                            <th scope="col">Field</th>
                             <th scope="col">Value</th>
                         </tr>
                     </thead>

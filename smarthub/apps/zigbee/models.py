@@ -2,6 +2,7 @@
 import json
 import logging
 from json.decoder import JSONDecodeError
+from ..notifications.models import NotificationMedium
 from typing import TYPE_CHECKING, Union
 
 from django.apps import apps
@@ -37,10 +38,8 @@ class ZigbeeDeviceQuerySet(models.QuerySet):
 
     def get_device_states(self, device) -> models.QuerySet:
         """Return list of user created states for the specified device"""
-        return (
-            self.filter(device=device)
-            # .order_by("devices_states__name")
-            .values("device_states__uuid", "device_states__name")
+        return self.filter(device=device).values(
+            "device_states__uuid", "device_states__name"
         )
 
 
@@ -440,6 +439,8 @@ class ZigbeeMessage(BaseAbstractModel):
 
             return
 
+        logger.info("Invoking notifications...")
+
         for notification in user_notifications:
             notification_data = {
                 "topic": topic,
@@ -449,12 +450,12 @@ class ZigbeeMessage(BaseAbstractModel):
                 "trigger_log": trigger_log,
             }
 
-            notification_medium = apps.get_model("notifications", "NotificationMedium")
-
-            if notification.notification_medium == notification_medium.PUSHBULLET:
+            if notification.notification_medium == NotificationMedium.PUSHBULLET:
                 notification.pushbulletnotification.send(**notification_data)
-            elif notification.notification_medium == notification_medium.EMAIL:
+            elif notification.notification_medium == NotificationMedium.EMAIL:
                 notification.emailnotification.send(**notification_data)
+
+        logger.info("Notification invocation complete.")
 
 
 class ZigbeeLog(BaseAbstractModel):

@@ -6,8 +6,8 @@
     <a href="{% url 'notifications:add' %}" class="btn btn-success btn-sm">
         <i class="fas fa-plus" title="Setup new notification channel"></i>
     </a>
-    <p class="mt-2">Notification channels set out how Smart Hub should notify you when events you have defined have been
-        triggered.
+    <p class="m-2">Notification channels define how you will be notify when any of your events have been triggered (if
+        notifications are enabled).
         You will be notified by each of the enabled channels below each time an event has been triggered. <br />
         <strong>Note:</strong> you can only create one notification setting per channel - channel being the medium by
         which
@@ -22,7 +22,7 @@
             <tr>
                 <th scope="col">#</th>
                 <th scope="col">Method</th>
-                <th scope="col">Status</th>
+                <th scope="col">Enabled?</th>
                 <th scope="col">Total Sent</th>
                 <th scope="col">Options</th>
             </tr>
