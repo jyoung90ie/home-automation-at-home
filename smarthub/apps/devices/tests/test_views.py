@@ -1,5 +1,8 @@
+from django.db.models.query import QuerySet
+from django.http.response import Http404
 from django.urls import reverse
 from unittest import mock
+from unittest.mock import MagicMock, PropertyMock, patch
 import json
 import math
 import factory
@@ -139,14 +142,14 @@ class TestDetailDevice(TestCaseWithHelpers):
         response = self.get_url_response(uuid=device.uuid)
 
         device_detail = f"""<div class="row content-box">
-        <div class="fw-bold col-4 col-md-2">Friendly Name</div>
-        <div class="col-8 col-md-4">{device.friendly_name}</div>
-        <div class="fw-bold col-4 col-md-2">Device Identifier</div>
-        <div class="col-8 col-md-4">{device.device_identifier}</div>
-        <div class="fw-bold col-4 col-md-2">Location</div>
-        <div class="col-8 col-md-4">{device.location.location}</div>
-        <div class="fw-bold col-4 col-md-2">Protocol</div>
-        <div class="col-8 col-md-4">{device.protocol}</div>
+        <div class="fw-bold col-4 col-lg-2">Friendly Name</div>
+        <div class="col-8 col-lg-4">{device.friendly_name}</div>
+        <div class="fw-bold col-4 col-lg-2">Device Identifier</div>
+        <div class="col-8 col-lg-4">{device.device_identifier}</div>
+        <div class="fw-bold col-4 col-lg-2">Location</div>
+        <div class="col-8 col-lg-4">{device.location.location}</div>
+        <div class="fw-bold col-4 col-lg-2">Protocol</div>
+        <div class="col-8 col-lg-4">{device.protocol}</div>
     </div>"""
 
         values = [
@@ -163,19 +166,22 @@ class TestDetailDevice(TestCaseWithHelpers):
 
         response = self.get_url_response(uuid=device.uuid)
 
-        values = [
-            {
-                "value": "Your device has not yet been linked to a hardware device.",
-                "exists": True,
-            },
-            {
-                "value": "This device does not yet have any states - you can add some using the button above.",
-                "exists": True,
-            },
-        ]
-
-        self.assertEqual(response.status_code, 200)
-        self.assert_values_in_reponse(response=response, values=values)
+        self.assertContains(
+            response=response,
+            text="""<span class="m-2">Smart Hub has been unable to detect this device, please ensure that the
+                    device identifier matches the hardware device <em>ieee_address</em> or the <em>friendly_name</em>
+                    matches the device's. If you are unsure, please see the <strong>Help section</strong>.
+                </span>""",
+            status_code=200,
+            html=False,
+        )
+        self.assertContains(
+            response=response,
+            text="""            This device is not controllable and as a result you cannot create device states for it - it is likely this
+            is a sensor.""",
+            status_code=200,
+            html=False,
+        )
 
     def test_detail_shows_linked_device(self):
         device = DeviceFactory(user=self.user)
@@ -309,13 +315,16 @@ class TestDetailDevice(TestCaseWithHelpers):
 
             self.assert_values_in_reponse(response=response, values=values)
 
+    def test_that_non_controllable_device_does_not_permit_adding_device_states(self):
+        pass
+
     @mock.patch(
         "django.template.context_processors.get_token",
         mock.Mock(return_value="csrf-token"),
     )
-    def test_adding_device_state_appears_on_detail_view(self):
+    def test_adding_device_state_appears_on_detail_view_for_controllable_device(self):
         user_device = DeviceFactory(user=self.user)
-        zigbee_device = ZigbeeDeviceFactory(device=user_device)
+        zigbee_device = ZigbeeDeviceFactory(device=user_device, is_controllable=True)
 
         device_states = factory.create_batch(
             klass=DeviceState,
@@ -351,7 +360,7 @@ class TestDetailDevice(TestCaseWithHelpers):
                     "exists": True,
                 },
                 {
-                    "value": """<td>TBC</td>""",
+                    "value": """<td>1</td>""",
                     "exists": True,
                 },
                 {
@@ -642,7 +651,7 @@ class TestDeviceMetadata(TestCaseWithHelpers):
         self.assertTrue(response.status_code, 200)
 
     def test_when_linked_device_has_no_metadata_returns_default_response(self):
-        zb_device = ZigbeeDeviceFactory(device=self.device)
+        ZigbeeDeviceFactory(device=self.device)
 
         response = self.get_url_response(uuid=self.device.uuid)
         expected_json_response = json.dumps({"data": ["", "-----"]})
@@ -718,7 +727,7 @@ class TestDeviceStatesJson(TestCaseWithHelpers):
         self.assertEqual(response.status_code, 404)
 
     def test_user_can_access_own_device_states(self):
-        zb_device = ZigbeeDeviceFactory(device=self.device)
+        zb_device = ZigbeeDeviceFactory(device=self.device, is_controllable=True)
         device_state = ZigbeeDeviceStateFactory(content_object=zb_device)
         device_state2 = ZigbeeDeviceStateFactory(content_object=zb_device)
         user_device = device_state.content_object.device
@@ -738,6 +747,12 @@ class TestDeviceStatesJson(TestCaseWithHelpers):
         self.assertEqual(response.status_code, 200)
         self.assertJSONEqual(response.content.decode("utf-8"), expected_data)
 
+    def test_non_controllable_device_returns_404(self):
+        ZigbeeDeviceFactory(device=self.device, is_controllable=False)
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 404)
+
     def test_anonymous_user_is_redirected(self):
         self.client.logout()
 
@@ -746,8 +761,8 @@ class TestDeviceStatesJson(TestCaseWithHelpers):
 
         response = self.get_url_response(uuid=user_device.uuid)
 
-        self.assertTrue(self.user != user_device.user)
         self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith(login_url))
 
 
 class TestLogsForDevice(TestCaseWithHelpers):
@@ -765,21 +780,21 @@ class TestLogsForDevice(TestCaseWithHelpers):
 
         return self.client.get(url)
 
-    def test_user_can_access_device_logs(self):
+    def test_user_can_access_device_log_for_linked_device(self):
         response = self.get_url_response(uuid=self.device.uuid)
-
-        self.assertEqual(response.status_code, 200)
 
         values = [
             {
-                "value": "<h1>Showing device logs for...</h1>",
+                "value": '<h1><i class="fas fa-file-download me-2"></i>Device Logs</h1>',
                 "exists": True,
             },
             {
-                "value": f"<strong>{self.device.friendly_name} [{self.device.device_identifier}]</strong>",
+                "value": f"<h2><strong>{self.device.friendly_name} [{self.device.device_identifier}]</strong></h2>",
                 "exists": True,
             },
         ]
+
+        self.assertEqual(response.status_code, 200)
         self.assert_values_in_reponse(response=response, values=values)
 
     def test_logs_cannot_be_accessed_by_any_other_user(self):
@@ -794,6 +809,7 @@ class TestLogsForDevice(TestCaseWithHelpers):
         response = self.get_url_response(uuid=self.device.uuid)
 
         self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith(login_url))
 
     def test_logs_are_paginated(self):
         factory.create_batch(
@@ -804,7 +820,6 @@ class TestLogsForDevice(TestCaseWithHelpers):
         )
 
         response = self.get_url_response(uuid=self.device.uuid)
-        # print(response.content.decode("utf-8"))
 
         all_msgs = ZigbeeMessage.objects.all()
         total_msgs = all_msgs.count()
@@ -895,6 +910,7 @@ class TestExportCSVDeviceLogs(TestCaseWithHelpers):
         response = self.get_url_response(uuid=self.device.uuid)
 
         self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith(login_url))
 
 
 class TestDeviceRedirectView(TestCaseWithHelpers):
@@ -904,6 +920,28 @@ class TestDeviceRedirectView(TestCaseWithHelpers):
 
         self.device = DeviceFactory(user=self.user)
 
+    def test_url_state_with_no_uuid_results_in_redirect(self):
+        response = self.client.get(f"/devices/{self.device.uuid}/state/")
+
+        self.assertRedirects(
+            response=response,
+            expected_url=reverse(
+                "devices:device:detail", kwargs={"uuid": self.device.uuid}
+            ),
+        )
+
+    def test_url_state_with_uuid_no_final_path_results_in_redirect(self):
+        zb_device = ZigbeeDeviceFactory(device=self.device)
+        state = ZigbeeDeviceStateFactory(content_object=zb_device)
+        response = self.client.get(f"/devices/{self.device.uuid}/state/{state.uuid}/")
+
+        self.assertRedirects(
+            response=response,
+            expected_url=reverse(
+                "devices:device:detail", kwargs={"uuid": self.device.uuid}
+            ),
+        )
+
 
 class TestAddDeviceState(TestCaseWithHelpers):
     def setUp(self) -> None:
@@ -912,8 +950,37 @@ class TestAddDeviceState(TestCaseWithHelpers):
 
         self.device = DeviceFactory(user=self.user)
 
-    def test_that_user_can_delete_device_state(self):
-        pass
+    def get_url_response(self, uuid=None, url=None):
+        if not uuid:
+            uuid = self.device.uuid
+
+        if not url:
+            url = reverse("devices:device:states:add", kwargs={"uuid": uuid})
+
+        return self.client.get(url)
+
+    def test_can_add_device_state_when_device_controllable(self):
+        ZigbeeDeviceFactory(device=self.device, is_controllable=True)
+
+        response = self.get_url_response()
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_cannot_add_device_state_when_device_not_controllable(self):
+        ZigbeeDeviceFactory(device=self.device, is_controllable=False)
+
+        response = self.get_url_response()
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_anonymous_user_is_redirected(self):
+        ZigbeeDeviceFactory(device=self.device, is_controllable=True)
+        self.client.logout()
+
+        response = self.get_url_response()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith(login_url))
 
 
 class TestDeleteDeviceState(TestCaseWithHelpers):
@@ -922,6 +989,45 @@ class TestDeleteDeviceState(TestCaseWithHelpers):
         self.client.force_login(user=self.user)
 
         self.device = DeviceFactory(user=self.user)
+        self.zb_device = ZigbeeDeviceFactory(device=self.device, is_controllable=True)
+        self.state = ZigbeeDeviceStateFactory()
+
+    def get_url_response(self, uuid=None, suuid=None, url=None, **kwargs):
+        if not uuid:
+            uuid = self.device.uuid
+
+        if not suuid:
+            suuid = self.state.uuid
+
+        if not url:
+            url = reverse(
+                "devices:device:states:state:delete",
+                kwargs={"uuid": uuid, "suuid": suuid},
+            )
+
+        return self.client.get(url, **kwargs)
+
+    def test_user_can_delete_own_device_state(self):
+        response = self.get_url_response()
+
+        self.assertContains(
+            response=response, text="Delete Device State?", status_code=200, html=False
+        )
+
+    def test_user_cannot_delete_other_user_device_states(self):
+        new_user = UserFactory()
+        self.client.force_login(user=new_user)
+        response = self.get_url_response()
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_anonymous_user_is_redirected(self):
+        self.client.logout()
+
+        response = self.get_url_response()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith(login_url))
 
 
 class TestUpdateDeviceState(TestCaseWithHelpers):
@@ -930,20 +1036,46 @@ class TestUpdateDeviceState(TestCaseWithHelpers):
         self.client.force_login(user=self.user)
 
         self.device = DeviceFactory(user=self.user)
+        self.zb_device = ZigbeeDeviceFactory(device=self.device, is_controllable=True)
+        self.state = ZigbeeDeviceStateFactory(content_object=self.zb_device)
+
+    def get_url_response(self, uuid=None, suuid=None, url=None, **kwargs):
+        if not uuid:
+            uuid = self.device.uuid
+
+        if not suuid:
+            suuid = self.state.uuid
+
+        if not url:
+            url = reverse(
+                "devices:device:states:state:update",
+                kwargs={"uuid": uuid, "suuid": suuid},
+            )
+
+        return self.client.get(url, **kwargs)
 
     def test_user_can_update_own_device_state(self):
-        zb_device = ZigbeeDeviceFactory(device=self.device)
-        device_state = ZigbeeDeviceStateFactory(content_object=zb_device)
-        user_device = device_state.content_object.device
+        response = self.get_url_response()
 
-        response = self.get_url_response(
-            url=reverse(
-                "devices:device:states:state:update",
-                kwargs={"uuid": user_device.uuid, "suuid": device_state.uuid},
-            )
+        self.assertContains(
+            response=response, text="Update Device State", status_code=200
         )
 
-        self.assertEqual(response.status_code, 200)
+    def test_that_user_cannot_update_state_for_another_users_device(self):
+        new_user = UserFactory()
+        self.client.force_login(user=new_user)
+
+        response = self.get_url_response()
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_anonymous_user_is_redirected(self):
+        self.client.logout()
+
+        response = self.get_url_response()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith(login_url))
 
 
 class TestListDeviceLocations(TestCaseWithHelpers):
@@ -1014,9 +1146,138 @@ class TestListDeviceLocations(TestCaseWithHelpers):
             exists=False,
         )
 
+    @patch(
+        "apps.devices.models.DeviceLocation.total_linked_devices",
+        new_callable=PropertyMock,
+        return_value="4321",
+    )
+    def test_total_linked_devices_for_location(self, linked_devices_mock):
+        new_user = UserFactory()
+        location = DeviceLocationFactory(user=new_user)
+        device = DeviceFactory(user=new_user, location=location)
+
+        self.client.force_login(user=new_user)
+
+        response = self.client.get(self.url)
+        print(response.content.decode("utf-8"))
+
+        self.assertContains(
+            response=response,
+            text=f"<td>4321</td>",
+        )
+
 
 class TestDetailDeviceLocation(TestCaseWithHelpers):
-    pass
+    def setUp(self) -> None:
+        self.user = UserFactory()
+        self.client.force_login(user=self.user)
+
+        self.location = DeviceLocationFactory(user=self.user)
+
+        self.device_in_location = DeviceFactory(user=self.user, location=self.location)
+        self.device_not_in_location = DeviceFactory(user=self.user)
+
+    def get_url_response(self, uuid=None, url=None, **kwargs):
+        if not uuid:
+            uuid = self.location.uuid
+
+        if not url:
+            url = reverse(
+                "devices:locations:detail",
+                kwargs={"uuid": uuid},
+            )
+
+        return self.client.get(url, **kwargs)
+
+    def test_detail_view_only_contains_location_devices(self):
+        response = self.get_url_response()
+
+        self.assertContains(
+            response=response,
+            text=(
+                '<h1 class="d-inline"><i class="fas fa-laptop-house me-2"></i>'
+                f"{self.location.location.title()}</h1>"
+            ),
+            status_code=200,
+        )
+        self.assertContains(
+            response=response, text="Devices in this Location", status_code=200
+        )
+
+        values = [
+            {
+                "value": self.device_not_in_location.friendly_name,
+                "exists": False,
+            },
+            {
+                "value": self.device_in_location.friendly_name,
+                "exists": True,
+            },
+            {
+                "value": self.device_in_location.protocol,
+                "exists": True,
+            },
+        ]
+
+        self.assert_values_in_reponse(response=response, values=values)
+
+    def test_other_users_devices_are_not_displayed_in_location(self):
+        # create another device
+        other_user_device = DeviceFactory()
+        response = self.get_url_response()
+
+        values = [
+            {
+                "value": other_user_device.friendly_name,
+                "exists": False,
+            },
+        ]
+
+        self.assertTrue(self.user != other_user_device.user)
+        self.assertEqual(response.status_code, 200)
+        self.assert_values_in_reponse(response=response, values=values)
+
+    def test_user_cannot_view_other_user_locations(self):
+        new_user = UserFactory()
+        self.client.force_login(user=new_user)
+        response = self.get_url_response()
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_anonymous_user_is_redirected(self):
+        self.client.logout()
+
+        response = self.get_url_response()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith(login_url))
+
+    def test_linked_device_status_shown_correctly(self):
+        ZigbeeDeviceFactory(device=self.device_in_location)
+
+        response = self.get_url_response()
+
+        text = f"""<span class="badge bg-success" data-bs-toggle="tooltip" data-bs-placement="top"
+    title="{self.device_in_location.protocol.upper()} device has been detected and linked to your account">Linked</span>"""
+
+        self.assertContains(
+            response=response,
+            text=f"<td>{self.device_in_location.friendly_name.title()}</td>",
+        )
+        self.assertContains(response=response, text=text)
+
+    @patch("apps.devices.models.Device.last_communication", new_callable=PropertyMock)
+    def test_last_communication_is_displayed(self, last_comm_mock):
+        last_comm_mock.return_value = "LAST COMMUNICATION"
+        device = DeviceFactory(user=self.user, location=self.location)
+        ZigbeeDeviceFactory(device=device)
+
+        response = self.get_url_response()
+
+        self.assertContains(
+            response=response,
+            text=f"<td>LAST COMMUNICATION</td>",
+        )
 
 
 class TestUpdateDeviceLocation(TestCaseWithHelpers):

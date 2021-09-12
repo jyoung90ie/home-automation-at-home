@@ -54,4 +54,4 @@ class ZigbeeDeviceStateFactory(AbstractDeviceStateFactory):
     class Meta:
         model = models.DeviceState
 
-    content_object = factory.SubFactory(ZigbeeDeviceFactory)
+    content_object = factory.SubFactory(ZigbeeDeviceFactory, is_controllable=True)

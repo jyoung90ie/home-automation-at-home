@@ -19,6 +19,7 @@ class ZigbeeDeviceFactory(factory.django.DjangoModelFactory):
     model = factory.Faker("catch_phrase")
     model_id = fuzzy.FuzzyText(length=6, prefix="MODEL-")
     power_source = fuzzy.FuzzyChoice(["Battery", "Mains"])
+    is_controllable = False
 
 
 @factory.django.mute_signals(post_save)
