@@ -7,7 +7,6 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.deletion import ProtectedError
 from django.db.utils import IntegrityError
-from django.http import response
 from django.http.response import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
@@ -421,6 +420,7 @@ class AddDeviceState(
     form_class = forms.DeviceStateForm
     template_name = "devices/device_state_form.html"
     success_message = "New state added for this device"
+    controllable_only = True
 
     def get_initial(self):
         """Populate update form with stored data"""
@@ -448,6 +448,7 @@ class UpdateDeviceState(
     template_name = "devices/device_state_update_form.html"
     slug_url_kwarg = "suuid"
     success_message = "State values have been updated"
+    controllable_only = True
 
     def __init__(self) -> None:
         self.perm_obj = models.Device
@@ -472,6 +473,7 @@ class DeleteDeviceState(UUIDView, PermitDeviceOwnerOnly, DeleteView):
     model = models.DeviceState
     slug_url_kwarg = "suuid"
     template_name = "devices/device_state_confirm_delete.html"
+    controllable_only = True
 
     def __init__(self) -> None:
         self.object = None
@@ -511,6 +513,7 @@ class DeleteDeviceState(UUIDView, PermitDeviceOwnerOnly, DeleteView):
 class DeviceStatesJson(UUIDView, PermitObjectOwnerOnly, BaseDetailView):
     """Return list of device states - for user in event response form with AJAX"""
 
+    controllable_only = True
     http_method_names = [
         "get",
     ]

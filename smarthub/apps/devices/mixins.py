@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import AccessMixin
+from django.http.response import Http404
 from django.urls.base import reverse
 
 from .models import Device
@@ -20,6 +21,12 @@ class PermitObjectOwnerOnly(AccessMixin):
 
         if not qs:
             return self.handle_no_permission()
+
+        # for restricting devicestate views
+        if getattr(self, "controllable_only", False):
+            device = qs.first()
+            if not device.is_controllable():
+                raise Http404("Device does not support states")
 
         return super().dispatch(request, *args, **kwargs)
 

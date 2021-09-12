@@ -282,7 +282,7 @@ class Device(BaseAbstractModel):
         return self.get_linked_device() is not None
 
     def is_controllable(self) -> bool:
-        """Returns if the underlying hardware device can be controlled"""
+        """Returns true if the underlying hardware device can be controlled"""
         if self.is_linked:
             try:
                 linked_device = self.get_linked_device().first()
