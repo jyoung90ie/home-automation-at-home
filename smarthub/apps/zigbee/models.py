@@ -2,7 +2,6 @@
 import json
 import logging
 from json.decoder import JSONDecodeError
-from ..notifications.models import NotificationMedium
 from typing import TYPE_CHECKING, Union
 
 from django.apps import apps
@@ -13,6 +12,7 @@ from django.db.models.query_utils import Q
 
 from ..models import BaseAbstractModel
 from ..mqtt.publish import send_messages
+from ..notifications.models import NotificationMedium
 
 if TYPE_CHECKING:
     from ..devices.models import Device

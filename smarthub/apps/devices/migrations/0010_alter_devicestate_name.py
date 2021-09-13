@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('devices', '0009_devicestate'),
+        ("devices", "0009_devicestate"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='devicestate',
-            name='name',
-            field=models.CharField(max_length=50, verbose_name='Name you want to save this state under'),
+            model_name="devicestate",
+            name="name",
+            field=models.CharField(
+                max_length=50, verbose_name="Name you want to save this state under"
+            ),
         ),
     ]

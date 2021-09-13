@@ -1,25 +1,20 @@
+import json
+import math
+from unittest import mock
+from unittest.mock import MagicMock, PropertyMock, patch
+
 from django.db.models.query import QuerySet
 from django.http.response import Http404
 from django.urls import reverse
-from unittest import mock
-from unittest.mock import MagicMock, PropertyMock, patch
-import json
-import math
-import factory
-from .factories import (
-    DeviceFactory,
-    DeviceLocationFactory,
-    UserFactory,
-    ZigbeeDeviceStateFactory,
-)
-from ...zigbee.tests.factories import (
-    ZigbeeDeviceFactory,
-    ZigbeeLogFactory,
-    ZigbeeMessageFactory,
-)
-from ...zigbee.models import ZigbeeLog, ZigbeeMessage, ZigbeeDevice
-from ...devices.models import DeviceState
 
+import factory
+
+from ...devices.models import DeviceState
+from ...zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
+from ...zigbee.tests.factories import (ZigbeeDeviceFactory, ZigbeeLogFactory,
+                                       ZigbeeMessageFactory)
+from .factories import (DeviceFactory, DeviceLocationFactory, UserFactory,
+                        ZigbeeDeviceStateFactory)
 from .helpers import TestCaseWithHelpers
 
 login_url = reverse("account_login")

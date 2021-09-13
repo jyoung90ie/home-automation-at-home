@@ -1,6 +1,7 @@
+from django.db.models.signals import post_save
+
 import factory
 from factory import fuzzy
-from django.db.models.signals import post_save
 
 from .. import models
 

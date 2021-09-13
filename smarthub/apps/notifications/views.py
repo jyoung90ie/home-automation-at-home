@@ -8,11 +8,8 @@ from django.views.generic.base import RedirectView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 
-from ..mixins import (
-    AddUserToFormMixin,
-    LimitResultsToUserMixin,
-    MakeRequestObjectAvailableInFormMixin,
-)
+from ..mixins import (AddUserToFormMixin, LimitResultsToUserMixin,
+                      MakeRequestObjectAvailableInFormMixin)
 from ..views import UUIDView
 from . import forms, models
 

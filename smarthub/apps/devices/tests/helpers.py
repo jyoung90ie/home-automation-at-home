@@ -1,8 +1,9 @@
 """Testing helper methods"""
 from django.contrib.auth import get_user_model
 from django.http.response import HttpResponse
-from factory.base import Factory
 from django.test import TestCase
+
+from factory.base import Factory
 
 
 class TestCaseWithHelpers(TestCase):

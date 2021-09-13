@@ -6,13 +6,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('events', '0004_auto_20210910_0745'),
-        ('notifications', '0003_notification_trigger_log'),
+        ("events", "0004_auto_20210910_0745"),
+        ("notifications", "0003_notification_trigger_log"),
     ]
 
     operations = [
         migrations.RenameModel(
-            old_name='Notification',
-            new_name='NotificationLog',
+            old_name="Notification",
+            new_name="NotificationLog",
         ),
     ]

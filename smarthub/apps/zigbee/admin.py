@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericInlineModelAdmin
+
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 
 from ..devices.models import DeviceState

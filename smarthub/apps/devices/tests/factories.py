@@ -1,11 +1,12 @@
 from django.contrib.contenttypes.models import ContentType
-import factory
-from factory import fuzzy
 from django.db.models.signals import post_save
 
+import factory
+from factory import fuzzy
+
 from ...users.tests.factories import UserFactory
-from .. import models
 from ...zigbee.tests.factories import ZigbeeDeviceFactory
+from .. import models
 
 
 @factory.django.mute_signals(post_save)

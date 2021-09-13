@@ -1,20 +1,14 @@
-from ...devices.models import DeviceProtocol
 from typing import Tuple
 
 from django.db.models.query import QuerySet
-from ...zigbee.models import ZigbeeDevice, ZigbeeLog
 from django.test.testcases import TestCase
-from .factories import (
-    DeviceFactory,
-    DeviceLocationFactory,
-    UserFactory,
-    ZigbeeDeviceStateFactory,
-)
-from ...zigbee.tests.factories import (
-    ZigbeeDeviceFactory,
-    ZigbeeLogFactory,
-    ZigbeeMessageFactory,
-)
+
+from ...devices.models import DeviceProtocol
+from ...zigbee.models import ZigbeeDevice, ZigbeeLog
+from ...zigbee.tests.factories import (ZigbeeDeviceFactory, ZigbeeLogFactory,
+                                       ZigbeeMessageFactory)
+from .factories import (DeviceFactory, DeviceLocationFactory, UserFactory,
+                        ZigbeeDeviceStateFactory)
 
 
 class DeviceMixinForTest(TestCase):

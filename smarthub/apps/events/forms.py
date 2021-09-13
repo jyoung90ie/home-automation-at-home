@@ -2,10 +2,11 @@
 
 import logging
 
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Column, Field, Fieldset, Layout, Row, Submit
 from django import forms
 from django.apps import apps
+
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Column, Field, Fieldset, Layout, Row, Submit
 
 from ..events.defines import NON_NUMERIC_TRIGGER_TYPES, NUMERIC_TRIGGER_TYPES
 from ..forms import CustomChoiceField

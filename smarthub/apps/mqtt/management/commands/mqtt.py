@@ -4,21 +4,17 @@ import json
 import logging
 from json.decoder import JSONDecodeError
 from random import random
-from ....devices.models import DeviceState
 
-import paho.mqtt.client as mqtt
 from django.core.cache import cache
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 
-from smarthub.settings import (
-    MQTT_BASE_TOPIC,
-    MQTT_CLIENT_NAME,
-    MQTT_QOS,
-    MQTT_SERVER,
-    MQTT_TOPICS,
-)
+import paho.mqtt.client as mqtt
 
+from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
+                               MQTT_SERVER, MQTT_TOPICS)
+
+from ....devices.models import DeviceState
 from ....zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
 from ... import defines
 from ...utils import get_cache_key

@@ -1,5 +1,4 @@
 import logging
-
 from typing import TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
@@ -9,7 +8,6 @@ from django.db.models.constraints import UniqueConstraint
 from django.urls.base import reverse
 
 from ..models import BaseAbstractModel
-
 # from ..events.models import EventTriggerLog
 from .utils import Pushbullet
 
