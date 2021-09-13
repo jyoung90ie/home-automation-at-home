@@ -33,7 +33,7 @@ class ToggleDeviceState(UUIDView, View):
         if device and not device.is_linked():
             raise Http404("The device must be linked to a hardware device")
 
-        mqtt_topic = device.get_linked_device().get().friendly_name
+        mqtt_topic = device.get_linked_device().friendly_name
 
         logger.info("publish topic=%s", mqtt_topic)
 

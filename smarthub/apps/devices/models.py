@@ -158,18 +158,20 @@ class Device(BaseAbstractModel):
         obj.try_to_link_zigbee_device()
 
     def get_zigbee_device(
-        self, field_name="zigbeedevice_set"
-    ) -> Union[QuerySet["ZigbeeDevice"], None]:
+        self, field_name: str = "zigbeedevice_set"
+    ) -> Union["ZigbeeDevice", None]:
         """Return ZigbeeDevice object or false"""
         obj: "ZigbeeDevice" = getattr(self, field_name, None)
 
-        return obj.all() if obj else None
+        return obj.first() if obj else None
 
     def get_zigbee_messages(
-        self, latest_only=False, field_name="zigbeemessage_set"
-    ) -> QuerySet["ZigbeeMessage"]:
+        self, latest_only: bool = False, field_name: str = "zigbeemessage_set"
+    ) -> Union[QuerySet["ZigbeeMessage"], None]:
         """Return all raw messages for zigbee device"""
-        zb_device: QuerySet["ZigbeeDevice"] = self.get_zigbee_device()
+        zb_device: "ZigbeeDevice" = self.get_zigbee_device()
+
+        messages = None
 
         if zb_device:
             if isinstance(zb_device, QuerySet):
@@ -178,69 +180,71 @@ class Device(BaseAbstractModel):
             try:
                 messages = getattr(zb_device, field_name).all()
 
-                if not messages:
-                    return []
+                # if not messages:
+                # return []
 
                 if latest_only:
                     messages = [messages.order_by("-created_at").first()]
-            except AttributeError:
-                logger.error("There was a problem aggregating ZigbeeMessages")
+            except AttributeError as ex:
+                logger.error("There was a problem aggregating ZigbeeMessages - %s", ex)
 
         return messages
 
     def get_zigbee_logs(
-        self, message_obj=None, latest_only=False, field_name="zigbeelog_set"
-    ) -> Union[QuerySet["ZigbeeLog"], bool]:
+        self,
+        filter_message: "ZigbeeMessage" = None,
+        latest_only: bool = False,
+        field_name: str = "zigbeelog_set",
+    ) -> Union[QuerySet["ZigbeeLog"], None]:
         """
         Return all processed messages for zigbee device.
         If latest_only is True, returns only the most recent log entry based on created_at field.
-        If message_obj is specified, returns logs for specified message_obj ONLY.
+        If filter_for_message is specified, returns logs that object ONLY.
         """
-        logs = []
-        messages = self.get_zigbee_messages(latest_only=latest_only)
+        logs = None
+        zigbee_messages = self.get_zigbee_messages(latest_only=latest_only)
 
-        if not messages or len(messages) == 0:
+        if not zigbee_messages or len(zigbee_messages) == 0:
             logger.info("ZigbeeDevice has no messages - %s", self)
             return logs
 
-        if message_obj:
-            if not isinstance(message_obj, apps.get_model("zigbee", "ZigbeeMessage")):
-                logger.info(
-                    "get_zigbee_logs(): Invalid object type provided - expected ZigbeeMessage"
-                    " (value=%s)",
-                    message_obj,
-                )
-                return False
-            return messages.filter(message=message_obj)
+        # loop through all messages
+        logs = []
+        for message in zigbee_messages:
+            if filter_message and filter_message != message:
+                # skip if message doesn't match when filter is applied
+                continue
 
-        for message in messages:
             try:
-                message_logs = getattr(message, field_name).all()
+                logs_for_message = getattr(message, field_name).all()
 
                 if latest_only:
                     # latest_only -> returns only latest ZigbeeMessage -> no need to build
                     # queryset of logs as only one result
-                    return message_logs
+                    return logs_for_message
 
-                logs.append(message_logs)
-            except AttributeError:
-                logger.error("There was a problem aggregating ZigbeeLogs")
+                for log in logs_for_message:
+                    logs.append(log)
+
+            except AttributeError as ex:
+                logs = None
+                logger.error("There was a problem aggregating ZigbeeLogs - %s", ex)
 
         return logs
 
-    def get_lastest_zigbee_logs(self) -> Union[QuerySet["ZigbeeLog"], bool]:
-        """Returns all logs relating to the last message from the device"""
+    def get_latest_zigbee_logs(self) -> Union[QuerySet["ZigbeeLog"], None]:
+        """Returns the parsed logs eminating from the last ZigbeeMessage received"""
         return self.get_zigbee_logs(latest_only=True)
 
     def try_to_link_zigbee_device(self) -> None:
         """Looks in Zigbee devices to see if there are any matches using friendly_name and
         device_identifier"""
-        if not DeviceProtocol.ZIGBEE or self.get_zigbee_device():
+        if self.protocol is not DeviceProtocol.ZIGBEE or self.get_zigbee_device():
             return
 
         if not self.zigbee_model:
             logger.debug(
-                "Cannot link zigbee device - ZigbeeDevice model not set within Device model"
+                "Cannot link zigbee device - ZigbeeDevice model has not been passed through to object"
             )
             return
 
@@ -260,12 +264,12 @@ class Device(BaseAbstractModel):
                 zigbee_device.device = self
                 zigbee_device.save()
 
-                logger.info("Device linked and save as object %s", zigbee_device)
+                logger.info("Device linked - ZigbeeDevice obj= %s", zigbee_device)
 
         except (self.zigbee_model.DoesNotExist, Exception) as ex:
             logger.error("Device could not be linked - %s", ex)
 
-    def get_linked_device(self) -> object:
+    def get_linked_device(self) -> Union["ZigbeeDevice", None]:
         """Return the hardware device object this user device is linked to"""
         foreign_keys = ["zigbeedevice_set", "apidevice_set"]
         for fk_name in foreign_keys:
@@ -273,7 +277,7 @@ class Device(BaseAbstractModel):
             is_linked = fk_obj and hasattr(fk_obj.first(), "device")
 
             if is_linked:
-                return fk_obj
+                return fk_obj.first()
 
         return None
 
@@ -285,7 +289,7 @@ class Device(BaseAbstractModel):
         """Returns true if the underlying hardware device can be controlled"""
         if self.is_linked:
             try:
-                linked_device = self.get_linked_device().first()
+                linked_device = self.get_linked_device()
                 return getattr(linked_device, "is_controllable", False)
             except AttributeError as ex:
                 pass

@@ -539,7 +539,7 @@ class DeviceStatesJson(UUIDView, PermitObjectOwnerOnly, BaseDetailView):
         )
 
         try:
-            hardware_device = device.get_linked_device().first()
+            hardware_device = device.get_linked_device()
             device_obj = type(hardware_device)
 
             device_states = device_obj.objects.get_device_states(device=device)
