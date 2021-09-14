@@ -5,16 +5,25 @@ from django.test.testcases import TestCase
 
 from ...devices.models import DeviceProtocol
 from ...zigbee.models import ZigbeeDevice, ZigbeeLog
-from ...zigbee.tests.factories import (ZigbeeDeviceFactory, ZigbeeLogFactory,
-                                       ZigbeeMessageFactory)
-from .factories import (DeviceFactory, DeviceLocationFactory, UserFactory,
-                        ZigbeeDeviceStateFactory)
+from ...zigbee.tests.factories import (
+    ZigbeeDeviceFactory,
+    ZigbeeLogFactory,
+    ZigbeeMessageFactory,
+)
+from .factories import (
+    DeviceFactory,
+    DeviceLocationFactory,
+    UserFactory,
+    ZigbeeDeviceStateFactory,
+)
+
+from ...events.tests.factories import EventTriggerFactory
 
 
-class DeviceMixinForTest(TestCase):
+class DeviceTestMixin(TestCase):
     def setUp(self) -> None:
         self.user = UserFactory()
-        self.device = DeviceFactory(user=self.user)
+        self.device = DeviceFactory(user=self.user, protocol=DeviceProtocol.ZIGBEE)
 
     def generate_logs(
         self,
@@ -36,7 +45,7 @@ class DeviceMixinForTest(TestCase):
         return msgs, logs
 
 
-class TestDeviceLinkDevice(DeviceMixinForTest):
+class TestDeviceLinkDevice(DeviceTestMixin):
     def link_device(self):
         self.zb_device = ZigbeeDeviceFactory()
         self.device.device_identifier = self.zb_device.ieee_address
@@ -86,7 +95,7 @@ class TestDeviceLinkDevice(DeviceMixinForTest):
         self.assertEqual(self.zb_device, self.device.get_zigbee_device())
 
 
-class TestDeviceGetZigbeeMessages(DeviceMixinForTest):
+class TestDeviceGetZigbeeMessages(DeviceTestMixin):
     def test_returns_none_when_device_not_linked(self):
         msgs = self.device.get_zigbee_messages()
 
@@ -130,7 +139,7 @@ class TestDeviceGetZigbeeMessages(DeviceMixinForTest):
         self.assertEqual(len(other_zb_device.device.get_zigbee_messages()), 0)
 
 
-class TestDeviceGetZigbeeLogs(DeviceMixinForTest):
+class TestDeviceGetZigbeeLogs(DeviceTestMixin):
     def test_returns_none_when_device_not_linked(self):
         logs = self.device.get_zigbee_logs()
 
@@ -191,7 +200,7 @@ class TestDeviceGetZigbeeLogs(DeviceMixinForTest):
                 self.assertTrue(device_log in last_msg_logs)
 
 
-class TestDeviceGetLatestZigbeeLogs(DeviceMixinForTest):
+class TestDeviceGetLatestZigbeeLogs(DeviceTestMixin):
     def test_returns_none_when_device_not_linked(self):
         logs = self.device.get_latest_zigbee_logs()
 
@@ -222,7 +231,7 @@ class TestDeviceGetLatestZigbeeLogs(DeviceMixinForTest):
                 self.assertTrue(device_log in last_msg_logs)
 
 
-class TestDeviceTryToLinkZigbeeDevice(DeviceMixinForTest):
+class TestDeviceTryToLinkZigbeeDevice(DeviceTestMixin):
     def test_that_api_device_is_not_linked(self):
         device = DeviceFactory(user=self.user, protocol=DeviceProtocol.API)
 
@@ -235,17 +244,145 @@ class TestDeviceTryToLinkZigbeeDevice(DeviceMixinForTest):
         self.assertTrue(device.protocol, DeviceProtocol.API)
         self.assertFalse(device.is_linked())
 
-    def test_that_zigbee_device_is_linked(self):
+    def test_that_zigbee_device_is_linked_when_device_matches_identifier(self):
+        ZigbeeDeviceFactory(ieee_address=self.device.device_identifier)
+
+        self.device.try_to_link_zigbee_device()
+
+        self.assertTrue(self.device.protocol, DeviceProtocol.ZIGBEE)
+        self.assertTrue(self.device.is_linked())
+
+    def test_that_zigbee_device_is_linked_when_device_matches_friendly_name(self):
+        ZigbeeDeviceFactory(friendly_name=self.device.friendly_name)
+
+        self.device.try_to_link_zigbee_device()
+
+        self.assertTrue(self.device.protocol, DeviceProtocol.ZIGBEE)
+        self.assertTrue(self.device.is_linked())
+
+    def test_that_device_is_not_linked_when_details_do_not_match(self):
         device = DeviceFactory(user=self.user, protocol=DeviceProtocol.ZIGBEE)
 
-        ZigbeeDeviceFactory(
-            ieee_address=device.device_identifier, friendly_name=device.friendly_name
-        )
+        ZigbeeDeviceFactory()
 
         device.try_to_link_zigbee_device()
 
         self.assertTrue(device.protocol, DeviceProtocol.ZIGBEE)
-        self.assertTrue(device.is_linked())
+        self.assertFalse(device.is_linked())
+
+
+class TestDeviceGetLinkedDevice(DeviceTestMixin):
+    def test_that_nothing_is_returned_when_device_is_not_linked(self):
+        self.assertTrue(self.device is not None)
+        self.assertTrue(self.device.get_linked_device() is None)
+
+    def test_that_linked_device_is_returned(self):
+        zb_device = ZigbeeDeviceFactory(device=self.device)
+
+        linked_device = self.device.get_linked_device()
+
+        self.assertTrue(linked_device == zb_device)
+        self.assertTrue(isinstance(linked_device, ZigbeeDevice))
+
+    def test_that_only_first_device_is_returned_if_multiple_devices_mistakenly_linked(
+        self,
+    ):
+        zb_device1 = ZigbeeDeviceFactory(device=self.device)
+        zb_device2 = ZigbeeDeviceFactory(device=self.device)
+        zb_device3 = ZigbeeDeviceFactory(device=self.device)
+
+        linked_device = self.device.get_linked_device()
+
+        self.assertTrue(linked_device == zb_device1)
+        self.assertTrue(isinstance(linked_device, ZigbeeDevice))
+
+
+class TestDeviceGetLinkedDeviceValues(DeviceTestMixin):
+    def test_that_nothing_is_returned_when_device_is_not_linked(self):
+        self.assertTrue(self.device is not None)
+        self.assertTrue(self.device.get_linked_device() is None)
+
+    def test_that_linked_device_values_are_returned(self):
+        zb_device = ZigbeeDeviceFactory(device=self.device)
+
+        linked_device_values = self.device.get_linked_device_values()
+
+        zb_device_values = ZigbeeDevice.objects.values().last()
+
+        self.assertTrue(isinstance(linked_device_values, dict))
+        self.assertTrue(linked_device_values == zb_device_values)
+
+
+class TestDeviceIsLinked(DeviceTestMixin):
+    def test_when_linked_returns_true(self):
+        zb_device = ZigbeeDeviceFactory(device=self.device)
+
+        self.assertTrue(self.device.is_linked())
+
+    def test_when_not_linked_returns_false(self):
+        self.assertFalse(self.device.is_linked())
+
+
+class TestDeviceIsControllable(DeviceTestMixin):
+    def test_when_device_is_not_linked_returns_false(self):
+        self.assertFalse(self.device.is_linked())
+        self.assertFalse(self.device.is_controllable())
+
+    def test_when_device_is_linked_but_not_controllable_returns_false(self):
+        zb_device = ZigbeeDeviceFactory(device=self.device, is_controllable=False)
+        self.assertTrue(self.device.is_linked())
+        self.assertFalse(self.device.is_controllable())
+
+    def test_when_device_is_linked_and_controllable_returns_true(self):
+        zb_device = ZigbeeDeviceFactory(device=self.device, is_controllable=True)
+        self.assertTrue(self.device.is_linked())
+        self.assertTrue(self.device.is_controllable())
+
+
+class TestDeviceGetEventTriggers(DeviceTestMixin):
+    def test_when_device_has_no_eventtriggers_returns_empty_queryset(self):
+        # zb_device = ZigbeeDeviceFactory(device=self.device)
+
+        event_triggers = self.device.get_event_triggers()
+
+        self.assertTrue(len(event_triggers) == 0)
+        self.assertTrue(isinstance(event_triggers, QuerySet))
+
+    def test_returns_only_enabled_event_triggers(self):
+        triggers = [
+            EventTriggerFactory(device=self.device, is_enabled=True),
+            EventTriggerFactory(device=self.device, is_enabled=False),
+            EventTriggerFactory(device=self.device, is_enabled=True),
+        ]
+
+        event_triggers = self.device.get_event_triggers()
+
+        self.assertTrue(len(event_triggers) == 2)
+
+        for trigger in triggers:
+            with self.subTest(trigger=trigger):
+                if trigger.is_enabled:
+                    self.assertTrue(trigger in event_triggers)
+                else:
+                    self.assertFalse(trigger in event_triggers)
+
+    def test_does_not_return_triggers_for_other_devices(self):
+        triggers = [
+            EventTriggerFactory(device=self.device, is_enabled=True),
+            EventTriggerFactory(is_enabled=True),
+            EventTriggerFactory(is_enabled=True),
+        ]
+
+        event_triggers = self.device.get_event_triggers()
+
+        self.assertTrue(len(event_triggers) == 1)
+
+        for trigger in triggers:
+            with self.subTest(trigger=trigger):
+                if trigger.device == self.device:
+                    self.assertTrue(trigger in event_triggers)
+                else:
+                    self.assertFalse(trigger in event_triggers)
 
 
 class TestDeviceLocation(TestCase):
@@ -254,6 +391,45 @@ class TestDeviceLocation(TestCase):
         self.location = DeviceLocationFactory(
             user=self.user,
         )
+
+    def test_location_name_is_saved_as_lower_case(self):
+        self.location.location = "THIS IS IN UPPERCASE"
+        self.location.save()
+
+        self.assertNotEqual(self.location.location, "THIS IS IN UPPERCASE")
+        self.assertEqual(self.location.location, "this is in uppercase")
+
+    def test_get_linked_devices_only_returns_devices_with_same_location(self):
+        devices = [
+            DeviceFactory(
+                user=self.user, location=self.location, protocol=DeviceProtocol.ZIGBEE
+            ),
+            DeviceFactory(
+                user=self.user, location=self.location, protocol=DeviceProtocol.ZIGBEE
+            ),
+            DeviceFactory(user=self.user, protocol=DeviceProtocol.ZIGBEE),
+        ]
+
+        zb_devices = [
+            ZigbeeDeviceFactory(device=devices[0]),
+            ZigbeeDeviceFactory(device=devices[1]),
+            ZigbeeDeviceFactory(device=devices[2]),
+        ]
+
+        linked_devices = self.location.get_linked_devices()
+
+        self.assertEqual(len(linked_devices), 2)
+        self.assertEqual(self.location.total_linked_devices(), 2)
+
+        for zb_device in zb_devices:
+            with self.subTest(zb_device=zb_device):
+                if zb_device.device.location == self.location:
+                    self.assertTrue(zb_device in linked_devices)
+                else:
+                    self.assertFalse(zb_device in linked_devices)
+
+    def test_total_linked_devices_is_zero_when_no_devices(self):
+        self.assertEqual(self.location.total_linked_devices(), 0)
 
 
 class TestDeviceState(TestCase):

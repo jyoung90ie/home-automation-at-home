@@ -9,12 +9,19 @@ from django.urls import reverse
 
 import factory
 
-from ...devices.models import DeviceState
+from ...devices.models import DeviceProtocol, DeviceState
 from ...zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
-from ...zigbee.tests.factories import (ZigbeeDeviceFactory, ZigbeeLogFactory,
-                                       ZigbeeMessageFactory)
-from .factories import (DeviceFactory, DeviceLocationFactory, UserFactory,
-                        ZigbeeDeviceStateFactory)
+from ...zigbee.tests.factories import (
+    ZigbeeDeviceFactory,
+    ZigbeeLogFactory,
+    ZigbeeMessageFactory,
+)
+from .factories import (
+    DeviceFactory,
+    DeviceLocationFactory,
+    UserFactory,
+    ZigbeeDeviceStateFactory,
+)
 from .helpers import TestCaseWithHelpers
 
 login_url = reverse("account_login")
@@ -179,7 +186,7 @@ class TestDetailDevice(TestCaseWithHelpers):
         )
 
     def test_detail_shows_linked_device(self):
-        device = DeviceFactory(user=self.user)
+        device = DeviceFactory(user=self.user, protocol=DeviceProtocol.ZIGBEE)
         zigbee_device = ZigbeeDeviceFactory(device=device)
 
         response = self.get_url_response(uuid=device.uuid)
@@ -253,7 +260,7 @@ class TestDetailDevice(TestCaseWithHelpers):
 
     def test_that_last_device_message_is_displayed(self):
         json_message = "{'test': '1234'}"
-        user_device = DeviceFactory(user=self.user)
+        user_device = DeviceFactory(user=self.user, protocol=DeviceProtocol.ZIGBEE)
         zigbee_device = ZigbeeDeviceFactory(device=user_device)
 
         # create two zigbee messages and confirm only the last appears
@@ -272,17 +279,12 @@ class TestDetailDevice(TestCaseWithHelpers):
         response = self.get_url_response(uuid=user_device.uuid)
 
         for log in first_msg_logs:
-            values = [
-                {
-                    "value": f"""<tr>
-                            <td>{log.metadata_type}</td>
-                            <td><em>{log.metadata_value}</em></td>
-                        </tr>""",
-                    "exists": True,
-                },
-            ]
-
-            self.assert_values_in_reponse(response=response, values=values)
+            with self.subTest(log=log):
+                text = f"""<tr>
+                                <td>{log.metadata_type}</td>
+                                <td><em>{log.metadata_value}</em></td>
+                            </tr>"""
+                self.assertContains(response=response, text=text)
 
         # create new logs and confirm they replace the previous version on page
         last_zb_message = ZigbeeMessageFactory(
@@ -298,17 +300,12 @@ class TestDetailDevice(TestCaseWithHelpers):
         response = self.get_url_response(uuid=user_device.uuid)
 
         for log in last_msg_logs:
-            values = [
-                {
-                    "value": f"""<tr>
-                            <td>{log.metadata_type}</td>
-                            <td><em>{log.metadata_value}</em></td>
-                        </tr>""",
-                    "exists": True,
-                },
-            ]
-
-            self.assert_values_in_reponse(response=response, values=values)
+            with self.subTest(log=log):
+                text = f"""<tr>
+                                <td>{log.metadata_type}</td>
+                                <td><em>{log.metadata_value}</em></td>
+                            </tr>"""
+                self.assertContains(response=response, text=text)
 
     def test_that_non_controllable_device_does_not_permit_adding_device_states(self):
         pass
@@ -318,7 +315,7 @@ class TestDetailDevice(TestCaseWithHelpers):
         mock.Mock(return_value="csrf-token"),
     )
     def test_adding_device_state_appears_on_detail_view_for_controllable_device(self):
-        user_device = DeviceFactory(user=self.user)
+        user_device = DeviceFactory(user=self.user, protocol=DeviceProtocol.ZIGBEE)
         zigbee_device = ZigbeeDeviceFactory(device=user_device, is_controllable=True)
 
         device_states = factory.create_batch(
