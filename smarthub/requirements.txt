@@ -20,6 +20,7 @@ click==7.1.2
 click-didyoumean==0.0.3
 click-plugins==1.1.1
 click-repl==0.2.0
+coverage==5.5
 crispy-bootstrap5==0.4
 cryptography==3.4.7
 defusedxml==0.7.1
@@ -70,6 +71,7 @@ pylint-plugin-utils==0.6
 pymemcache==3.5.0
 pyparsing==2.4.7
 pytest==6.2.4
+pytest-cov==2.12.1
 pytest-django==4.4.0
 python-dateutil==2.8.2
 python3-openid==3.2.0
