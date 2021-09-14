@@ -1,7 +1,7 @@
 """Captures user device information which can be used to link to hardware devices via other
 modules"""
 import logging
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Dict, Union
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
@@ -88,17 +88,28 @@ class DeviceLocation(BaseAbstractModel):
 
         super().save(*args, **kwargs)
 
+    def get_linked_devices(self) -> Union["QuerySet", None]:
+        linked_devices = None
+        try:
+            linked_devices = self.user.get_linked_devices
+
+            if linked_devices:
+                linked_devices = linked_devices.filter(location=self)
+        except (EmptyResultSet, ObjectDoesNotExist):
+            pass
+
+        return linked_devices
+
     def total_linked_devices(self) -> int:
         """Return number of user's linked devices in specified location"""
         total = 0
-        try:
-            users_linked_devices: QuerySet = self.user.get_linked_devices
 
-            if users_linked_devices:
-                location_linked_devices = users_linked_devices.filter(location=self)
-                total = location_linked_devices.count()
-        except (EmptyResultSet, ObjectDoesNotExist):
+        try:
+            total = self.get_linked_devices().count()
+        except TypeError:
+            # queryset wasn't returned
             pass
+
         return total
 
 
@@ -237,14 +248,14 @@ class Device(BaseAbstractModel):
         return self.get_zigbee_logs(latest_only=True)
 
     def try_to_link_zigbee_device(self) -> None:
-        """Looks in Zigbee devices to see if there are any matches using friendly_name and
-        device_identifier"""
+        """Filters ZigbeeDevice objects with device friendly_name and device_identifier to see if
+        there are any unlinked matches - which will be then linked to the current device."""
         if self.protocol is not DeviceProtocol.ZIGBEE or self.get_zigbee_device():
             return
 
         if not self.zigbee_model:
             logger.debug(
-                "Cannot link zigbee device - ZigbeeDevice model has not been passed through to object"
+                "Cannot link zigbee device - ZigbeeDevice model has not been setup in __init__()"
             )
             return
 
@@ -269,17 +280,30 @@ class Device(BaseAbstractModel):
         except (self.zigbee_model.DoesNotExist, Exception) as ex:
             logger.error("Device could not be linked - %s", ex)
 
-    def get_linked_device(self) -> Union["ZigbeeDevice", None]:
-        """Return the hardware device object this user device is linked to"""
+    def get_linked_device(self, return_values=False) -> Union["ZigbeeDevice", None]:
+        """Return the first hardware device that was linked to specified user device - returns
+        only the first obj"""
         foreign_keys = ["zigbeedevice_set", "apidevice_set"]
+
         for fk_name in foreign_keys:
             fk_obj = getattr(self, fk_name, None)
             is_linked = fk_obj and hasattr(fk_obj.first(), "device")
 
             if is_linked:
+                fk_obj = fk_obj.all().order_by(
+                    "created_at"
+                )  # return only first obj by creation date
+
+                if return_values:
+                    fk_obj = fk_obj.values()
+
                 return fk_obj.first()
 
         return None
+
+    def get_linked_device_values(self) -> dict:
+        """Return dict containing key-value pairs representing data model field and value"""
+        return self.get_linked_device(return_values=True)
 
     def is_linked(self) -> bool:
         """Returns true if user device is linked to a hardware device"""
@@ -299,11 +323,7 @@ class Device(BaseAbstractModel):
         """Default redirect url"""
         return reverse("devices:device:detail", kwargs={"uuid": self.uuid})
 
-    def __str__(self):
-        return f"{self.friendly_name} [{self.device_identifier}]"
-
-    @property
-    def last_communication(self):
+    def last_communication(self) -> str:
         """Returns the date and time of the most recent communication from the hardware device"""
         received_at: str = ""
         try:
@@ -316,10 +336,12 @@ class Device(BaseAbstractModel):
 
         return received_at
 
-    def get_event_triggers(self) -> QuerySet:
+    def get_event_triggers(self) -> "QuerySet":
         """Return all enabled event triggers that object is related to"""
-
         return self.eventtrigger_set.filter(is_enabled=True)
+
+    def __str__(self):
+        return f"{self.friendly_name} [{self.device_identifier}]"
 
 
 class DeviceState(BaseAbstractModel):

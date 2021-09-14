@@ -40,7 +40,7 @@ class CustomUserManager(BaseUserManager):
 
         return self.create_user(email, password, **extra_fields)
 
-    def get_user_devices(self, user) -> QuerySet:
+    def get_user_devices(self, user) -> "QuerySet":
         """Return all devices created by user"""
         return (
             apps.get_model("devices", "Device")
@@ -48,7 +48,7 @@ class CustomUserManager(BaseUserManager):
             .order_by("friendly_name")
         )
 
-    def get_linked_devices(self, user) -> QuerySet:
+    def get_linked_devices(self, user) -> "QuerySet":
         """Return list of device objects for user"""
         user_devices = self.get_user_devices(user=user).filter(
             Q(zigbeedevice__uuid__isnull=False)
@@ -60,7 +60,7 @@ class CustomUserManager(BaseUserManager):
 
         return user_devices
 
-    def get_controllable_devices(self, user) -> QuerySet:
+    def get_controllable_devices(self, user) -> "QuerySet":
         """Return list of device objects which can be controlled"""
         user_devices = self.get_linked_devices(user=user).filter(
             zigbeedevice__is_controllable=True

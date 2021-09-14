@@ -36,7 +36,7 @@
             relevant options) and your device will react accordingly.
         </p>
         <div class="row mt-2 content-box table-responsive">
-            {% for state in device.get_linked_device.first.device_states.all %}
+            {% for state in device.get_linked_device.device_states.all %}
             {% if forloop.first %}
             <table class="table table-hover">
                 <thead>
@@ -110,13 +110,12 @@
 
                 {% if is_linked %}
 
-                {% for dict in device.get_linked_device.all.values %}
-                {% for type, value in dict.items %}
+
+                {% for type, value in device.get_linked_device_values.items %}
                 <div class="fw-bold col-4 mb-2">{{ type|upper }}</div>
                 <div class="col-8 mb-2">{{ value }}</div>
                 {% empty %}
                 Device data has not been captured.
-                {% endfor %}
                 {% endfor %}
                 {% else %}
                 <span class="m-2">Smart Hub has been unable to detect this device, please ensure that the
@@ -130,34 +129,32 @@
         {% if is_linked %}
         <div class="col-lg-6">
             <div class="row content-box mt-0 table-responsive">
-                {% with logs=device.get_lastest_zigbee_logs %}
-                {% if logs %}
-                {% for log in logs %}
-                {% if forloop.first %}
-                <table>
-                    <caption>
-                        <em>Most recent data update from device.</em>
-                    </caption>
-                    <thead>
-                        <tr>
-                            <th scope="col">Field</th>
-                            <th scope="col">Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                {% with logs=device.get_latest_zigbee_logs %}
+                    {% for log in logs %}
+                        {% if forloop.first %}
+                        <table>
+                            <caption>
+                                <em>Most recent data update from device.</em>
+                            </caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Field</th>
+                                    <th scope="col">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                         {% endif %}
-                        <tr>
-                            <td>{{ log.metadata_type }}</td>
-                            <td><em>{{ log.metadata_value }}</em></td>
-                        </tr>
+                            <tr>
+                                <td>{{ log.metadata_type }}</td>
+                                <td><em>{{ log.metadata_value }}</em></td>
+                            </tr>
                         {% if forloop.last %}
-                    </tbody>
-                </table>
-                {% endif %}
-                {% endfor %}
-                {% else %}
-                <p>No data received from the device.</p>
-                {% endif %}
+                            </tbody>
+                        </table>
+                        {% endif %}
+                    {% empty %}
+                        <p>No data received from the device.</p>
+                    {% endfor %}
                 {% endwith %}
 
             </div>
@@ -170,5 +167,4 @@
 {% endblock %}
 
 {% block extra_body %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.0/dist/chart.min.js"></script>
 {% endblock %}
