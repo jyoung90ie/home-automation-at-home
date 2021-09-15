@@ -8,3 +8,4 @@ RUN rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /docker-entrypoint-initdb.d
 
+RUN localedef -i en_US -f UTF-8 en_US.UTF-8
