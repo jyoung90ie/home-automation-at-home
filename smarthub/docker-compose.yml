@@ -2,7 +2,8 @@ version: "3.9"
    
 services:
   db:
-    image: postgis/postgis
+    # image: arm32v7/postgres # postgis/postgis
+    build: ./docker/postgres
     restart: always
     volumes:
       - ./data/db:/var/lib/postgresql/data
@@ -16,10 +17,6 @@ services:
     ports:
       - 11211:11211
     command: ["memcached"]
-  rabbitmq:
-    image: rabbitmq
-    ports:
-      - 5672:5672
   web:
     build: .
     command: bash -c "wait-for-it db:5432 -- wait-for-it memcached:11211 -- python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
@@ -40,3 +37,5 @@ services:
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:?EMAIL_HOST_PASSWORD}
       - MEROSS_EMAIL=${MEROSS_EMAIL:?MEROSS_EMAIL}
       - MEROSS_PASSWORD=${MEROSS_PASSWORD:?MEROSS_PASSWORD}
+
+      

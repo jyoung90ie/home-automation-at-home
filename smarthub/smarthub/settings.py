@@ -113,6 +113,7 @@ WSGI_APPLICATION = "smarthub.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.contrib.gis.db.backends.postgis",
+        # "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": os.getenv("POSTGRES_DB"),
         "USER": os.getenv("POSTGRES_USER"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
@@ -214,12 +215,11 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 # mqtt
-MQTT_QOS = 1
-
-MQTT_SERVER = "192.168.178.58"
-MQTT_BASE_TOPIC = "zigbee2mqtt"
+MQTT_QOS = os.getenv("MQTT_QOS")
+MQTT_SERVER = os.getenv("MQTT_SERVER")
+MQTT_BASE_TOPIC = os.getenv("MQTT_BASE_TOPIC")
+MQTT_CLIENT_NAME = os.getenv("MQTT_CLIENT_NAME")
 MQTT_TOPICS = ["#"]
-MQTT_CLIENT_NAME = "Smart Hub"
 
 
 # breadcrumbs
