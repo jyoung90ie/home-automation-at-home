@@ -132,7 +132,7 @@ class MQTTClient:
             logger.info(ex)
             self.disconnect()
         except Exception as ex:
-            logger.info("Could not connect to MQTT broker - %s", ex)
+            logger.error("Could not connect to MQTT broker - %s", ex)
             logger.info(
                 "Server - QOS: %s - Address: %s - Base Topic: %s - Client Name: %s",
                 MQTT_QOS,
@@ -145,22 +145,30 @@ class MQTTClient:
         """Callback function - called when connection is successful"""
         if result_code == 0:
             logger.info("Connected to MQTT Broker")
+            try:
 
-            self.get_topics_for_subscribing()
+                self.get_topics_for_subscribing()
 
-            if self.subscribed_topics:
-                client.subscribe(self.subscribed_topics)
+                if self.subscribed_topics:
+                    client.subscribe(self.subscribed_topics)
+            except Exception as ex:
+                logger.error("Could not subscribe to topics - %s", ex)
         else:
-            logger.error("Could not connect to MQTT broker")
+            logger.error(
+                "Could not connect to MQTT broker - result_code was different from 0"
+            )
 
     def on_message(self, client, user_data, message) -> None:
         """Callback function - called each time a message is received"""
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        topic = message.topic
-        payload = message.payload.decode("utf-8")
+        try:
+            now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            topic = message.topic
+            payload = message.payload.decode("utf-8")
 
-        logger.info("MQTT msg received: %s - [%s] %s", now, topic, str(payload))
-        MQTTMessage(topic=topic, payload=payload)
+            logger.info("MQTT msg received: %s - [%s] %s", now, topic, str(payload))
+            MQTTMessage(topic=topic, payload=payload)
+        except Exception as ex:
+            logger.debug("There was a problem parsing MQTT message - %s", ex)
 
     def on_subscribe(self, client, user_data, mid, qos) -> None:
         """Callback function - called when MQTT subscribers have been successful"""
@@ -187,7 +195,7 @@ class MQTTClient:
             new_topic = ""
             if self.base_topic:
                 new_topic += self.base_topic + "/"
-            new_topic += f"{topic}"
+            new_topic += topic
 
             topics_for_subscribing.append((new_topic, self.qos))
 
