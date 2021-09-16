@@ -403,7 +403,10 @@ class TestAddDevice(TestCaseWithHelpers):
 
         add_location_url = reverse("devices:locations:add")
 
-        self.assertTrue(response.url.startswith(add_location_url))
+        redirect_url, _ = response.redirect_chain[0]
+
+        self.assertEqual(add_location_url, redirect_url)
+        self.assertEqual(len(response.redirect_chain), 1)
         self.assertContains(
             response=response,
             text=(
@@ -413,17 +416,10 @@ class TestAddDevice(TestCaseWithHelpers):
             status_code=200,
         )
 
-    def test_create_device_form_does_not_show_when_no_device_locations_added(self):
+    def test_user_redirected_from_add_device_to_add_location_when_none_exist(self):
         response = self.client.get(self.url)
 
-        values = [
-            {
-                "value": "You must add at least one device location before you can add a device",
-                "exists": True,
-            },
-            {"value": '<form method="post">', "exists": False},
-        ]
-        self.assert_values_in_reponse(response=response, values=values)
+        self.assertEqual(response.status_code, 302)
 
     def test_that_user_can_create_a_device_when_they_have_device_locations(self):
         # device_location = DeviceLocationFactory(user=self.user)
@@ -443,7 +439,7 @@ class TestAddDevice(TestCaseWithHelpers):
 
         values = [
             {
-                "value": "You must add at least one device location before you can add a device",
+                "value": "You must create a device location before you can add a new device - you have been redirected to create device location.",
                 "exists": False,
             },
         ]
@@ -1166,7 +1162,6 @@ class TestListDeviceLocations(TestCaseWithHelpers):
         self.client.force_login(user=new_user)
 
         response = self.client.get(self.url)
-        print(response.content.decode("utf-8"))
 
         self.assertContains(
             response=response,

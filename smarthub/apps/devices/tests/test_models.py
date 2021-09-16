@@ -424,9 +424,9 @@ class TestDeviceLocation(TestCase):
         for zb_device in zb_devices:
             with self.subTest(zb_device=zb_device):
                 if zb_device.device.location == self.location:
-                    self.assertTrue(zb_device in linked_devices)
+                    self.assertTrue(zb_device.device in linked_devices)
                 else:
-                    self.assertFalse(zb_device in linked_devices)
+                    self.assertFalse(zb_device.device in linked_devices)
 
     def test_total_linked_devices_is_zero_when_no_devices(self):
         self.assertEqual(self.location.total_linked_devices(), 0)
