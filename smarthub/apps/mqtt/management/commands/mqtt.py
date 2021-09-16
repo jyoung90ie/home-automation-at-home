@@ -106,14 +106,14 @@ class MQTTClient:
         """Constructor captures required information for MQTT connection"""
         self.server = server
         self.topics = topics
+        self.qos = int(qos)
+        self.base_topic = str(base_topic)
 
         # if client disconnected without informing the server then server will not allow another
         # client to connect with the same name. To prevent a loop cycle, change name each
         # connection
         rand_num = int(random() * 1000)
-        self.client_name = f"{client_name}-{rand_num}"
-        self.qos = qos
-        self.base_topic = base_topic
+        self.client_name = f"{str(client_name)}-{rand_num}"
 
         self.connect()
 
