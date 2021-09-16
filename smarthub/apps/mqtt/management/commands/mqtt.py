@@ -133,6 +133,13 @@ class MQTTClient:
             self.disconnect()
         except Exception as ex:
             logger.info("Could not connect to MQTT broker - %s", ex)
+            logger.info(
+                "Server - QOS: %s - Address: %s - Base Topic: %s - Client Name: %s",
+                MQTT_QOS,
+                MQTT_SERVER,
+                MQTT_BASE_TOPIC,
+                MQTT_CLIENT_NAME,
+            )
 
     def on_connect(self, client, user_data, flags, result_code) -> None:
         """Callback function - called when connection is successful"""
