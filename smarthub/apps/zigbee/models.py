@@ -261,7 +261,8 @@ class ZigbeeMessage(BaseAbstractModel):
         """Checks if linked device is attached to event trigger - if so, values check and event
         triggered if necessary"""
 
-        self.user_device = self.zigbee_device.user_device
+        self.user_device = getattr(self.zigbee_device, "user_device", False)
+
         if not self.user_device:
             return
 
