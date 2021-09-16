@@ -231,12 +231,28 @@ class AddDevice(
         self.object = None
         super().__init__()
 
+    def dispatch(self, request, *args, **kwargs):
+
+        locations = models.DeviceLocation.objects.filter(user=request.user)
+
+        if locations.count() == 0:
+            messages.warning(
+                self.request,
+                "You must create a device location before you can add a new device - you have been redirected to create device location.",
+            )
+            return reverse("devices:locations:add")
+
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # used to check user has at least one device location to attach their device to
-        context["locations"] = models.DeviceLocation.objects.filter(
-            user=self.request.user
-        )
+
+        # make sure user has at least one location
+
+        # context["locations"] = models.DeviceLocation.objects.filter(
+        #     user=self.request.user
+        # )
         return context
 
     def form_valid(self, form):

@@ -87,7 +87,7 @@ urlpatterns = [
             (
                 [
                     path("", views.ListDeviceLocations.as_view(), name="list"),
-                    path("add", views.AddDeviceLocation.as_view(), name="add"),
+                    path("add/", views.AddDeviceLocation.as_view(), name="add"),
                     path(
                         "<uuid:uuid>/",
                         include(

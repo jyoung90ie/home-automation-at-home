@@ -398,6 +398,21 @@ class TestAddDevice(TestCaseWithHelpers):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.startswith(login_url))
 
+    def test_user_redirected_with_message_when_no_locations(self):
+        response = self.client.get(self.url, follow=True)
+
+        add_location_url = reverse("devices:locations:add")
+
+        self.assertTrue(response.url.startswith(add_location_url))
+        self.assertContains(
+            response=response,
+            text=(
+                "You must create a device location before you can add a new device - you have "
+                "been redirected to create device location."
+            ),
+            status_code=200,
+        )
+
     def test_create_device_form_does_not_show_when_no_device_locations_added(self):
         response = self.client.get(self.url)
 
