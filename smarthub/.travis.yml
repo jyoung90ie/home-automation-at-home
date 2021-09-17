@@ -1,0 +1,19 @@
+
+language: 
+    - python
+
+python: 
+    - "3.9"
+
+services:
+    - docker
+
+before_script:
+    - pip install docker-compose
+
+script:
+    - docker-compose run web flake8
+    - docker-compose run web pytest .
+
+after_success:
+    - docker-compose run web codecov --token=${CODECOV_TOKEN}
