@@ -62,6 +62,7 @@ class FormSuccessMessageMixin:
             messages.success(self.request, self.success_message)
             return super().form_valid(form)
         except TypeError as ex:
+            print("FormSuccessMixin", ex)
             messages.error(
                 self.request,
                 "There was an error processing this form - please try again.",

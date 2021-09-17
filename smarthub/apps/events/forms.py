@@ -14,7 +14,7 @@ from ..zigbee.models import METADATA_TYPE_FIELD, ZigbeeDevice
 from . import models
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 
 class EventForm(forms.ModelForm):
@@ -159,18 +159,15 @@ class EventTriggerForm(forms.ModelForm):
                     " of the following: {non_numeric_options}",
                 )
 
-        logger.info("Finish EventTriggerForm clean()")
         return clean
 
     def save(self, commit=True):
         """Attached custom field values and link to source event"""
-        logger.info("Start EventTriggerForm save()")
         self.instance.event = models.Event.objects.get(uuid=self.event_uuid)
         self.instance.device = self.device
         self.instance.metadata_field = self.cleaned_data["_metadata_field"]
 
         super().save(commit=commit)
-        logger.info("Finish EventTriggerForm save()")
 
 
 class EventResponseForm(forms.ModelForm):
@@ -195,11 +192,11 @@ class EventResponseForm(forms.ModelForm):
         self.device = kwargs.pop("device", None)
         self.state_uuid = None
         self.is_update_form = False
-
         super().__init__(*args, **kwargs)
 
     def clean(self):
         """Validate manual fields - raise form errors if unexpected values found"""
+
         clean = super().clean()
         error_message = (
             "Select a valid choice. The value you selected is not one of the"
@@ -228,22 +225,34 @@ class EventResponseForm(forms.ModelForm):
             else:
                 device = self.device
 
-            hardware_device = device.get_linked_device().first()
+            print("Device=", device)
+
+            hardware_device = device.get_linked_device()
+            print("HardwareDevice =", hardware_device)
+            if not hardware_device:
+                self.add_error(
+                    device_field_name,
+                    error_message,
+                )
+
             hardware_device_obj = type(hardware_device)
 
             device_state = hardware_device_obj.objects.filter(
                 device_states__uuid=form_state
             ).first()
 
-            if form_state and not device_state:
+            print("DeviceState=", device_state)
+
+            if not device_state:
                 self.add_error(
                     state_field,
                     error_message,
                 )
 
             self.state_uuid = form_state
-        except Exception:
-            pass
+            print("Self device_state=", self.state_uuid)
+        except Exception as ex:
+            logger.error("EventResponseForm exception - %s", ex)
 
         return clean
 

@@ -3,11 +3,11 @@ import datetime
 import json
 import logging
 from random import random
+from django.urls import base
 
 import paho.mqtt.client as mqtt
 
-from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
-                               MQTT_SERVER)
+from smarthub.settings import MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS, MQTT_SERVER
 
 from .defines import MQTT_DEVICE_STATE_ENDPOINT, MQTT_STATE_COMMAND
 
@@ -45,7 +45,7 @@ class MQTTPublish:
         # connection
         rand_num = int(random() * 1000)
         self.client_name = f"{MQTT_CLIENT_NAME} - publisher -{rand_num}"
-        self.qos = qos
+        self.qos = int(qos)
 
         self.connect()
 
@@ -130,7 +130,7 @@ def send_message(
         state_endpoint  - the device topic endpoint for changing device state -
                             e.g. [base_topic]/[device_topic]/[state_endpoint]
     """
-
+    base_topic = str(base_topic)
     if not mqtt_topic:
         logger.info("%s - device friendly_name empty - cannot proceed", __name__)
         return

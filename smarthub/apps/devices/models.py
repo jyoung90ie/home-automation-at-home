@@ -17,7 +17,7 @@ from django.utils.translation import gettext_lazy as _
 
 from ..models import BaseAbstractModel
 
-logger = logging.getLogger("mqtt")
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 if TYPE_CHECKING:
@@ -171,9 +171,8 @@ class Device(BaseAbstractModel):
     def get_zigbee_device(
         self, field_name: str = "zigbeedevice_set"
     ) -> Union["ZigbeeDevice", None]:
-        """Return ZigbeeDevice object or false"""
+        """Return ZigbeeDevice object"""
         obj: "ZigbeeDevice" = getattr(self, field_name, None)
-
         return obj.first() if obj else None
 
     def get_zigbee_messages(
@@ -250,7 +249,8 @@ class Device(BaseAbstractModel):
     def try_to_link_zigbee_device(self) -> None:
         """Filters ZigbeeDevice objects with device friendly_name and device_identifier to see if
         there are any unlinked matches - which will be then linked to the current device."""
-        if self.protocol is not DeviceProtocol.ZIGBEE or self.get_zigbee_device():
+        if self.protocol != DeviceProtocol.ZIGBEE or self.get_zigbee_device():
+            logger.debug("Device already linked")
             return
 
         if not self.zigbee_model:

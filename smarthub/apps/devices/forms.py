@@ -41,7 +41,7 @@ class DeviceStateForm(forms.ModelForm):
         """Attached custom field values and link to source device"""
 
         self.instance.content_object = (
-            self.device.get_linked_device().first()
+            self.device.get_linked_device()
         )  # get the actual hardware device and store it (e.g. zigbee/api)
 
         super().save(commit=commit)

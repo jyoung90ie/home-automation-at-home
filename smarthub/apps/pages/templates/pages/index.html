@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
 <h1>Smart Hub</h1>
 <p>Smart Hub helps you manage your Internet of Things (IoT) devices on your home network. It enables you to integrate
@@ -12,6 +13,13 @@
     <a href="{% url 'account_login' %}" class="btn btn-primary">Login</a>
     <a href="{% url 'account_signup' %}" class="btn btn-secondary">Register</a>
 </div>
-{% endif %}
 </p>
+{% else %}
+
+<h2>Architecture Overview</h2>
+<p class="content-box">
+    <img src="{% static 'images/architecture-overview.png' %}" class="img-fluid"
+        alt="Image showing the technologies used to develop Smart Hub">
+</p>
+{% endif %}
 {% endblock %}
