@@ -1,12 +1,33 @@
 dist: focal
 os: linux
+language: c
 arch: arm64
 # https://packages.ubuntu.com/focal/crossbuild-essential-armhf
-# compiler: arm-linux-gnueabihf-gcc
+compiler: arm-linux-gnueabihf-gcc
 env:
-    - CC=arm-linux-gnueabihf-gcc
+    # - CC=arm-linux-gnueabihf-gcc
     - SETARCH="setarch linux32 --verbose --32bit"
 before_install:
+    # Check if the running version is intentional.
+    # It seems when `dist: foo` is not available, the different version is executed in Travis.
+    - echo TRAVIS_DIST=${TRAVIS_DIST} ACTUAL_VERSION=$(lsb_release -cs)
+    - test "$(lsb_release -cs)" = "${TRAVIS_DIST}"
+    # Print cpu info.
+    - lscpu
+    - sudo apt-get update
+    - sudo apt-get install -y wget gnupg2 ca-certificates
+    - |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key \
+            | sudo apt-key add -
+    - |
+        sudo apt-key adv \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys 60C317803A41BA51845E371A1E9377A2BA9EF27F
+    - |
+        sudo rm -rf ${TRAVIS_ROOT}/var/lib/apt/lists/* &&
+            sudo cp -p assets/99${TRAVIS_DIST}.list /etc/apt/sources.list.d/ &&
+            sudo apt-get update -yq
+install:
     - sudo dpkg --add-architecture armhf
     - sudo apt-get update -yq
     # There is no gcc-multilib on arm64.
@@ -19,23 +40,17 @@ before_install:
         crossbuild-essential-armhf \
         libc6:armhf
 
-# language: 
-#     - python
-
-# python: 
-#     - "3.9"
-
-# services:
-#     - docker
-
-
-
-
-
-# before_script:
-#     - pip install docker-compose
+before_script:
+    - dpkg --print-architecture
+    - dpkg --print-foreign-architectures
+    - setarch --list
+    - echo JOBS=${JOBS} TRAVIS_CPU_ARCH=${TRAVIS_CPU_ARCH} SETARCH=${SETARCH} CC=${CC}
+    - $SETARCH uname -a
+    - id
+    - $CC --version
 
 script:
+    - $SETARCH
     - docker-compose run --rm web flake8
     - docker-compose run --rm web pytest .
 
