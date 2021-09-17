@@ -2,10 +2,11 @@ dist: focal
 os: linux
 arch: arm64
 # https://packages.ubuntu.com/focal/crossbuild-essential-armhf
-compiler: arm-linux-gnueabihf-gcc
+# compiler: arm-linux-gnueabihf-gcc
 env:
+    - CC=arm-linux-gnueabihf-gcc
     - SETARCH="setarch linux32 --verbose --32bit"
-install:
+before_install:
     - sudo dpkg --add-architecture armhf
     - sudo apt-get update -yq
     # There is no gcc-multilib on arm64.
@@ -24,15 +25,15 @@ install:
 # python: 
 #     - "3.9"
 
-services:
-    - docker
+# services:
+#     - docker
 
 
 
 
 
-before_script:
-    - pip install docker-compose
+# before_script:
+#     - pip install docker-compose
 
 script:
     - docker-compose run --rm web flake8
