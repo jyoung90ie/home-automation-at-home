@@ -25,7 +25,6 @@ before_install:
             --recv-keys 60C317803A41BA51845E371A1E9377A2BA9EF27F
     - |
         sudo rm -rf ${TRAVIS_ROOT}/var/lib/apt/lists/* &&
-            sudo cp -p assets/99${TRAVIS_DIST}.list /etc/apt/sources.list.d/ &&
             sudo apt-get update -yq
 install:
     - sudo dpkg --add-architecture armhf
