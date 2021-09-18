@@ -16,7 +16,7 @@ services:
 
 before_install:
     - sudo apt-get update
-    - sudo apt-get apt-get install --allow-unauthenticated -y wait-for-it binutils gdal-bin libproj-dev postgis* graphviz graphviz-dev
+    - sudo apt-get install --allow-unauthenticated -y wait-for-it binutils gdal-bin libproj-dev postgis* graphviz graphviz-dev
     - docker-compose build
 
 script:
