@@ -1,6 +1,5 @@
 services:
   db:
-    # image: arm32v7/postgres # postgis/postgis
     build: ./docker/postgres
     restart: always
     volumes:
