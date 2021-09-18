@@ -1,5 +1,3 @@
-version: "3.8"
-   
 services:
   db:
     # image: arm32v7/postgres # postgis/postgis
