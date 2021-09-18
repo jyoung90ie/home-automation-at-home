@@ -16,7 +16,7 @@ services:
 
 before_install:
     - sudo apt-get update
-    - sudo apt-get install --allow-unauthenticated -y wait-for-it binutils gdal-bin libproj-dev postgis* graphviz graphviz-dev
+    - sudo apt-get install --allow-unauthenticated -y curl wait-for-it binutils gdal-bin libproj-dev postgis* graphviz graphviz-dev
     - sudo rm /usr/local/bin/docker-compose
     - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
     - chmod +x docker-compose
