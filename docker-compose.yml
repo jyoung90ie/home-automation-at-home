@@ -13,7 +13,8 @@ services:
     image: memcached:alpine
     ports:
       - 11211:11211
-    command: ["memcached"]
+    command: 
+      - "memcached"
   web:
     build: .
     command: bash -c "wait-for-it db:5432 -- wait-for-it memcached:11211 -- python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
