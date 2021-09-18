@@ -10,20 +10,13 @@ addons:
     apt:
         sources:
             - sourceline: "deb http://ftp.de.debian.org/debian stable main"
-        packages:
-            - wait-for-it 
-            - binutils 
-            - gdal-bin
-            - libproj-dev 
-            - graphviz 
-            - graphviz-dev
-            - postgis*
 
 services:
     - docker
 
 before_install:
     - sudo apt-get update
+    - sudo apt-get apt-get install --allow-unauthenticated -y wait-for-it binutils gdal-bin libproj-dev postgis* graphviz graphviz-dev
     - docker-compose build
 
 script:

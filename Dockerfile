@@ -7,7 +7,7 @@ WORKDIR /code
 RUN printf "deb http://ftp.de.debian.org/debian stable main" > /etc/apt/sources.list
 
 RUN apt-get update
-RUN apt-get install -y --allow-unauthenticated wait-for-it binutils gdal-bin libproj-dev graphviz graphviz-dev
+RUN apt-get install -y wait-for-it binutils gdal-bin libproj-dev graphviz graphviz-dev
 RUN rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /code
