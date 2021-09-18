@@ -6,10 +6,24 @@ os: linux
 env:
     - DOCKER_COMPOSE_VERSION=3.3
 
+addons:
+    apt:
+        sources:
+            - sourceline: "deb http://ftp.de.debian.org/debian stable main"
+        packages:
+            - wait-for-it 
+            - binutils 
+            - gdal-bin
+            - libproj-dev 
+            - graphviz 
+            - graphviz-dev
+            - postgis*
+
 services:
     - docker
 
 before_install:
+    - sudo apt-get update
     - docker-compose build
 
 script:
