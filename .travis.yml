@@ -15,8 +15,9 @@ before_install:
     # Print cpu info.
     - lscpu
     - sudo apt-get update
-    - sudo apt-get install libzbar-dev libzbar0
-    - sudo apt-get install arm-linux-gnueabihf-gcc
+    # - sudo apt-get install libzbar-dev libzbar0
+    # - sudo apt-get install arm-linux-gnueabihf-gcc
+    - sudo apt-get install gcc-arm-linux-gnueabihf
     - sudo apt-get install -y wget gnupg2 ca-certificates
     - |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key \
