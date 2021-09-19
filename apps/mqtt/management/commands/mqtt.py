@@ -4,6 +4,7 @@ import json
 import logging
 from json.decoder import JSONDecodeError
 from random import random
+from typing import Union
 
 from django.core.cache import cache
 from django.core.management import BaseCommand
@@ -19,37 +20,14 @@ from ....zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
 from ... import defines
 from ...utils import get_cache_key
 
-logger = logging.getLogger("mqtt")
+logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 logging.basicConfig()
 
 
-def has_message_sufficiently_changed(message: str, cache_key: str) -> bool:
-    """Compares the message against the last cached message to see if it has changed -
-    excluding ignored fields. This helps prevent event triggers when a device rebroadcasts a
-    message, with little to no content change."""
-
-    cache_data = cache.get(key=cache_key)
-    has_changed = True
-
-    if cache_data:
-        # parsing both messages so that the raw message is retained in cache for debugging if needed
-        parsed_message = parse_message_for_comparison(message=message)
-        parsed_cache = parse_message_for_comparison(message=cache_data, is_cache=True)
-
-        if parsed_message == parsed_cache:
-            logger.info("Message content unchanged - skipping event triggers")
-            has_changed = False
-
-    # device has no message or message is different from cached value
-    if has_changed:
-        logger.info("Message content changed")
-
-    cache.set(key=cache_key, value=message, timeout=None)
-    return has_changed
-
-
-def parse_message_for_comparison(message: str, is_cache: bool = False):
+def parse_message_for_comparison(
+    message: str, is_cache: bool = False
+) -> Union["str", "None"]:
     """Parses the MQTT message, comparing the content against that stored in the cache.
     Importantly, it ignores all fields list in MESSAGE_FIELDS_TO_IGNORE as these are deemed to
     have immaterial value in terms of triggering events.
@@ -82,6 +60,31 @@ def parse_message_for_comparison(message: str, is_cache: bool = False):
     except JSONDecodeError:
         logger.debug("Could not parse message %s - is_cache=%s", message, is_cache)
         return None
+
+
+def has_message_sufficiently_changed(message: str, cache_key: str) -> bool:
+    """Compares the message against the last cached message to see if it has changed -
+    excluding ignored fields. This helps prevent event triggers when a device rebroadcasts a
+    message, with little to no content change."""
+
+    cache_data = cache.get(key=cache_key)
+    has_changed = True
+
+    if cache_data:
+        # parsing both messages so that the raw message is retained in cache for debugging if needed
+        parsed_message = parse_message_for_comparison(message=message)
+        parsed_cache = parse_message_for_comparison(message=cache_data, is_cache=True)
+
+        if parsed_message == parsed_cache:
+            logger.info("Message content unchanged - skipping event triggers")
+            has_changed = False
+
+    # device has no message or message is different from cached value
+    if has_changed:
+        logger.info("Message content changed")
+
+    cache.set(key=cache_key, value=message, timeout=None)
+    return has_changed
 
 
 class MQTTClient:
@@ -204,21 +207,29 @@ class MQTTMessage:
     raw_payload = None
     parsed_payload = None
 
-    def __init__(self, topic, payload):
+    def __init__(self, topic: str, payload: str) -> None:
         """Constructor"""
+        if len(payload) == 0:
+            logger.debug("MQTT Message - payload empty - ignored")
+            return
+
         self.topic = str(topic).strip().lower()
         self.raw_payload = payload
 
         try:
             self.parsed_payload = json.loads(payload)
-
-        except JSONDecodeError:
+        except JSONDecodeError as ex:
+            logger.error(
+                "MQTT Messsage - could not process payload - %s - %s", ex, payload
+            )
             return
 
         if self.topic == defines.MQTT_DEVICE_LIST_TOPIC:
             self.parse_devices()  # also parses capabilities
         elif self.topic in defines.MQTT_TOPIC_IGNORE_LIST:
-            logger.info("MQTT - msg received on topic %s - ignoring", self.topic)
+            logger.info(
+                "MQTT - msg received on an ignored topic '%s' - msg ignored", self.topic
+            )
             return
         else:
             self.parse_message()
@@ -260,7 +271,7 @@ class MQTTMessage:
         or is a sensor"""
         logger.info("Checking device attributes for - %s", zb_device)
 
-        definitions = device_data.get("definition")
+        definitions = device_data.get("definition", None)
 
         if definitions:
             attributes = definitions.get("exposes")
@@ -278,7 +289,7 @@ class MQTTMessage:
 
                         if state_command:
                             logger.info(
-                                "Updating device is_controllable - %s",
+                                "Updating device field `is_controllable` - %s",
                                 zb_device,
                             )
                             zb_device.is_controllable = True
@@ -352,7 +363,8 @@ class MQTTMessage:
 
             if not zigbee_message:
                 logger.error(
-                    "MQTT - parse_message - could not record ZigbeeMessage - data: %s",
+                    "%s - parse_message - could not record ZigbeeMessage - data: %s",
+                    __name__,
                     mqtt_data,
                 )
                 return
@@ -387,15 +399,18 @@ class MQTTMessage:
                     )
                     if not log:
                         logger.error(
-                            "MQTT - parse_message - could not record ZigbeeMessage - data: %s",
+                            "%s - parse_message - could not record ZigbeeMessage - data: %s",
+                            __name__,
                             mqtt_data,
                         )
                     log.save()
 
-            logger.info("MQTT - parse_message - message successfully parsed")
+            logger.info("%s - parse_message - message successfully parsed", __name__)
 
         except Exception as ex:
-            logger.error("Encountered an error creating ZigbeeMessage: %s", ex)
+            logger.error(
+                "%s - Encountered an error creating ZigbeeMessage: %s", __name__, ex
+            )
 
 
 class Command(BaseCommand):

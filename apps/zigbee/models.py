@@ -126,7 +126,7 @@ class ZigbeeDevice(BaseAbstractModel):
             return
 
         device_dict = cls.dict_generator(cls.DATA_FIELDS, metadata)
-        definition_data = metadata.get("definition")
+        definition_data = metadata.get("definition", None)
 
         if definition_data:
             device_dict = cls.dict_generator(
@@ -190,8 +190,10 @@ class ZigbeeDevice(BaseAbstractModel):
 
     def save(self, *args, **kwargs):
         # save lowercase to maintain consistency with MQTT broker
-        self.friendly_name = self.friendly_name.lower()
-        self.ieee_address = self.ieee_address.lower()
+        if self.friendly_name:
+            self.friendly_name = self.friendly_name.lower()
+        if self.ieee_address:
+            self.ieee_address = self.ieee_address.lower()
 
         super().save(*args, **kwargs)
 

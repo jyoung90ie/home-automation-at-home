@@ -4,8 +4,6 @@ import json
 import logging
 from random import random
 
-from django.urls import base
-
 import paho.mqtt.client as mqtt
 
 from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
@@ -13,12 +11,7 @@ from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
 
 from .defines import MQTT_DEVICE_STATE_ENDPOINT, MQTT_STATE_COMMAND
 
-logger = logging.getLogger("mqtt")
-logger.setLevel(level=logging.INFO)
-logging.basicConfig()
-
-
-# PUBLISH_CLIENT_NAME = MQTT_CLIENT_NAME + " - Publisher"
+logger = logging.getLogger(__name__)
 
 
 class MQTTPublishError(Exception):
@@ -132,19 +125,20 @@ def send_message(
         state_endpoint  - the device topic endpoint for changing device state -
                             e.g. [base_topic]/[device_topic]/[state_endpoint]
     """
-    base_topic = str(base_topic)
     if not mqtt_topic:
         logger.info("%s - device friendly_name empty - cannot proceed", __name__)
         return
 
-    device_state_topic = "/".join([base_topic, mqtt_topic, state_endpoint])
+    device_state_topic = "/".join(
+        [str(base_topic), str(mqtt_topic), str(state_endpoint)]
+    )
     command = json.dumps({str(command): str(command_value)})
 
     logger.info("Publishing to MQTT topic %s: %s", device_state_topic, command)
 
     # exceptions are handled in view
     MQTTPublish(
-        server=MQTT_SERVER, topic=device_state_topic, message=command, qos=MQTT_QOS
+        server=str(MQTT_SERVER), topic=device_state_topic, message=command, qos=MQTT_QOS
     )
 
 
