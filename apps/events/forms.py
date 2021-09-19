@@ -4,6 +4,7 @@ import logging
 
 from django import forms
 from django.apps import apps
+from django.core.exceptions import ObjectDoesNotExist
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Column, Field, Fieldset, Layout, Row, Submit
@@ -85,7 +86,6 @@ class EventTriggerForm(forms.ModelForm):
             "_metadata_field",
             "trigger_type",
             "metadata_trigger_value",
-            "is_enabled",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -156,7 +156,7 @@ class EventTriggerForm(forms.ModelForm):
                 self.add_error(
                     trigger_type_field_name,
                     f"If you wish to use a non-numeric trigger value, you can select one"
-                    " of the following: {non_numeric_options}",
+                    f" of the following: {non_numeric_options}",
                 )
 
         return clean
@@ -167,7 +167,7 @@ class EventTriggerForm(forms.ModelForm):
         self.instance.device = self.device
         self.instance.metadata_field = self.cleaned_data["_metadata_field"]
 
-        super().save(commit=commit)
+        return super().save(commit=commit)
 
 
 class EventResponseForm(forms.ModelForm):
@@ -214,43 +214,39 @@ class EventResponseForm(forms.ModelForm):
             if not self.is_update_form:
                 device = self.request.user.get_controllable_devices.filter(
                     uuid=form_device
-                )
-
-                if form_device and not device.exists():
-                    self.add_error(
-                        device_field_name,
-                        error_message,
-                    )
-                device = device.get()
+                ).first()
             else:
                 device = self.device
 
-            print("Device=", device)
-
-            hardware_device = device.get_linked_device()
-            print("HardwareDevice =", hardware_device)
-            if not hardware_device:
+            if not device:
                 self.add_error(
                     device_field_name,
                     error_message,
                 )
+            if device:
+                hardware_device = device.get_linked_device()
+                if not hardware_device:
+                    self.add_error(
+                        device_field_name,
+                        error_message,
+                    )
 
-            hardware_device_obj = type(hardware_device)
+                hardware_device_obj = type(hardware_device)
+                try:
+                    device_state = hardware_device_obj.objects.filter(
+                        device=device, device_states__uuid=form_state
+                    ).first()
+                except ObjectDoesNotExist:
+                    device_state = None
 
-            device_state = hardware_device_obj.objects.filter(
-                device_states__uuid=form_state
-            ).first()
+                if not device_state:
+                    self.add_error(
+                        state_field,
+                        error_message,
+                    )
+                # this will only be used when there are no errors
+                self.state_uuid = form_state
 
-            print("DeviceState=", device_state)
-
-            if not device_state:
-                self.add_error(
-                    state_field,
-                    error_message,
-                )
-
-            self.state_uuid = form_state
-            print("Self device_state=", self.state_uuid)
         except Exception as ex:
             logger.error("EventResponseForm exception - %s", ex)
 
@@ -262,13 +258,13 @@ class EventResponseForm(forms.ModelForm):
         self.instance.device_state = apps.get_model(
             "devices", "DeviceState"
         ).objects.get(uuid=self.state_uuid)
-        super().save(commit=commit)
+        return super().save(commit=commit)
 
 
 class EventResponseUpdateForm(EventResponseForm):
     """Overrides device form field to only show the name - user cannot select"""
 
-    _device = forms.Field(label="Device", disabled=True)
+    _device = forms.Field(label="Device", disabled=True, required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

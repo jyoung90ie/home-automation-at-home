@@ -11,27 +11,19 @@ from django.http.response import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.urls.base import reverse
-from django.views.generic import (
-    CreateView,
-    DeleteView,
-    DetailView,
-    ListView,
-    RedirectView,
-    UpdateView,
-)
+from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
+                                  RedirectView, UpdateView)
 from django.views.generic.detail import BaseDetailView
 
 from csv_export.views import CSVExportView
 
-from ..mixins import (
-    AddUserToFormMixin,
-    FormSuccessMessageMixin,
-    LimitResultsToUserMixin,
-    MakeRequestObjectAvailableInFormMixin,
-)
+from ..mixins import (AddUserToFormMixin, FormSuccessMessageMixin,
+                      LimitResultsToUserMixin,
+                      MakeRequestObjectAvailableInFormMixin)
 from ..views import UUIDView
 from . import forms, models
-from .mixins import DeviceStateFormMixin, PermitDeviceOwnerOnly, PermitObjectOwnerOnly
+from .mixins import (DeviceStateFormMixin, PermitDeviceOwnerOnly,
+                     PermitObjectOwnerOnly)
 
 logger = logging.getLogger("mqtt")
 logging.basicConfig(level=logging.INFO)
@@ -242,17 +234,6 @@ class AddDevice(
             return HttpResponseRedirect(reverse("devices:locations:add"))
 
         return super().get(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # used to check user has at least one device location to attach their device to
-
-        # make sure user has at least one location
-
-        # context["locations"] = models.DeviceLocation.objects.filter(
-        #     user=self.request.user
-        # )
-        return context
 
     def form_valid(self, form):
         try:

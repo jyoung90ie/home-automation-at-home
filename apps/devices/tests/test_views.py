@@ -11,17 +11,10 @@ import factory
 
 from ...devices.models import DeviceProtocol, DeviceState
 from ...zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
-from ...zigbee.tests.factories import (
-    ZigbeeDeviceFactory,
-    ZigbeeLogFactory,
-    ZigbeeMessageFactory,
-)
-from .factories import (
-    DeviceFactory,
-    DeviceLocationFactory,
-    UserFactory,
-    ZigbeeDeviceStateFactory,
-)
+from ...zigbee.tests.factories import (ZigbeeDeviceFactory, ZigbeeLogFactory,
+                                       ZigbeeMessageFactory)
+from .factories import (DeviceFactory, DeviceLocationFactory, UserFactory,
+                        ZigbeeDeviceStateFactory)
 from .helpers import TestCaseWithHelpers
 
 login_url = reverse("account_login")
@@ -470,6 +463,29 @@ class TestAddDevice(TestCaseWithHelpers):
             exists=False,
         )
 
+    def test_adding_new_device_returns_success_message_and_redirects_to_detail_template(
+        self,
+    ):
+        location = DeviceLocationFactory(user=self.user)
+
+        device_data = {
+            "friendly_name": "DummyDeviceName",
+            "device_identifier": "DummyIdentifier1234",
+            "location": location.id,
+            "protocol": DeviceProtocol.ZIGBEE,
+        }
+
+        response = self.client.post(self.url, device_data, follow=True)
+        expected_message = """<div class="alert alert-success alert-dismissible fade show" role="alert">
+                The new device has been created - you have been redirected to it.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        """
+        self.assertContains(response=response, text=expected_message, status_code=200)
+        self.assertTemplateUsed(
+            response=response, template_name="devices/device_detail.html"
+        )
+
 
 class TestUpdateDevice(TestCaseWithHelpers):
     def setUp(self) -> None:
@@ -746,6 +762,7 @@ class TestDeviceStatesJson(TestCaseWithHelpers):
             }
         )
 
+        self.assertEqual(response["Content-Type"], "application/json")
         self.assertTrue(self.user == user_device.user)
         self.assertEqual(response.status_code, 200)
         self.assertJSONEqual(response.content.decode("utf-8"), expected_data)
@@ -766,6 +783,25 @@ class TestDeviceStatesJson(TestCaseWithHelpers):
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.startswith(login_url))
+
+    def test_returns_404_when_device_is_not_controllable(self):
+        # create hardware device
+        ZigbeeDeviceFactory(device=self.device, is_controllable=False)
+
+        response = self.get_url_response(uuid=self.device.uuid)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_return_value_when_device_has_no_states(self):
+        # create hardware device
+        ZigbeeDeviceFactory(device=self.device, is_controllable=True)
+
+        response = self.get_url_response(uuid=self.device.uuid)
+        actual = json.loads(response.content)
+        expected = {"data": ["", "Device does not have any states"]}
+
+        self.assertEqual(response["Content-Type"], "application/json")
+        self.assertDictEqual(actual, expected)
 
 
 class TestLogsForDevice(TestCaseWithHelpers):
@@ -995,7 +1031,7 @@ class TestDeleteDeviceState(TestCaseWithHelpers):
         self.zb_device = ZigbeeDeviceFactory(device=self.device, is_controllable=True)
         self.state = ZigbeeDeviceStateFactory()
 
-    def get_url_response(self, uuid=None, suuid=None, url=None, **kwargs):
+    def get_url_response(self, uuid=None, suuid=None, url=None, post=False, **kwargs):
         if not uuid:
             uuid = self.device.uuid
 
@@ -1007,6 +1043,8 @@ class TestDeleteDeviceState(TestCaseWithHelpers):
                 "devices:device:states:state:delete",
                 kwargs={"uuid": uuid, "suuid": suuid},
             )
+        if post:
+            return self.client.post(path=url, **kwargs)
 
         return self.client.get(url, **kwargs)
 
@@ -1031,6 +1069,19 @@ class TestDeleteDeviceState(TestCaseWithHelpers):
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.startswith(login_url))
+
+    def test_on_delete_user_receives_message_and_is_redirected(self):
+        response = self.get_url_response(post=True, follow=True)
+
+        expected_message = """<div class="alert alert-success alert-dismissible fade show" role="alert">
+                The device state has been deleted.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>"""
+
+        self.assertContains(response=response, text=expected_message, status_code=200)
+        self.assertTemplateUsed(
+            response=response, template_name="devices/device_detail.html"
+        )
 
 
 class TestUpdateDeviceState(TestCaseWithHelpers):
@@ -1336,6 +1387,32 @@ class TestUpdateDeviceLocation(TestCaseWithHelpers):
         self.assertEqual(response.status_code, 200)
         self.assert_values_in_reponse(response=response, values=values)
 
+    def test_error_shown_when_trying_to_use_name_that_already_exists(self):
+        location1 = DeviceLocationFactory(user=self.user)
+        location2 = DeviceLocationFactory(user=self.user)
+
+        existing_location = reverse(
+            "devices:locations:update", kwargs={"uuid": location1.uuid}
+        )
+
+        form_data = {"location": location2.location}
+
+        response = self.client.post(existing_location, data=form_data, follow=True)
+
+        expected_error = """<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                You already have a device location with this name - please change the location name and try again
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>"""
+
+        self.assertContains(
+            response=response,
+            text=expected_error,
+            status_code=200,
+        )
+        self.assertTemplateUsed(
+            response=response, template_name="devices/devicelocation_update.html"
+        )
+
 
 class TestDeleteDeviceLocation(TestCaseWithHelpers):
     def setUp(self) -> None:
@@ -1445,6 +1522,27 @@ class TestDeleteDeviceLocation(TestCaseWithHelpers):
         self.assertTrue(device_location.user is not self.user)
         self.assertEqual(response.status_code, 404)
 
+    def test_error_message_shown_when_trying_to_delete_location_that_has_device(self):
+        device_location = DeviceLocationFactory(user=self.user)
+        device = DeviceFactory(location=device_location, user=self.user)
+
+        response = self.client.post(
+            reverse("devices:locations:delete", kwargs={"uuid": device_location.uuid}),
+            data={},
+            follow=True,
+        )
+
+        expected_message = f"""<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                Cannot delete item because it is being used by one or more of your devices - please update this device and try again  (Devices: {device.friendly_name})
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>"""
+
+        self.assertContains(response=response, text=expected_message, status_code=200)
+        self.assertTemplateUsed(
+            response=response,
+            template_name="devices/devicelocation_confirm_delete.html",
+        )
+
 
 class TestAddDeviceLocation(TestCaseWithHelpers):
     def setUp(self) -> None:
@@ -1491,3 +1589,24 @@ class TestAddDeviceLocation(TestCaseWithHelpers):
 
         self.assertEqual(response.status_code, 200)
         self.assert_values_in_reponse(response=response, values=values)
+
+    def test_error_shown_when_location_already_exists(self):
+        location = DeviceLocationFactory(user=self.user, location="TestLocation")
+
+        form_data = {"location": location.location}
+
+        response = self.client.post(self.url, data=form_data, follow=True)
+
+        expected_error = """<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                You already have a device location with this name - please change the location name and try again
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>"""
+
+        self.assertContains(
+            response=response,
+            text=expected_error,
+            status_code=200,
+        )
+        self.assertTemplateUsed(
+            response=response, template_name="devices/devicelocation_form.html"
+        )

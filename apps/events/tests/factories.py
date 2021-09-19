@@ -3,8 +3,8 @@ from django.db.models.signals import post_save
 import factory
 from factory import fuzzy
 
-from ...users.tests.factories import UserFactory
 from ...devices.tests.factories import DeviceFactory, ZigbeeDeviceStateFactory
+from ...users.tests.factories import UserFactory
 from .. import models
 
 

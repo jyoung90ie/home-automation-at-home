@@ -3,11 +3,13 @@ import datetime
 import json
 import logging
 from random import random
+
 from django.urls import base
 
 import paho.mqtt.client as mqtt
 
-from smarthub.settings import MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS, MQTT_SERVER
+from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
+                               MQTT_SERVER)
 
 from .defines import MQTT_DEVICE_STATE_ENDPOINT, MQTT_STATE_COMMAND
 

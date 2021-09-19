@@ -11,13 +11,8 @@ from django.core.management.base import CommandError
 
 import paho.mqtt.client as mqtt
 
-from smarthub.settings import (
-    MQTT_BASE_TOPIC,
-    MQTT_CLIENT_NAME,
-    MQTT_QOS,
-    MQTT_SERVER,
-    MQTT_TOPICS,
-)
+from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
+                               MQTT_SERVER, MQTT_TOPICS)
 
 from ....devices.models import DeviceState
 from ....zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage

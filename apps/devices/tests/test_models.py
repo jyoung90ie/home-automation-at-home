@@ -4,20 +4,12 @@ from django.db.models.query import QuerySet
 from django.test.testcases import TestCase
 
 from ...devices.models import DeviceProtocol
-from ...zigbee.models import ZigbeeDevice, ZigbeeLog
-from ...zigbee.tests.factories import (
-    ZigbeeDeviceFactory,
-    ZigbeeLogFactory,
-    ZigbeeMessageFactory,
-)
-from .factories import (
-    DeviceFactory,
-    DeviceLocationFactory,
-    UserFactory,
-    ZigbeeDeviceStateFactory,
-)
-
 from ...events.tests.factories import EventTriggerFactory
+from ...zigbee.models import ZigbeeDevice, ZigbeeLog
+from ...zigbee.tests.factories import (ZigbeeDeviceFactory, ZigbeeLogFactory,
+                                       ZigbeeMessageFactory)
+from .factories import (DeviceFactory, DeviceLocationFactory, UserFactory,
+                        ZigbeeDeviceStateFactory)
 
 
 class DeviceTestMixin(TestCase):
@@ -436,4 +428,30 @@ class TestDeviceState(TestCase):
     def setUp(self) -> None:
         self.user = UserFactory()
         self.device = DeviceFactory(user=self.user)
-        self.state = ZigbeeDeviceStateFactory(content_object=self.device)
+        self.zb_device = ZigbeeDeviceFactory(device=self.device)
+        self.state = ZigbeeDeviceStateFactory(content_object=self.zb_device)
+
+    def test_string_output(self):
+        expected = (
+            f"{self.state.name} [{self.state.command} = {self.state.command_value}]"
+        )
+
+        self.assertEqual(str(self.state), expected)
+
+    def test_friendly_name_returns_device_value(self):
+        expected = self.device.friendly_name
+
+        self.assertEqual(self.state.friendly_name, expected)
+
+    def test_hardware_device_obj(self):
+        expected = self.zb_device
+
+        self.assertEqual(self.state.hardware_device_obj, expected)
+
+    def test_saving_transforms_values_to_lower_case(self):
+        self.state.command = "COMMAND"
+        self.state.command_value = "COMMAND_VALUE"
+        self.state.save()
+
+        self.assertEqual(self.state.command, "command")
+        self.assertEqual(self.state.command_value, "command_value")
