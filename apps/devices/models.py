@@ -154,7 +154,7 @@ class Device(BaseAbstractModel):
         super().__init__(*args, **kwargs)
         self.zigbee_model = apps.get_model("zigbee", "ZigbeeDevice")
 
-    def save(self, *args, **kwargs) -> None:
+    def save(self, link_devices=True, *args, **kwargs) -> None:
         # save lowercase to prevent duplicates with different casing
         self.friendly_name = self.friendly_name.lower()
         self.device_identifier = self.device_identifier.lower()
@@ -165,8 +165,9 @@ class Device(BaseAbstractModel):
         if not isinstance(self, Device):
             # if item is queryset get the object inside it
             obj = self.first()
-
-        obj.try_to_link_zigbee_device()
+        
+        if link_devices:
+            obj.try_to_link_zigbee_device()
 
     def get_zigbee_device(
         self, field_name: str = "zigbeedevice_set"

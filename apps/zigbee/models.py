@@ -13,6 +13,7 @@ from django.db.models.query_utils import Q
 from ..models import BaseAbstractModel
 from ..mqtt.publish import send_messages
 from ..notifications.models import NotificationMedium
+from ..devices.models import DeviceProtocol
 
 if TYPE_CHECKING:
     from ..devices.models import Device
@@ -85,14 +86,24 @@ class ZigbeeDevice(BaseAbstractModel):
         self.user_device_model = apps.get_model("devices", "Device")
 
     @classmethod
-    def process_metadata(cls, metadata):
+    def process_metadata(cls, metadata: dict) -> Union["ZigbeeDevice", None]:
         """If mqtt data type is an interview then capture metadata for model"""
         message_type = metadata.get("type")
         if message_type and message_type == cls.INTERVIEW_TYPE:
             data = metadata.get("data")
-            ieee_address = data.get("ieee_address")
+
+            if not data:
+                logger.info(
+                    "%s - cannot process metadata without `data` dict", __name__
+                )
+                return
+
+            ieee_address = data.get("ieee_address", False)
 
             if not ieee_address:
+                logger.info(
+                    "%s - cannot process metadata without `ieee_address`", __name__
+                )
                 return
 
             zigbee_device: "ZigbeeDevice" = cls.objects.filter(
@@ -100,11 +111,11 @@ class ZigbeeDevice(BaseAbstractModel):
             )
 
             if not zigbee_device:
-                logger.info("Found new device with IEEE Address ='%s'", ieee_address)
-                return cls.create_device(metadata)
+                logger.info("Found new device with `ieee_address`='%s'", ieee_address)
+                return cls.create_device(metadata=data)
 
     @staticmethod
-    def dict_generator(fields, data, _dict=None):
+    def dict_generator(fields, data, _dict=None) -> dict:
         """Returns a dict containing specified data fields"""
         if not _dict:
             _dict = {}
@@ -115,7 +126,7 @@ class ZigbeeDevice(BaseAbstractModel):
         return _dict
 
     @classmethod
-    def create_device(cls, metadata):
+    def create_device(cls, metadata: dict) -> Union["ZigbeeDevice", None]:
         """Creates new zigbee device based on information provided by MQTT broker"""
         logger.info("ZigbeeDevice metadata=%s", metadata)
 
@@ -125,12 +136,14 @@ class ZigbeeDevice(BaseAbstractModel):
             )
             return
 
-        device_dict = cls.dict_generator(cls.DATA_FIELDS, metadata)
+        device_dict = cls.dict_generator(fields=cls.DATA_FIELDS, data=metadata)
         definition_data = metadata.get("definition", None)
 
         if definition_data:
             device_dict = cls.dict_generator(
-                cls.DEFINITION_DATA_FIELDS, definition_data, device_dict
+                fields=cls.DEFINITION_DATA_FIELDS,
+                data=definition_data,
+                _dict=device_dict,
             )
 
         zigbee_device = cls.objects.create(**device_dict)
@@ -141,44 +154,44 @@ class ZigbeeDevice(BaseAbstractModel):
                 device_dict["ieee_address"],
             )
 
-            cls.link_to_user_device(zigbee_device)
+            zigbee_device.try_to_link_user_device()
+
             return zigbee_device
 
         logger.error("Could not create ZigbeeDevice for %s", device_dict)
         return None
 
-    @classmethod
-    def link_to_user_device(cls, zigbee_device=None) -> bool:
+    def try_to_link_user_device(self) -> bool:
         """Attempt to match zigbee device to an entry in Device model"""
+        is_linked = False
         try:
-            if not cls.user_device_model:
-                return
+            if not self.user_device_model:
+                return is_linked
 
-            obj = zigbee_device or cls
-            logger.info("ZigbeeDevice - link_device - obj=%s", obj)
-
-            if not obj.device:
-                device = cls.user_device_model.objects.filter(
-                    models.Q(friendly_name=obj.friendly_name)
-                    | models.Q(friendly_name=obj.ieee_address)
-                )
+            if not self.device:
+                device = self.user_device_model.objects.filter(
+                    models.Q(friendly_name=self.friendly_name)
+                    | models.Q(device_identifier=self.ieee_address),
+                    protocol=DeviceProtocol.ZIGBEE,
+                ).first()
 
                 if device:
-                    cls.device = device
-                    obj.save()
+                    self.device = device
+                    self.save()
                     logger.info(
                         "Zigbee device (friendly_name=%s) linked to user device uuid='%s'",
-                        obj.friendly_name,
-                        obj.device.uuid,
+                        self.friendly_name,
+                        self.device.uuid,
                     )
                     return True
                 logger.info(
                     "Could not link device (friendly_name=%s) as no user device exists",
-                    obj.friendly_name,
+                    self.friendly_name,
                 )
         except Exception as ex:
-            logger.error("ERROR: ZigbeeDevice link_to_user_device - %s", ex)
-        return False
+            logger.error("link_to_user_device - %s", ex)
+
+        return is_linked
 
     def __str__(self) -> str:
         return f"{self.friendly_name} ({self.ieee_address})"
@@ -259,7 +272,7 @@ class ZigbeeMessage(BaseAbstractModel):
             self.check_event_triggers(last_message=last_message)
             logger.info("%s - End of event trigger checks.", __name__)
 
-    def check_event_triggers(self, last_message=None):
+    def check_event_triggers(self, last_message=None) -> None:
         """Checks if linked device is attached to event trigger - if so, values check and event
         triggered if necessary"""
 
@@ -281,11 +294,8 @@ class ZigbeeMessage(BaseAbstractModel):
 
         try:
             parsed_message = json.loads(self.raw_message)
-        except JSONDecodeError:
-            logger.info(
-                "%s - ZigbeeMessage - check_event_triggers - could not parse message JSON",
-                __name__,
-            )
+        except JSONDecodeError as ex:
+            logger.info("%s - ZigbeeMessage - check_event_triggers - %s", __name__, ex)
             return
 
         for trigger in triggers:
