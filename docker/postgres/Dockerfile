@@ -1,4 +1,5 @@
-FROM arm32v7/postgres
+ARG ARCH_IMAGE=${ARCH_IMAGE:-arm32v7/postgres}
+FROM $ARCH_IMAGE
 
 RUN printf "deb http://ftp.de.debian.org/debian stable main" > /etc/apt/sources.list
 
