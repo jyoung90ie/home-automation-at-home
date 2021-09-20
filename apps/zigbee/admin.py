@@ -18,16 +18,6 @@ def truncate_string(string_val, length=50):
     return string_val
 
 
-# class DeviceStateInline(GenericInlineModelAdmin):
-#     """Add device states to device page"""
-
-#     ct_field = "device_type"
-#     ct_fk_field = "device_object_id"
-#     model = DeviceState
-#     extra = 0
-#     fields = ("name", "command", "command_value", "device_type")
-
-
 class ZigbeeMessageInline(TabularInlinePaginated):
     model = models.ZigbeeMessage
     per_page = 5
@@ -57,7 +47,6 @@ class ZigbeeDeviceAdmin(admin.ModelAdmin):
     )
     inlines = [
         ZigbeeMessageInline,
-        # DeviceStateInline,
     ]
     readonly_fields = ("created_at", "updated_at")
 

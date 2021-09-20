@@ -10,10 +10,10 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models.query_utils import Q
 
+from ..devices.models import DeviceProtocol
 from ..models import BaseAbstractModel
 from ..mqtt.publish import send_messages
 from ..notifications.models import NotificationMedium
-from ..devices.models import DeviceProtocol
 
 if TYPE_CHECKING:
     from ..devices.models import Device

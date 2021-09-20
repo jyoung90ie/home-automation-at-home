@@ -1,20 +1,18 @@
+import json
+from unittest import mock
+
+from django.test import TestCase
+
 from apps.events.models import EventResponse
 from apps.users.tests.factories import UserFactory
+
 from ...devices.models import DeviceProtocol
-from ...devices.tests.factories import DeviceFactory
-from django.test import TestCase
-from .factories import ZigbeeDeviceFactory, ZigbeeLogFactory, ZigbeeMessageFactory
+from ...devices.tests.factories import DeviceFactory, ZigbeeDeviceStateFactory
+from ...events.tests.factories import (EventFactory, EventResponseFactory,
+                                       EventTriggerFactory)
 from ..models import ZigbeeDevice, ZigbeeMessage
-from ...devices.tests.factories import ZigbeeDeviceStateFactory
-from ...events.tests.factories import (
-    EventTriggerFactory,
-    EventResponseFactory,
-    EventFactory,
-)
-
-import json
-
-from unittest import mock
+from .factories import (ZigbeeDeviceFactory, ZigbeeLogFactory,
+                        ZigbeeMessageFactory)
 
 
 class TestZigbeeDevice(TestCase):
@@ -200,24 +198,24 @@ class TestZigbeeMessage(TestCase):
 
         self.assertEqual(total_trigger_calls, 1)
 
-    # @mock.patch("apps.zigbee.models.ZigbeeMessage.process_event.trigger", autospec=True)
-    # @mock.patch("apps.zigbee.models.ZigbeeMessage.invoke_event_response")
-    # def test_process_event_trigger_device_value_has_changed_invoke_triggers(
-    #     self, mock_triggered, mock_invoke_response
-    # ):
-    #     # manually override so trigger is invoked
-    #     mock_triggered.is_triggered.return_value = True
+    @mock.patch("apps.zigbee.models.ZigbeeMessage.process_event.trigger", autospec=True)
+    @mock.patch("apps.zigbee.models.ZigbeeMessage.invoke_event_response")
+    def test_process_event_trigger_device_value_has_changed_invoke_triggers(
+        self, mock_triggered, mock_invoke_response
+    ):
+        # manually override so trigger is invoked
+        mock_triggered.is_triggered.return_value = True
 
-    #     triggers = [
-    #         EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
-    #         EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
-    #         EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
-    #     ]
+        triggers = [
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+        ]
 
-    #     self.zb_msg.check_event_triggers()
-    #     total_trigger_calls = mock_invoke_response.call_count
+        self.zb_msg.check_event_triggers()
+        total_trigger_calls = mock_invoke_response.call_count
 
-    #     self.assertEqual(total_trigger_calls, 1)
+        self.assertEqual(total_trigger_calls, 1)
 
     def test_process_event_trigger_device_value_has_changed_but_trigger_is_not_enabled(
         self,

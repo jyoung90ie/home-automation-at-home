@@ -165,7 +165,7 @@ class Device(BaseAbstractModel):
         if not isinstance(self, Device):
             # if item is queryset get the object inside it
             obj = self.first()
-        
+
         if link_devices:
             obj.try_to_link_zigbee_device()
 

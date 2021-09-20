@@ -7,11 +7,16 @@
     <p class="ps-2">Smart Hub is an open source application designed to allow Internet of Things (IoT) devices to
         communicate with each other, with Smart Hub acting as the integration platform.</p>
 
+    <p class="h4">Can I contribute to it's development?</p>
+    <p class="ps-2">Yes! All contributions are appreciated, you can view the code and find out more at the project<a
+            href="https://github.com/jyoung90ie/qub-dissertation" target="_blank">GitHub Repo</a>.</p>
+
+
+
     <p class="h4">What protocols does it support?</p>
     <p class="ps-2">At present, it supports the following protocols:
     <ul>
         <li>Zigbee</li>
-        <li>API</li>
     </ul>
     Given the open source development, it is expected that this list will continue to grow overtime. If the protocol you
     need is not supported, you are welcome to develop it and create pull request on GitHub - or let us know and we'll
@@ -24,35 +29,25 @@
         devices. Smart Hub can then be configured to connect to the MQTT broker with the relevant device topics (i.e.
         the channel each device is publishing to). With these configurations in place, Smart Hub will then facilitate
         all communication to and from the devices - based on your personal configurations.</p>
-    <p class="h5 ps-1">API</p>
-    <p class="ps-3">TBC</p>
     <div>
         <h2>What can Smart Hub do?</h2>
-        <p>Good question! Once your logged in to an account you will have access to the following:
+        <p>Good question!
         <ul>
-            <li><strong>Devices</strong>
-                <ul>
-                    <li>Add, Update, Delete, View</li>
-                    <li>View and Export device logs</li>
-                </ul>
-            </li>
-            <li><strong>Device Locations:</strong> this is the ability to group devices by location, however, this is
-                open to
-                your own
-                intrepretation. This will enable you interact with the group as opposed to individually selecting each
-                individual device.</li>
-            <li><strong>Events:</strong> Here you can create <em>routines</em> for your devices, which will involve
-                <strong>triggers</strong>, <strong>notifications</strong>, and <strong>responses</strong>, building out
-                your
-                automation capability.
-            </li>
-            <li><strong>Notifications:</strong> you can specify the notification <em>channels</em> that should be used
-                to
-                contact you when any of your events have been triggered. At present you can be notified by
-                <em>email</em> and
-                <em>mobile app</em>
-            </li>
+            <li>Secure your home smart devices and automations with an authentication system</li>
+            <li>Create automations using event triggers and responses</li>
+            <li>View device communication logs</li>
+            <li>Export logs in CSV for data analysis</li>
+            <li>Receive notifications when events are triggered, on your mobile device/tablet/computer/email/etc.</li>
+            <li>Create <em>states</em> for your devices that can be toggled, e.g. turning devices on and off, or setting
+                RGB
+                light bulb values.</li>
+            <li>Group devices by geographic location - in future you will be able to create location events and/or
+                toggle location devices</li>
+            <li>Store your home GPS location - in future you will be able to use this to create automations, when you
+                leave or get close to home.</li>
         </ul>
+        </p>
     </div>
+
 </div>
 {% endblock %}

@@ -1,17 +1,6 @@
 # Smart Hub
 
-[![Build Status](https://app.travis-ci.com/jyoung90ie/qub-dissertation.svg?token=xyzLEs9qjL7SuD52KvT6&branch=main)](https://app.travis-ci.com/jyoung90ie/qub-dissertation)
-
-[![codecov](https://codecov.io/gh/jyoung90ie/qub-dissertation/branch/main/graph/badge.svg?token=46RL5224IH)](https://codecov.io/gh/jyoung90ie/qub-dissertation)
-
-## Deployment
-
-This was developed to be deployed on any device that supports docker and as such the steps below assume you already have `Docker` and `docker-compose` installed.
-### Raspbian
-
-This was deployed 
-
-
+[![Build Status](https://app.travis-ci.com/jyoung90ie/qub-dissertation.svg?token=xyzLEs9qjL7SuD52KvT6&branch=main)](https://app.travis-ci.com/jyoung90ie/qub-dissertation) [![codecov](https://codecov.io/gh/jyoung90ie/qub-dissertation/branch/main/graph/badge.svg?token=46RL5224IH)](https://codecov.io/gh/jyoung90ie/qub-dissertation)
 
 # Smart Hub
 
@@ -62,11 +51,9 @@ Given the additional data input requirements, I had to specify custom forms in o
 
 #### Users
 
-This is where all customer information is retained via the custom user model. I also made the decision to use Django-allauth which added the ability to override the username field, using the email address as the login. It also brought with it the ability to verify email addresses and reset passwords.
+After researching authentication and authorisation, I made the decision to use `Django-allauth` which added a lot of funcionality, such as the ability to login with Social Accounts (e.g. Google), and limiting user account login attempts to improve security.
 
-Within this app I have overriden a number of the default forms provided by `django-allauth` to integrate with the custom user model. To produce responsive forms I have used the django-crispy-forms helper function which eanbled me to create custom form layouts with individual element styling. I have also modified the rendering of the django admin site for the user object, to provide a better structure.
-
-Outlined below are the views that are produced by this app:
+Outlined below are some of the key components of this app:
 
 a) **Signup:** a custom form used to create a new user account with the custom user model. The username field is removed, with the email address used in it's placed. Given this is a smart hub platform, it made sense to capture the user's home location, so that future developments could use this as a trigger for automation.
 
@@ -82,15 +69,26 @@ f) **Profile - Change email:** A user can have multiple emails if they wish, thi
 
 g) **Profile - Change password:** For security, a user must provide their current password alongside a new password before it will be accepted and updated.
 
+#### Apps
+
+a) **Mixins:**
+
+MakeRequestObjectAvailableInFormMixin
+AddUserToFormMixin
+LimitResultsToUserMixin
+UserHasLinkedDevice
+FormSuccessMessageMixin
+
+b) **Forms:** 
+
+CustomChoiceField
+
+c) **Models:** 
+
+BaseAbstractModel
 #### MQTT
 
-As I was developing an end-to-end solution, I needed a way for _sniff_ communications from the zigbee devices. I opted not use to a Zigbee router as this would require investment in a brand and likely would come with limitations placed by the manufacturer. Instead, I opted to purchase this [Zigbee sniffer](https://www.amazon.co.uk/dp/B07YDG4QHM/ref=cm_sw_r_cp_apa_glt_fabc_KVCAQ6ETZ1WWWKGCQJY0?_encoding=UTF8&psc=1&pldnSite=1).
-
-To setup the hardware device, it needs to be flashed with custom firmware that publishes to an MQTT broker - see [instructions here](https://www.zigbee2mqtt.io/information/alternative_flashing_methods.html).
-
-For this to work, you must have an MQTT broker installed - in this case I opted to use [Mosquitto](https://mosquitto.org/) with default settings.
-
-With all of the above in place, we can now move on to how the Smart Hub platform communicates with devices. There are a number of components that make up this app, which I have outlined below:
+There are a number of components that make up this app, which I have outlined below:
 
 a) **Listener:** 
 
@@ -102,33 +100,58 @@ d) **Toggle View:**
 
 e) **Trigger View:** 
 
-f) **Customised Admin Functionality:** 
-
-g) **Create Order:** 
 
 #### Devices
 
 TBC
 
-a) **TBC:** 
+a) **CRUD Device:** 
 
-b) **TBC:** 
+b) **CRUD DeviceLocation:** 
 
-c) **TBC:** 
+c) **CRUD DeviceState:** 
 
-d) **TBC:** 
+d) **Device Logs & Export:** 
+
+e) **Device Metadata:** 
+
+f) **Device States JSON:** 
+
+g) **Redirects:**
+
+h) **Customised Admin:** 
+
+i) **Mixins:**
+
+j) **Forms:**
+
+
+### Zigbee Devices
+
+TBC
+
+a) **ZigbeeDevice:**
+
+b) **ZigbeeMessage:**
+
+c) **ZigbeeLog:**
+
+d) **Customised Admin:**
+
+
 
 #### Events
 
 TBC
 
-a) **TBC:** 
+a) **CRUD Event:** 
 
-b) **TBC:** 
+b) **CRUD EventTrigger:** 
 
-c) **TBC:** 
+c) **CRUD EventResponse:** 
 
-d) **TBC:** 
+d) **Customised Admin:** 
+
 
 #### Pages
 
@@ -138,25 +161,32 @@ The Pages app is used to website pages which are not related to any specific app
 
 TBC
 
-a) **TBC:** 
+a) **CRUD Notification:** 
 
-b) **TBC:** 
+b) **Pushbullet:** 
 
-c) **TBC:** 
+c) **Email:** 
 
-d) **TBC:** 
+d) **Redirects:** 
+
+e) **Utils:**
+
+Pushbullet API class
+
+f) **Defines:**
+
+g) **Customised Admin:** 
+
+h) **Forms:**
 
 #### Settings
 
 Normally Django settings are contained within a single file, settings.py, within the project folder. However, in the interest of security and trackability, I have created a settings folder. This contains a number of files which are detailed below:
 
-a) **base.py:** this contains the 'base' settings which are common across all environments that this application has been deployed on. This does not contain any sensitive information. Some of the specific deployment files, listed after this, may override some of these settings if necessary.
+a) **settings.py:** this contains the standard deployment settings. This does not contain any sensitive information - any items that use sensitive information are sourced from `.env` file using Python `os.getenv("VAR_NAME")`.
 
-b) **local.py:** this contains all settings specific to my local development environment, for example, permissible addresses, database accesses, etc.
 
-c) **test.py:** this contains the settings required to deploy to my test environment, in this case, these are the settings I use to run my application on Travis CI.
-
-d) **production.py:** these are the settings used for deployment in the production environment.
+b) **test_settings.py:** this contains the settings required to run `PyTest` locally and on the Travis CI.
 
 ### Features to be implemented
 
@@ -166,7 +196,6 @@ d) **production.py:** these are the settings used for deployment in the producti
 ## Challenges
 
 - TBC
-
 - TBC
 
 ## Technologies Used
@@ -180,8 +209,6 @@ d) **production.py:** these are the settings used for deployment in the producti
 
 - [JavaScript](https://www.w3schools.com/Js/)
   - This language enables an interactive element to be added to websites, permitting realtime responsive pages.
-
-  - To use Bootstrap tabs with the template I had to write custom JS code to override the default Bootstrap.js function and replace it with code that worked for me.
   - The navigation menu becomes fixed once the user scrolls past the header and brand container, this is achieved using custom JS code and Bootstrap classes.
 
 - [Python](https://www.python.org/)
@@ -195,6 +222,10 @@ d) **production.py:** these are the settings used for deployment in the producti
   - This is a technology which packages up applications into containers and runs them in an isolated container within a chosen operating system, which is seperate from the host operating system.
   - TBC - confirm why I used Docker
 
+- [Zigbee2MQTT](https://www.zigbee2mqtt.io/)
+
+- [Mosquitto](https://mosquitto.org/)
+
 ### Frameworks
 
 - [Bootstrap](https://getbootstrap.com/)
@@ -205,26 +236,29 @@ d) **production.py:** these are the settings used for deployment in the producti
   - This was used to provide the interactive functionality for fetching device's and device command's for setting up event triggers and responses.
 
 - [Font Awesome](https://fontawesome.com/)
-  - This is a font library which I have used to provide some context appropriate icons throughout the application. For example, the Basket icon.
+  - This is a font library which I have used to provide some context appropriate icons throughout the application. These are visible throughout, from menu icons to headers.
 
 - [Django](https://www.djangoproject.com/)
   - This is a high-level python framework which provides advanced functionality with minimal effort from the developer.
   - The application is developed using Django and extensively uses built-in functionality and custom packages.
 
 - [Django-allauth](https://www.intenct.nl/projects/django-allauth/)
-  - This package is an add-on app for Django which implements a third-party authentication system. It provides advanced functionality, such as the integration of external social authentication, e.g. allowing users to authenticate with your website using their Google account, in addition to local authentication.
-  - For this application I have used this package for its additional security, as it will only permit a user to attempt to login with incorrect details 5 times before restricting their ability to do so. This is important given it is an ecommerce application. It also enabled me to develop the application using email address as the user login and remove the unneccessary username field in the custom user model.
+  - This package is an add-on for Django which implements a third-party authentication system. It provides advanced functionality, such as the integration of external social authentication, e.g. allowing users to authenticate with your website using their Google account, in addition to local authentication.
+  - For this application I have used this package for its additional security, as it will only permit a user to attempt to login with incorrect details 5 times before restricting their ability to do so. 
+  - The ability to log-in via Google OAuth is provided by this package.
 
 - [Django-crispy-forms](https://github.com/django-crispy-forms/django-crispy-forms)
   - This package renders Django forms using Bootstrap conventions and classes, effectively making the forms responsive and mobile-first.
-  - It also permits customisation of form rendering, from layout, to individual field styles.
-  - I have used this package throughout to provide better structured forms with responsive design.
+  - It permits customised form rendering in a much more programmatic fashion compared to Django's default implementation.
 
 ## Testing
 
 ### Automated
 
-TBC - point to the report 
+Each app within the platform has a `tests/` folder which contains relevant testings for that specific app. For **coverage report** of overall testing, click the `CodeCov badge` at the top of the readme.
+
+To run testing locally, use the following command:
+  `docker-compose run --rm web python -m pytest .`
 
 ### Manual
 
@@ -240,7 +274,7 @@ In addition to the automated testing, I conducted some manual testing across a n
 
 ### Known bugs
 
-TBC
+There are no known bugs in this release.
 
 ## Deployment
 
@@ -256,26 +290,34 @@ TBC
 | `EMAIL_HOST_USER` | `dummy-email-address@gmail.com` | This will be the account used to send email notifications |
 | `EMAIL_HOST_PASSWORD` | `app-key` |
 | `MQTT_QOS` | `1` | The Quality of Service level you want to guarantee - see [here](https://mosquitto.org/man/mqtt-7.html)
-| `MQTT_SERVER` | `192.168.x.x` | The IP address of the server running the MQTT broker - usually a LAN address |
+| `MQTT_SERVER` | `192.168.x.x` | The IP address of the server running the MQTT broker (mentioned in [Zigbee Communication Sniffing](#zigbee-communication-sniffing)) - usually a LAN address |
 | `MQTT_BASE_TOPIC` | `zigbee2mqtt` |
 | `MQTT_CLIENT_NAME` | `Smart Hub` |
 | `ARCH_IMAGE` | `postgres` | Only set this value if you are using a CPU architecture other than ARM64 (e.g. not a Raspberry Pi)
 
+### Zigbee Communication Sniffing
+
+As I was developing an end-to-end solution, I needed a way for _sniff_ communications from the zigbee devices. I opted not use to a Zigbee router as this would require investment in a brand and likely would come with limitations placed by the manufacturer. Instead, I opted to purchase this [Zigbee sniffer](https://www.amazon.co.uk/dp/B07YDG4QHM/ref=cm_sw_r_cp_apa_glt_fabc_KVCAQ6ETZ1WWWKGCQJY0?_encoding=UTF8&psc=1&pldnSite=1).
+
+To setup the hardware device, it needs to be flashed with custom firmware that publishes to an MQTT broker - see [instructions here](https://www.zigbee2mqtt.io/information/alternative_flashing_methods.html).
+
+For this to work, you must have an MQTT broker installed - in this case I opted to use [Mosquitto](https://mosquitto.org/) with default settings.
+
+With all of the above in place, we can move on to deployment of the platform.
+
 ### Raspberry Pi with Raspbian 
 
-1. Setup Mosquitto MQTT
+1. Setup hardware for sniffing Zigbee communications - see [Zigbee Communication Sniffing](#zigbee-communication-sniffing)
 
-2. Setup Zigbee2MQTT
+2. Setup [Zigbee2MQTT](https://www.zigbee2mqtt.io/getting_started/running_zigbee2mqtt.html)
 
-3. Setup Zigbee Listener
+3. Configure `.env` to point to `MQTT_SERVER`
 
-4. Configure `.env` to point to `MQTT_SERVER`
+4. Install `Docker `by following the steps listed on [Docker](https://docs.docker.com/engine/install/debian/#install-using-the-convenience-script)
 
-5. Install `Docker `by following the steps listed on [Docker](https://docs.docker.com/engine/install/debian/#install-using-the-convenience-script)
+5. [Install Git](https://projects.raspberrypi.org/en/projects/getting-started-with-git/3)
 
-6. [Install Git](https://projects.raspberrypi.org/en/projects/getting-started-with-git/3)
-
-7. Continue with the steps at [Starting the application](#starting-the-application)
+6. Continue with the steps at [Starting the application](#starting-the-application)
 
 ### Local machine deployment
 
@@ -386,11 +428,6 @@ You will only receive notifications when you have created an `Event` with at lea
 7. Paste the `app password` into the file `.env`
     - `EMAIL_HOST_PASSWORD="app-password-here"`
 
-
-
-## Credits
-
-TBC
 
 ### Acknowledgements
 

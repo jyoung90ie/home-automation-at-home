@@ -14,7 +14,7 @@
             <div id="helpPageItem1" class="accordion-collapse collapse" aria-labelledby="headingHelpItem1"
                 data-bs-parent="#helpPageContent">
                 <div class="accordion-body">
-                    There are five settings that must be updated in the Django settings module:
+                    The following settings must be set in the .env file:
                     <ol>
                         <li>
                             <strong>MQTT_QOS:</strong> The MQTT specification outlines three levels for QoS - you can
@@ -43,6 +43,9 @@
                             that will show with published MQTT messages. <em>Default value = "Smart Hub"</em>
                         </li>
                     </ol>
+                    For more information see the project <a
+                        href="https://github.com/jyoung90ie/qub-dissertation/blob/main/README.md" target="_blank">GitHub
+                        README</a>
                 </div>
             </div>
         </div>
@@ -63,9 +66,9 @@
                         on the Smart Hub application. The subtly here is that this is not the actual zigbee device, this
                         is
                         a device proxy that Smart Hub will attempt to link to a Zigbee device, <em>if it can</em>.</p>
-                    <p>The process for linking a Smart Hub device to a physical Zigbee device is conducted using the two
-                        Smart Hub device fields, <strong>device identifier</strong> or <strong>friendly name</strong>.
-                        It is therefore imperative that these fields match exactly to those of the device.</p>
+                    <p>The process for linking a Smart Hub device to a physical Zigbee device is conducted using the
+                        device fields, <strong>device identifier</strong> and/or <strong>friendly name</strong>.
+                        It is important that at least one of these fields matches exactly to those of the device.</p>
                     <p><strong>Device identifier</strong> will be matched against the hardware device <strong>IEEE
                             address</strong>. This is the primary matching mechanism for linking devices to users, and
                         messages to devices.</p>
@@ -219,28 +222,33 @@
                                             Check all your devices to ensure you have not used the same device
                                             identifier and/or friendly name for another device.</li>
                                         <li>Check that the MQTT broker is online and the configuration settings are
-                                            correct - specially check the MQTT IP and authenication details for Smart
+                                            correct - specifically check the MQTT Broker IP and authenication details
+                                            (if applicable) for Smart
                                             Hub.</li>
                                         <li>Replace the device battery to ensure it has sufficient power.</li>
                                     </ol>
                                 </li>
                             </ul>
                         </li>
-
-                        <li>
-                            <strong>API device</strong>
-                            <ul>
-                                <li>
-                                    Something something here
-                                    <ol>
-                                        <li>Step 1</li>
-                                        <li>Step 2</li>
-                                        <li>Step 3</li>
-                                    </ol>
-                                </li>
-                            </ul>
-                        </li>
                     </ul>
+                </div>
+            </div>
+        </div>
+        <!-- ./help item -->
+        <!-- help item -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingHelpItem7">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#helpPageItem7" aria-expanded="false" aria-controls="helpPageItem7">
+                    I can't find an answer to my question - what do I do?
+                </button>
+            </h2>
+            <div id="helpPageItem7" class="accordion-collapse collapse" aria-labelledby="headingHelpItem7"
+                data-bs-parent="#helpPageContent">
+                <div class="accordion-body">
+                    <p>Don't panic! We have got you - have a look at our <a
+                            href="https://github.com/jyoung90ie/qub-dissertation/blob/main/README.md"
+                            target="_blank">GitHub README</a> which goes into much more technical detail.</p>
                 </div>
             </div>
         </div>
