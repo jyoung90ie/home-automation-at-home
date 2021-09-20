@@ -1,5 +1,9 @@
 # Smart Hub
 
+[![Build Status](https://app.travis-ci.com/jyoung90ie/qub-dissertation.svg?token=xyzLEs9qjL7SuD52KvT6&branch=main)](https://app.travis-ci.com/jyoung90ie/qub-dissertation)
+
+[![codecov](https://codecov.io/gh/jyoung90ie/qub-dissertation/branch/main/graph/badge.svg?token=46RL5224IH)](https://codecov.io/gh/jyoung90ie/qub-dissertation)
+
 ## Deployment
 
 This was developed to be deployed on any device that supports docker and as such the steps below assume you already have `Docker` and `docker-compose` installed.
@@ -242,28 +246,147 @@ TBC
 
 ### ENV file
 
-| KEY  | VALUE |
-| ---- | ----- |
-| `TBC` | `TBC` |
-| `TBC` | `TBC` |
-| `TBC` | `TBC` |
-| `TBC` | `TBC` |
-| `TBC` | `TBC` |
-| `TBC` | `TBC` |
-| `TBC` | `TBC` |
-| `TBC` | `TBC` |
-
-### Pushbullet setup (for notifications)
-
-TBC
+| KEY  | VALUE | DESCRIPTION |
+| ---- | ----- | ----------- |
+| `DJANGO_SECRET_KEY` | `use-a-secret-phrase` | It is important to use a secure hash here |
+| `POSTGRES_DB` | `smarthub` | Use the value from your PostgreSQL database |
+| `POSTGRES_USER` | `smarthub` | Use the value from your PostgreSQL database |
+| `POSTGRES_PASSWORD` | `smarthub` | Use the value from your PostgreSQL database |
+| `EMAIL_HOST` | `smtp.gmail.com` | This is used for sending email notifications and registration emails.
+| `EMAIL_HOST_USER` | `dummy-email-address@gmail.com` | This will be the account used to send email notifications |
+| `EMAIL_HOST_PASSWORD` | `app-key` |
+| `MQTT_QOS` | `1` | The Quality of Service level you want to guarantee - see [here](https://mosquitto.org/man/mqtt-7.html)
+| `MQTT_SERVER` | `192.168.x.x` | The IP address of the server running the MQTT broker - usually a LAN address |
+| `MQTT_BASE_TOPIC` | `zigbee2mqtt` |
+| `MQTT_CLIENT_NAME` | `Smart Hub` |
+| `ARCH_IMAGE` | `postgres` | Only set this value if you are using a CPU architecture other than ARM64 (e.g. not a Raspberry Pi)
 
 ### Raspberry Pi with Raspbian 
 
-TBC
+1. Setup Mosquitto MQTT
+
+2. Setup Zigbee2MQTT
+
+3. Setup Zigbee Listener
+
+4. Configure `.env` to point to `MQTT_SERVER`
+
+5. Install `Docker `by following the steps listed on [Docker](https://docs.docker.com/engine/install/debian/#install-using-the-convenience-script)
+
+6. [Install Git](https://projects.raspberrypi.org/en/projects/getting-started-with-git/3)
+
+7. Continue with the steps at [Starting the application](#starting-the-application)
 
 ### Local machine deployment
 
-TBC
+1. If you are running any CPU arch other than `ARM64` you will need to ensure that the following is added to your `.env` file - by default the `Dockerfile` is configured to download an `ARM64` compatiable image - addingt this ENV variable will ensure it runs on all other architectures.
+    - `ARCH_IMAGE="postgres"`
+
+2. Download and install `Docker` and `docker-compose` by following the steps on [Docker](https://docs.docker.com/get-docker/)
+
+3. [Install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+
+4. Continue with the steps at [Starting the application](#starting-the-application)
+
+### Starting the application
+
+1. Clone the Git repo using:
+    - `git clone https://github.com/jyoung90ie/qub-dissertation.git`
+
+2. Open the cloned folder in the shell (`cd folder-name`)
+
+3. Build the Docker containers
+    - `docker-compose build`
+
+4. Apply the database migrations
+    - `docker-compose run --rm web python -m manage migrate`
+
+5. Create a `superuser` account (for accessing admin areas) - follow the shell prompt
+    - `docker-compose run --rm web python -m manage createsuperuser`
+    
+6. Start up the docker containers in `detached mode` (in the background)
+    - `docker-compose up -d`
+
+7. To check the logs, for example, for the `web` container - for others replace `web` with the container name:
+    - `docker-compose logs -f web`
+
+8. Navigate to the Smart Hub interface, replacing `ip-address` with the IP of the Raspberry Pi device
+    - `http://ip-address:8080`
+
+9. Access admin area using the `superuser` account created in `Step 10`
+    - `http://ip-address:8080/admin`
+
+## Notification setup
+### Pushbullet
+
+If you wish to receive notifications on your mobile devices and/or computer, Smart Hub integrates with [Pushbullet](https://www.pushbullet.com/). 
+
+In order for notifications to work, you will need to setup an account at Pushbullet, then create an `Access Token` [here](https://www.pushbullet.com/#settings/account).
+
+Copy the `Access Token`, open the Smart Hub web page and follow the steps below:
+
+1. Login to your account
+
+2. Navigate to `Events` -> `Notifications`
+
+3. Click the green [ + ] button at the top to create a new `Notification Channel`
+
+4. Select `Pushbullet` from the dropdown
+
+5. Ensure `Enable notifications` is checked
+
+6. Paste in the `Access Token` in the `API token` input box
+
+7. Click `Save`
+
+8. Download the `Pushbullet` app on your desktop or mobile device and `login`
+
+9. Pushbullet notifications are now setup and will be pushed to all devices you have the app installed
+
+You will only receive notifications when you have created an `Event` with at least one `Event Trigger` in Smart Hub - notifications must be enabled.
+
+### Email
+
+If you wish to receive email notifications when Smart Hub `Events` are `triggered`, you will need to add SMTP email server settings to the `.env` file as detailed under the heading [ENV file](#env-file). _**NOTE**: an SMTP server must be configured before email notifications will work._
+
+Click [here](#generating-gmail-app-password) to see the steps for clicking a Gmail app password.
+
+1. Go back to `Smart Hub` and login to your account
+
+2. Navigate to `Events` -> `Notifications`
+
+3. Click the green [ + ] button at the top to create a new `Notification Channel`
+
+4. Select `Email` from the dropdown
+
+5. Input a valid email address for `From Email` - this details who the email will come from - **note**: this is will only work if you use your own SMTP, i.e. for Gmail the from address will show as the `EMAIL_HOST_USER` in the `.env` file.
+
+6. Input a valid email address for `To Email` - this is where the emails notifications will be sent.
+
+7. Click `Save`
+
+9. Email notifications are now setup. 
+
+You will only receive notifications when you have created an `Event` with at least one `Event Trigger` in Smart Hub - notifications must be enabled
+
+#### Generating Gmail App Password
+
+1. Login to your Gmail account
+
+2. Go to `Manage your Google Account` by clicking the button on the top right of your Gmail screen
+
+3. Go to `Security`
+
+4. Select `App passwords` under the heading `Signing in to Google`
+
+5. For `Select app` -> `Other (custom name)` -> input `Smart Hub`
+
+6. Click `Generate` and copy the `app password` generated
+
+7. Paste the `app password` into the file `.env`
+    - `EMAIL_HOST_PASSWORD="app-password-here"`
+
+
 
 ## Credits
 

@@ -200,8 +200,24 @@ class TestZigbeeMessage(TestCase):
 
         self.assertEqual(total_trigger_calls, 1)
 
-    def test_process_event_trigger_device_value_has_changed_invoke_triggers(self):
-        pass
+    # @mock.patch("apps.zigbee.models.ZigbeeMessage.process_event.trigger", autospec=True)
+    # @mock.patch("apps.zigbee.models.ZigbeeMessage.invoke_event_response")
+    # def test_process_event_trigger_device_value_has_changed_invoke_triggers(
+    #     self, mock_triggered, mock_invoke_response
+    # ):
+    #     # manually override so trigger is invoked
+    #     mock_triggered.is_triggered.return_value = True
+
+    #     triggers = [
+    #         EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+    #         EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+    #         EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+    #     ]
+
+    #     self.zb_msg.check_event_triggers()
+    #     total_trigger_calls = mock_invoke_response.call_count
+
+    #     self.assertEqual(total_trigger_calls, 1)
 
     def test_process_event_trigger_device_value_has_changed_but_trigger_is_not_enabled(
         self,
