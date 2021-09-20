@@ -8,7 +8,7 @@ RUN printf "deb http://ftp.de.debian.org/debian stable main" > /etc/apt/sources.
 RUN apt-get update
 RUN apt-get install -y wait-for-it binutils gdal-bin libproj-dev
 # true if arm64 is set
-RUN if [[ -n "$ARM64"]] ; then \
+RUN if [ -n "$ARM64"] ; then \
     apt-get install -y postgis* ; \
     else \
     apt-get install -y postgis postgresql-13-postgis-3 postgresql-13-postgis-3-scripts ; \
