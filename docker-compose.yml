@@ -1,8 +1,11 @@
 services:
   db:
-    args:
-      - ARCH_IMAGE=$ARCH_IMAGE
-    build: ./docker/postgres
+    image: 
+    build:
+      context: . 
+      dockerfile: ./docker/postgres/Dockerfile
+      args:
+        - ARCH_IMAGE=$ARCH_IMAGE
     restart: always
     volumes:
       - ./data/db:/var/lib/postgresql/data
