@@ -1,32 +1,18 @@
-# dist: focal
-language: c
-arch: arm64
-os: linux
+language: 
+    - python
 
-env:
-    - DOCKER_COMPOSE_VERSION=3.9
-
-addons:
-    apt:
-        sources:
-            - sourceline: "deb http://ftp.de.debian.org/debian stable main"
+python: 
+    - "3.7"
 
 services:
     - docker
 
-before_install:
-    - sudo apt-get update
-    - sudo apt-get install --allow-unauthenticated -y curl wait-for-it binutils gdal-bin libproj-dev postgis* graphviz graphviz-dev
-    - sudo rm /usr/local/bin/docker-compose
-    - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-    - chmod +x docker-compose
-    - sudo mv docker-compose /usr/local/bin
-    - docker-compose build
+before_script:
+    - pip install docker-compose
 
 script:
-    # - $SETARCH
-    # - docker-compose run --rm web flake8
+    # - docker-compose run web flake8
     - docker-compose run --rm web pytest .
 
 after_success:
-    - docker-compose run --rm web codecov --token=${CODECOV_TOKEN}
+    - docker-compose run web codecov --token=${CODECOV_TOKEN}
