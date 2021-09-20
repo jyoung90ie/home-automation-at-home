@@ -1,6 +1,5 @@
 services:
   db:
-    image: 
     build:
       context: . 
       dockerfile: ./docker/postgres/Dockerfile
