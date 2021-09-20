@@ -1,12 +1,13 @@
 services:
   db:
+    args:
+      - ARCH_IMAGE=$ARCH_IMAGE
     build: ./docker/postgres
     restart: always
     volumes:
       - ./data/db:/var/lib/postgresql/data
       - ./init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
     environment:
-      - ARCH_IMAGE=$ARCH_IMAGE
       - POSTGRES_DB=$POSTGRES_DB
       - POSTGRES_USER=$POSTGRES_USER
       - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
