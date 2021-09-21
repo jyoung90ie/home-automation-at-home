@@ -274,7 +274,9 @@ In addition to the automated testing, I conducted some manual testing across a n
 
 ### Known bugs
 
-There are no known bugs in this release.
+#### ADD EVENT TRIGGER FORM 
+
+When using "ADD EVENT TRIGGER" form - it can take a long time for the page to refresh and acknowledge that the new trigger has been added. This is a result of the query stack being called, it is not optimised and is performing custom validation on user inputs.
 
 ## Deployment
 
