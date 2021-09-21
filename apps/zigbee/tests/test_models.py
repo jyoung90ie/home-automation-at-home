@@ -3,13 +3,16 @@ from unittest import mock
 
 from django.test import TestCase
 
-from apps.events.models import EventResponse
-from apps.users.tests.factories import UserFactory
-
 from ...devices.models import DeviceProtocol
 from ...devices.tests.factories import DeviceFactory, ZigbeeDeviceStateFactory
+from ...events.models import EventResponse, EventTriggerLog
 from ...events.tests.factories import (EventFactory, EventResponseFactory,
                                        EventTriggerFactory)
+from ...notifications.models import NotificationMedium
+from ...notifications.tests.factories import (EmailNotificationFactory,
+                                              NotificationSettingFactory,
+                                              PushbulletNotificationFactory)
+from ...users.tests.factories import UserFactory
 from ..models import ZigbeeDevice, ZigbeeMessage
 from .factories import (ZigbeeDeviceFactory, ZigbeeLogFactory,
                         ZigbeeMessageFactory)
@@ -167,13 +170,18 @@ class TestZigbeeMessage(TestCase):
         self.zb_msg = ZigbeeMessageFactory(
             zigbee_device=self.zb_device, raw_message=raw_msg
         )
-        self.event = EventFactory(user=self.user, is_enabled=True)
+        self.event = EventFactory(
+            user=self.user, is_enabled=True, send_notification=True
+        )
         self.state = ZigbeeDeviceStateFactory(content_object=self.zb_device)
-        self.response = EventResponse(
+        self.response = EventResponseFactory(
             event=self.event, device_state=self.state, is_enabled=True
         )
 
-    @mock.patch("apps.zigbee.models.ZigbeeMessage.process_event_trigger")
+    @mock.patch(
+        "apps.zigbee.models.ZigbeeMessage.process_event_trigger",
+        return_value=(True, True),
+    )
     def test_check_event_triggers_successfully_triggered(self, mock_value):
         triggers = [
             EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
@@ -185,7 +193,10 @@ class TestZigbeeMessage(TestCase):
 
         self.assertEqual(total_trigger_calls, len(triggers))
 
-    @mock.patch("apps.zigbee.models.ZigbeeMessage.process_event_trigger")
+    @mock.patch(
+        "apps.zigbee.models.ZigbeeMessage.process_event_trigger",
+        return_value=(True, True),
+    )
     def test_check_event_triggers_not_called_when_disabled(self, mock_value):
         triggers = [
             EventTriggerFactory(event=self.event, device=self.device, is_enabled=False),
@@ -198,13 +209,11 @@ class TestZigbeeMessage(TestCase):
 
         self.assertEqual(total_trigger_calls, 1)
 
-    @mock.patch("apps.zigbee.models.ZigbeeMessage.process_event.trigger", autospec=True)
-    @mock.patch("apps.zigbee.models.ZigbeeMessage.invoke_event_response")
-    def test_process_event_trigger_device_value_has_changed_invoke_triggers(
-        self, mock_triggered, mock_invoke_response
+    @mock.patch("apps.events.models.EventTrigger.is_triggered", return_value=True)
+    @mock.patch("apps.zigbee.models.ZigbeeMessage.invoke_event_response", autospec=True)
+    def test_process_event_trigger_invokes_event_response_when_device_is_triggered(
+        self, mock_invoke_response, mock_triggered
     ):
-        # manually override so trigger is invoked
-        mock_triggered.is_triggered.return_value = True
 
         triggers = [
             EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
@@ -215,48 +224,220 @@ class TestZigbeeMessage(TestCase):
         self.zb_msg.check_event_triggers()
         total_trigger_calls = mock_invoke_response.call_count
 
+        self.assertEqual(total_trigger_calls, 3)
+
+    @mock.patch("apps.events.models.EventTrigger.is_triggered", return_value=False)
+    @mock.patch("apps.zigbee.models.ZigbeeMessage.invoke_event_response", autospec=True)
+    def test_invoke_event_response_is_not_called_when_event_is_not_triggered(
+        self, mock_invoke_response, mock_triggered
+    ):
+
+        triggers = [
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+        ]
+
+        self.zb_msg.check_event_triggers()
+        total_trigger_calls = mock_invoke_response.call_count
+
+        self.assertEqual(total_trigger_calls, 0)
+
+    @mock.patch("apps.events.models.EventTrigger.is_triggered")
+    @mock.patch(
+        "apps.zigbee.models.ZigbeeMessage.invoke_notifications",
+    )
+    def test_that_notifications_are_only_called_once_per_event(
+        self, mock_invoke_notification, mock_triggered
+    ):
+        triggers = [
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+        ]
+        self.zb_msg.check_event_triggers()
+
+        total_trigger_calls = mock_invoke_notification.call_count
+
         self.assertEqual(total_trigger_calls, 1)
 
-    def test_process_event_trigger_device_value_has_changed_but_trigger_is_not_enabled(
-        self,
+    @mock.patch(
+        "apps.zigbee.models.ZigbeeMessage.process_event_trigger",
+    )
+    def test_does_not_call_process_event_trigger_when_event_is_disabled(
+        self, mock_value
     ):
-        pass
+        self.event.is_enabled = False
+        self.event.save()
 
-    def test_process_event_trigger_device_value_has_not_changed_do_not_process(self):
-        pass
+        triggers = [
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+        ]
 
-    def test_process_event_trigger_records_a_trigger_log(self):
-        pass
+        self.zb_msg.check_event_triggers()
+        total_trigger_calls = mock_value.call_count
 
-    def test_process_event_trigger_sends_notifications_when_enabled(self):
-        pass
+        self.assertEqual(total_trigger_calls, 0)
 
-    def test_process_event_trigger_does_not_send_notifications_when_disabled(self):
-        pass
+    @mock.patch("apps.zigbee.models.ZigbeeMessage.process_event_trigger")
+    @mock.patch("apps.events.models.Event", autospec=True)
+    def test_does_not_call_process_event_trigger_when_event_triggers_are_disabled(
+        self, mock_event, mock_value
+    ):
+        mock_event.is_enabled.return_value = True
 
-    def test_invoke_event_response_returns_when_device_has_no_associated_user(self):
-        pass
+        triggers = [
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=False),
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=False),
+        ]
 
-    def test_invoke_event_response_returns_when_device_has_no_event(self):
-        pass
+        self.zb_msg.check_event_triggers()
+        total_trigger_calls = mock_value.call_count
 
-    def test_invoke_event_response_returns_when_device_has_no_event_responses(self):
-        pass
+        self.assertEqual(total_trigger_calls, 0)
 
-    def test_invoke_event_response_successfully_sends_mqtt_messages(self):
-        pass
+    @mock.patch("apps.events.models.Event.is_enabled", return_value=True)
+    @mock.patch(
+        "apps.zigbee.models.ZigbeeMessage.device_value_changed", return_value=False
+    )
+    @mock.patch("apps.events.models.EventTrigger.is_triggered", return_value=False)
+    def test_process_event_trigger_device_value_has_not_changed_do_not_process(
+        self, mock_is_triggered, mock_value_changed, mock_event
+    ):
+        triggers = [
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+        ]
 
-    def test_invoke_notifications_successful_when_there_are_active_notifications(self):
-        pass
+        self.zb_msg.check_event_triggers()
+        total_trigger_calls = mock_is_triggered.call_count
 
-    def test_invoke_notifications_returns_when_no_active_notifications(self):
-        pass
+        self.assertEqual(total_trigger_calls, 0)
 
-    def test_invoke_notifications_sends_to_pushbullet_when_enabled(self):
-        pass
+    @mock.patch("apps.events.models.EventTrigger.is_triggered", return_value=True)
+    @mock.patch("apps.events.models.Event.is_enabled", return_value=True)
+    @mock.patch(
+        "apps.zigbee.models.ZigbeeMessage.device_value_changed", return_value=True
+    )
+    @mock.patch("apps.events.models.EventTriggerLog.objects.create", autospec=True)
+    def test_process_event_trigger_records_a_trigger_log_for_triggers_processed(
+        self, mock_log, mock_value_changed, mock_event, mock_triggered
+    ):
+        triggers = [
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=False),
+        ]
 
-    def test_invoke_notifications_sends_to_email_when_enabled(self):
-        pass
+        self.zb_msg.check_event_triggers()
+        total_log_calls = mock_log.call_count
+
+        self.assertEqual(total_log_calls, 1)
+
+    @mock.patch("apps.events.models.EventTrigger.is_triggered", return_value=True)
+    @mock.patch("apps.notifications.models.PushbulletNotification.send")
+    @mock.patch("apps.notifications.models.EmailNotification.send")
+    def test_process_event_trigger_sends_notifications_when_enabled(
+        self, mock_email, mock_pushbullet, mock_triggered
+    ):
+        triggers = [
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=False),
+        ]
+
+        pb_notification = NotificationSettingFactory(
+            user=self.user,
+            notification_medium=NotificationMedium.PUSHBULLET,
+            is_enabled=True,
+        )
+        pushbullet = PushbulletNotificationFactory(notification=pb_notification)
+        em_notification = NotificationSettingFactory(
+            user=self.user,
+            notification_medium=NotificationMedium.EMAIL,
+            is_enabled=True,
+        )
+        email = EmailNotificationFactory(notification=em_notification)
+
+        self.zb_msg.check_event_triggers()
+        total_em = mock_email.call_count
+        total_pb = mock_pushbullet.call_count
+
+        self.assertEqual(total_em, 1)
+        self.assertEqual(total_pb, 1)
+
+    @mock.patch("apps.events.models.EventTrigger.is_triggered", return_value=True)
+    @mock.patch("apps.notifications.models.PushbulletNotification.send")
+    def test_process_event_trigger_sends_notifications_for_each_event(
+        self, mock_pushbullet, mock_triggered
+    ):
+        second_event = EventFactory(
+            user=self.user, is_enabled=True, send_notification=True
+        )
+
+        triggers = [
+            EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+            EventTriggerFactory(
+                event=second_event, device=self.device, is_enabled=True
+            ),
+        ]
+
+        pb_notification = NotificationSettingFactory(
+            user=self.user,
+            notification_medium=NotificationMedium.PUSHBULLET,
+            is_enabled=True,
+        )
+        pushbullet = PushbulletNotificationFactory(notification=pb_notification)
+
+        self.zb_msg.check_event_triggers()
+        total_pb = mock_pushbullet.call_count
+
+        self.assertEqual(total_pb, 2)
+
+    @mock.patch("apps.events.models.EventTrigger.is_triggered", return_value=True)
+    @mock.patch("apps.notifications.models.PushbulletNotification.send")
+    @mock.patch("apps.notifications.models.EmailNotification.send")
+    def test_process_event_trigger_does_not_send_notifications_when_disabled(
+        self, mock_email, mock_pushbullet, mock_triggered
+    ):
+        EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),
+
+        pb_notification = NotificationSettingFactory(
+            user=self.user,
+            notification_medium=NotificationMedium.PUSHBULLET,
+            is_enabled=False,
+        )
+        pushbullet = PushbulletNotificationFactory(notification=pb_notification)
+        em_notification = NotificationSettingFactory(
+            user=self.user,
+            notification_medium=NotificationMedium.EMAIL,
+            is_enabled=False,
+        )
+        email = EmailNotificationFactory(notification=em_notification)
+
+        self.zb_msg.check_event_triggers()
+
+        total_em = mock_email.call_count
+        total_pb = mock_pushbullet.call_count
+
+        self.assertEqual(total_em, 0)
+        self.assertEqual(total_pb, 0)
+
+    @mock.patch("apps.events.models.EventTrigger.is_triggered", return_value=True)
+    @mock.patch("apps.mqtt.publish.send_message")
+    def test_invoke_event_response_successfully_sends_mqtt_messages(
+        self, mock_mqtt, mock_triggered
+    ):
+        # add additional event responses to the one created in setUp
+        EventResponseFactory(event=self.event, is_enabled=True)
+        EventResponseFactory(event=self.event, is_enabled=True)
+
+        EventTriggerFactory(event=self.event, device=self.device, is_enabled=True)
+
+        self.zb_msg.check_event_triggers()
+
+        total_calls = mock_mqtt.call_count
+
+        self.assertEqual(total_calls, 3)
 
 
 class TestZigbeeLog(TestCase):

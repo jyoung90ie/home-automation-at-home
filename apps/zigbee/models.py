@@ -2,7 +2,7 @@
 import json
 import logging
 from json.decoder import JSONDecodeError
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Tuple, Union
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
@@ -283,6 +283,7 @@ class ZigbeeMessage(BaseAbstractModel):
 
         self.user = getattr(self.user_device, "user", None)
 
+        # only returns enabled triggers
         triggers = self.user_device.get_event_triggers()
 
         if not triggers:
@@ -298,50 +299,56 @@ class ZigbeeMessage(BaseAbstractModel):
             logger.info("%s - ZigbeeMessage - check_event_triggers - %s", __name__, ex)
             return
 
+        processed_notifications = []
         for trigger in triggers:
-            self.process_event_trigger(
+            if not trigger.event.is_enabled or not trigger.is_enabled:
+                # skip disabled events and triggers
+                continue
+
+            # check to see if event notifications have already been processed
+            process_notifications = trigger.event.uuid not in processed_notifications
+
+            _, notifications_invoked = self.process_event_trigger(
                 parsed_message=parsed_message,
                 trigger=trigger,
-                last_message=last_message,
+                cached_message=last_message,
+                process_notifications=process_notifications,
             )
+
+            if notifications_invoked:
+                processed_notifications.append(trigger.event.uuid)
 
     def process_event_trigger(
-        self, parsed_message: dict, trigger: "EventTrigger", last_message=None
-    ):
-        """Processes event triggers and invokes notifications/event responses if criteria met"""
+        self,
+        parsed_message: dict,
+        trigger: "EventTrigger",
+        cached_message=None,
+        process_notifications=True,
+    ) -> Tuple[bool, bool]:
+        """Processes event triggers and invokes notifications/event responses if criteria met.
+
+        Returns a tuple = response_invoked, notifications_invoked"""
         logger.info("%s - process_event_trigger - start", __name__)
+
+        response_invoked = False
+        notifications_invoked = False
+
         field = getattr(trigger, "metadata_field")
+        event = getattr(trigger, "event")
         device_value = str(parsed_message.get(field, None)).lower()
 
-        if not device_value or device_value is None:
-            return
-
-        if last_message:
-            # only check if last_message has a value
-            last_message = json.loads(last_message)
-
-            cached_value = str(last_message.get(field, None)).lower()
-
-            if device_value == cached_value:
-                logger.info(
-                    "process_event_trigger: device field value is unchanged - ignoring "
-                    "[last: %s, curr: %s]",
-                    cached_value,
-                    device_value,
-                )
-                # the actual trigger value hasn't changed
-                return
-
-        event = getattr(trigger, "event")
-        if not event.is_enabled:
-            logger.info(
-                "process_event_trigger - event is disabled (triggers and notifications will "
-                "not be processed)"
+        if (
+            not device_value
+            or not event.is_enabled
+            or not self.device_value_changed(
+                cached_message=cached_message,
+                field=field,
+                device_value=device_value,
             )
-            return
-
+        ):
+            # skip empty values, disabled events, and unchanged device values
+            return response_invoked, notifications_invoked
         trigger_result = trigger.is_triggered(device_value)
-
         if trigger_result:
             # matched a trigger - record notification
             message = (
@@ -350,8 +357,10 @@ class ZigbeeMessage(BaseAbstractModel):
             )
 
             trigger_log = self.invoke_event_response(triggered_by=trigger)
+            response_invoked = trigger_log is not None
 
-            if event.send_notification:
+            if process_notifications and event.send_notification:
+                notifications_invoked = True
                 self.invoke_notifications(
                     topic=event.notification_topic,
                     message=message,
@@ -360,15 +369,40 @@ class ZigbeeMessage(BaseAbstractModel):
                 )
 
         logger.info("process_event_trigger end")
+        return response_invoked, notifications_invoked
 
-    def invoke_event_response(self, triggered_by: "EventTrigger"):
+    def device_value_changed(
+        self, cached_message: str, field: str, device_value: str
+    ) -> bool:
+        """Compare device value to cached value.
+
+        Return true if values are different - i.e. have changed."""
+        # only check if a previous message exists
+        if not cached_message:
+            return True
+        cached_message = json.loads(cached_message)
+        cached_value = str(cached_message.get(field, None)).lower()
+
+        if device_value == cached_value:
+            # the actual trigger value hasn't changed
+            logger.info(
+                "device field value is unchanged - ignoring last: %s, curr: %s]",
+                cached_value,
+                device_value,
+            )
+            return False
+
+        return True
+
+    def invoke_event_response(
+        self, triggered_by: "EventTrigger"
+    ) -> Union["EventTriggerLog", None]:
         """Invokes all EventResponse objects for a triggered Event.
 
         An event response essentially maps an event to a device state."""
         if not self.user:
             logger.info("invoke_event_response: no user object - cannot proceed")
             return
-
         event = getattr(triggered_by, "event", None)
 
         if not event:
@@ -438,19 +472,22 @@ class ZigbeeMessage(BaseAbstractModel):
         message: str,
         triggered_by: "EventTrigger",
         trigger_log: "EventTriggerLog" = None,
-    ):
-        """Invoke all of user's enabled notifications"""
+    ) -> int:
+        """Invoke all of user's enabled notifications.
+
+        Returns the number of notifications sent"""
+        notifications_sent = 0
+
         if not self.user:
-            logger.info("invoke_notifications: no user object - cannot proceed")
-            return
+            logger.info("no user object - cannot proceed")
+            return notifications_sent
 
         user_notifications = get_user_model().objects.get_active_notifications(
             user=self.user
         )
         if not user_notifications:
-            logger.info("invoke_notifications: user has no active notification mediums")
-
-            return
+            logger.info("user has no active notification mediums")
+            return notifications_sent
 
         logger.info("Invoking notifications...")
 
@@ -467,8 +504,11 @@ class ZigbeeMessage(BaseAbstractModel):
                 notification.pushbulletnotification.send(**notification_data)
             elif notification.notification_medium == NotificationMedium.EMAIL:
                 notification.emailnotification.send(**notification_data)
+            notifications_sent += 1
 
         logger.info("Notification invocation complete.")
+
+        return notifications_sent
 
 
 class ZigbeeLog(BaseAbstractModel):
