@@ -353,7 +353,7 @@ class ZigbeeMessage(BaseAbstractModel):
             # matched a trigger - record notification
             message = (
                 f"{event.notification_message}\n\nTriggered by={trigger}\n\n"
-                "Device value={device_value}"
+                f"Device value={device_value}"
             )
 
             trigger_log = self.invoke_event_response(triggered_by=trigger)
