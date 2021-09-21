@@ -6,16 +6,20 @@ from django.test import TestCase
 from ...devices.models import DeviceProtocol
 from ...devices.tests.factories import DeviceFactory, ZigbeeDeviceStateFactory
 from ...events.models import EventResponse, EventTriggerLog
-from ...events.tests.factories import (EventFactory, EventResponseFactory,
-                                       EventTriggerFactory)
+from ...events.tests.factories import (
+    EventFactory,
+    EventResponseFactory,
+    EventTriggerFactory,
+)
 from ...notifications.models import NotificationMedium
-from ...notifications.tests.factories import (EmailNotificationFactory,
-                                              NotificationSettingFactory,
-                                              PushbulletNotificationFactory)
+from ...notifications.tests.factories import (
+    EmailNotificationFactory,
+    NotificationSettingFactory,
+    PushbulletNotificationFactory,
+)
 from ...users.tests.factories import UserFactory
 from ..models import ZigbeeDevice, ZigbeeMessage
-from .factories import (ZigbeeDeviceFactory, ZigbeeLogFactory,
-                        ZigbeeMessageFactory)
+from .factories import ZigbeeDeviceFactory, ZigbeeLogFactory, ZigbeeMessageFactory
 
 
 class TestZigbeeDevice(TestCase):
@@ -315,14 +319,15 @@ class TestZigbeeMessage(TestCase):
 
         self.assertEqual(total_trigger_calls, 0)
 
+    @mock.patch("apps.mqtt.publish.send_message")
     @mock.patch("apps.events.models.EventTrigger.is_triggered", return_value=True)
     @mock.patch("apps.events.models.Event.is_enabled", return_value=True)
     @mock.patch(
         "apps.zigbee.models.ZigbeeMessage.device_value_changed", return_value=True
     )
     @mock.patch("apps.events.models.EventTriggerLog.objects.create", autospec=True)
-    def test_process_event_trigger_records_a_trigger_log_for_triggers_processed(
-        self, mock_log, mock_value_changed, mock_event, mock_triggered
+    def test_trigger_log_created_when_a_trigger_condition_is_met(
+        self, mock_log, mock_value_changed, mock_event, mock_triggered, mock_mqtt
     ):
         triggers = [
             EventTriggerFactory(event=self.event, device=self.device, is_enabled=True),

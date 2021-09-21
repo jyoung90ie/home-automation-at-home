@@ -12,7 +12,7 @@ before_script:
 
 script:
     # - docker-compose run web flake8
-    - docker-compose run --rm web pytest .
+    - docker-compose run --rm web pytest . -p no:warnings
 
 after_success:
     - docker-compose run web codecov --token=${CODECOV_TOKEN}
