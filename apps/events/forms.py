@@ -11,7 +11,7 @@ from crispy_forms.layout import Column, Field, Fieldset, Layout, Row, Submit
 
 from ..events.defines import NON_NUMERIC_TRIGGER_TYPES, NUMERIC_TRIGGER_TYPES
 from ..forms import CustomChoiceField
-from ..zigbee.models import METADATA_TYPE_FIELD, ZigbeeDevice
+from ..zigbee.models import ZigbeeDevice
 from . import models
 
 logger = logging.getLogger(__name__)
@@ -126,14 +126,10 @@ class EventTriggerForm(forms.ModelForm):
             self.device = device.get()
 
         # metadata validation
-        valid_metadata = ZigbeeDevice.objects.get_metadata_fields(device=self.device)
-
-        if (
-            form_metadata
-            and not valid_metadata.filter(
-                **{METADATA_TYPE_FIELD: form_metadata}
-            ).exists()
-        ):
+        valid_metadata = list(
+            ZigbeeDevice.objects.get_metadata_fields(device=self.device)
+        )
+        if form_metadata and form_metadata not in valid_metadata:
             self.add_error(
                 metadata_field_name,
                 error_message,
