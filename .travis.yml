@@ -1,3 +1,7 @@
+os: linux
+
+dist: xenial
+
 language: 
     - python
 
@@ -7,12 +11,24 @@ python:
 services:
     - docker
 
+addons:
+    postgresql: "13"
+    apt:
+        packages:
+            - postgresql-13-postgis-3
+
+env:
+    global:
+        - PGPORT=5432
+        - PGUSER=smarthub
+
 before_script:
+    - psql -c "create database smarthub;" -U smarthub
+    - psql -c "create extension postgis"
     - pip install docker-compose
-    - sleep 15
 
 script:
-    - docker-compose run --rm web pytest . -p no:warnings
+    - docker-compose -f docker-compose.ci.yml run --rm web pytest . -p no:warnings
 
 after_success:
     - docker-compose run web codecov --token=${CODECOV_TOKEN}
