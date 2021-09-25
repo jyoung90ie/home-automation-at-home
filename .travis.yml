@@ -24,7 +24,6 @@ env:
         - PGUSER=smarthub
 
 before_script:
-    - psql -c "create extension postgis"
     - pip install docker-compose
 
 script:
