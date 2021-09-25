@@ -10,24 +10,12 @@ python:
 
 services:
     - docker
-    - postgresql
-
-addons:
-    postgresql: "13"
-    apt:
-        packages:
-            - postgresql-13-postgis-3
-
-env:
-    global:
-        - PGPORT=5432
-        - PGUSER=smarthub
 
 before_script:
     - pip install docker-compose
 
 script:
-    - docker-compose -f docker-compose.ci.yml run --rm web pytest . -p no:warnings
+    - docker-compose run --rm web pytest . -p no:warnings
 
 after_success:
     - docker-compose run web codecov --token=${CODECOV_TOKEN}
