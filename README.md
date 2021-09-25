@@ -297,6 +297,8 @@ There are no known bugs at present.
 | `MQTT_BASE_TOPIC` | `zigbee2mqtt` |
 | `MQTT_CLIENT_NAME` | `Smart Hub` |
 | `ARCH_IMAGE` | `postgres` | Only set this value if you are using a CPU architecture other than ARM64 (e.g. not a Raspberry Pi)
+| `SOCIAL_GOOGLE_CLIENT_ID` | `` | Follow the sets in [here](https://django-allauth.readthedocs.io/en/latest/providers.html#google) to obtain this value
+| `SOCIAL_GOOGLE_SECRET` | `` | Follow the sets in [here](https://django-allauth.readthedocs.io/en/latest/providers.html#google) to obtain this value
 
 ### Zigbee Communication Sniffing
 

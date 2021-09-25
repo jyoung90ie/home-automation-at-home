@@ -63,7 +63,6 @@ INSTALLED_APPS = [
     "apps.events",
     "apps.notifications",
     "apps.mqtt",
-    # "apps.api",
 ]
 
 MIDDLEWARE = [
@@ -113,7 +112,6 @@ WSGI_APPLICATION = "smarthub.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.contrib.gis.db.backends.postgis",
-        # "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": os.getenv("POSTGRES_DB"),
         "USER": os.getenv("POSTGRES_USER"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
@@ -174,8 +172,8 @@ SITE_ID = 1
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "APP": {
-            "client_id": "757193594569-5hus7r09outa5g18kmv742s3ppdkuo9n.apps.googleusercontent.com",
-            "secret": "Fm6hn9L9EyG4WTjrt2v-VRst",
+            "client_id": os.getenv("SOCIAL_GOOGLE_CLIENT_ID"),
+            "secret": os.getenv("SOCIAL_GOOGLE_SECRET"),
             "key": "",
         }
     }
