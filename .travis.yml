@@ -10,6 +10,7 @@ python:
 
 services:
     - docker
+    - postgresql
 
 addons:
     postgresql: "13"
