@@ -2,7 +2,6 @@
 
 [![Build Status](https://app.travis-ci.com/jyoung90ie/qub-dissertation.svg?token=xyzLEs9qjL7SuD52KvT6&branch=main)](https://app.travis-ci.com/jyoung90ie/qub-dissertation) [![codecov](https://codecov.io/gh/jyoung90ie/qub-dissertation/branch/main/graph/badge.svg?token=46RL5224IH)](https://codecov.io/gh/jyoung90ie/qub-dissertation)
 
-# Smart Hub
 
 This platform was created as the final dissertation project for completion of the MSc Software Development at [Queen's University Belfast](https://www.qub.ac.uk/courses/postgraduate-taught/software-development-msc/). It demonstrates the skills I developed throughout the course.
 
