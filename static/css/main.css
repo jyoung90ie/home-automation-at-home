@@ -130,7 +130,7 @@ ul.navbar-nav > li {
 }
 
 
-.navbar-light ul.dropdown-menu a {
+.navbar-light div.dropdown-menu a {
     color: var(--colour-two);
 }
 

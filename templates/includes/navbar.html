@@ -22,51 +22,36 @@
             data-bs-toggle="dropdown" aria-expanded="false">
             <i class="fas fa-tablet-alt" title="my devices"></i> devices
           </a>
-          <ul class="dropdown-menu" aria-labelledby="devicesNavbarDropdown">
-            <li class="dropdown-header">My Devices</li>
+          <div class="dropdown-menu" aria-labelledby="devicesNavbarDropdown">
+            <div class="dropdown-header">My Devices</div>
             {% url 'devices:list' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View All</a>
-            </li>
+            <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View All</a>
             {% url 'devices:add' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add </a>
-            </li>
-            <li class="dropdown-header">My Locations</li>
+            <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add </a>
+            <div class="dropdown-header">My Locations</div>
             {% url 'devices:locations:list' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View All</a>
-            </li>
+            <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View All</a>
             {% url 'devices:locations:add' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add</a>
-            </li>
+            <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add</a>
 
-          </ul>
+          </div>
         </li>
         {% url 'homepage' as url %}
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="eventsNavbarDropdown" role="button" data-bs-toggle="dropdown"
             aria-expanded="false">
-            <i class="fas fa-robot"></i> Events</a>
+            <i class="fas fa-robot"></i> Events
           </a>
-          <ul class="dropdown-menu" aria-labelledby="eventsNavbarDropdown">
-            <li class="dropdown-header">My Events</li>
+          <div class="dropdown-menu" aria-labelledby="eventsNavbarDropdown">
+            <div class="dropdown-header">My Events</div>
             {% url 'events:list' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View All</a>
-            </li>
+            <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">View All</a>
             {% url 'events:add' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add</a>
-            </li>
+            <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Add</a>
             <div class="dropdown-divider"></div>
             {% url 'notifications:list' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Notifications</a>
-            </li>
-
-          </ul>
+            <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Notifications</a>
+          </div>
         </li>
         {% endif %}
         <li class="nav-item">
@@ -77,7 +62,7 @@
         <li class="nav-item">
           {% url 'help' as url %}
           <a class="nav-link{% if request.path == url %} active{%endif%}" aria-current="page" href="{{ url }}"><i
-              class="far fa-question-circle" about="help page"></i> help</a>
+              class="far fa-question-circle" title="help page"></i> help</a>
         </li>
 
       </ul>
@@ -88,28 +73,20 @@
             data-bs-toggle="dropdown" aria-expanded="false">
             <i class="fas fa-user-alt" title="Account options"></i> account
           </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <li class="dropdown-header">{{user}}</li>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <div class="dropdown-header">{{user}}</div>
             {% url 'users:account_profile' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Profile</a>
-            </li>
+            <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Profile</a>
 
             {% url 'account_email' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change Email</a>
-            </li>
+            <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change Email</a>
             {% url 'account_change_password' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change
-                Password</a>
-            </li>
+            <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Change
+              Password</a>
             {% url 'socialaccount_connections' as url %}
-            <li>
-              <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Social
-                Accounts</a>
-            </li>
-          </ul>
+            <a class="dropdown-item{% if request.path == url %} active{%endif%}" href="{{ url }}">Social
+              Accounts</a>
+          </div>
         </li>
         {% url 'account_logout' as url %}
         <li class="nav-item">
