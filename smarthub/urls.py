@@ -5,7 +5,6 @@ from django.urls import path
 import debug_toolbar
 
 urlpatterns = [
-    # path("api/", include("apps.api.urls")),
     path("", include("apps.pages.urls")),
     path("accounts/", include("allauth.urls")),
     path("accounts/", include("apps.users.urls")),

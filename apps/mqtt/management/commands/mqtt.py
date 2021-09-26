@@ -12,8 +12,13 @@ from django.core.management.base import CommandError
 
 import paho.mqtt.client as mqtt
 
-from smarthub.settings import (MQTT_BASE_TOPIC, MQTT_CLIENT_NAME, MQTT_QOS,
-                               MQTT_SERVER, MQTT_TOPICS)
+from smarthub.settings import (
+    MQTT_BASE_TOPIC,
+    MQTT_CLIENT_NAME,
+    MQTT_QOS,
+    MQTT_SERVER,
+    MQTT_TOPICS,
+)
 
 from ....devices.models import DeviceState
 from ....zigbee.models import ZigbeeDevice, ZigbeeLog, ZigbeeMessage
@@ -81,7 +86,7 @@ def has_message_sufficiently_changed(message: str, cache_key: str) -> bool:
 
     # device has no message or message is different from cached value
     if has_changed:
-        logger.info("Message content changed")
+        logger.info("Message content changed - checking event triggers")
 
     cache.set(key=cache_key, value=message, timeout=None)
     return has_changed
@@ -232,6 +237,8 @@ class MQTTMessage:
             )
             return
         else:
+            # process metadata to determine if it is a new device
+            ZigbeeDevice.process_metadata(self.parsed_payload)
             self.parse_message()
 
     def parse_devices(self):

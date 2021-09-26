@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ..devices.models import Device
     from ..events.models import EventTrigger, EventTriggerLog
 
-logger = logging.getLogger("mqtt")
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 METADATA_TYPE_FIELD = "zigbeemessage__zigbeelog__metadata_type"
@@ -259,8 +259,6 @@ class ZigbeeMessage(BaseAbstractModel):
         Provides additional logic for:
         1) Linking ZigbeeMessage (self) to ZigbeeDevice via link_to_zigbee_device()
         1) Checks if Device is linked to an EventTrigger
-
-
         """
         # methods modifying object that need to be performed pre-save
         self.link_to_zigbee_device()

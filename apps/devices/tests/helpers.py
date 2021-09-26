@@ -35,7 +35,7 @@ class TestCaseWithHelpers(TestCase):
                     self.assertFalse(expected in content)
 
     def assert_values_in_reponse(
-        self, response: HttpResponse, values: list[dict[str, bool]]
+        self, response: HttpResponse, values: "list[dict[str, bool]]"
     ) -> None:
         content = response.content.decode("utf-8").lower()
 
