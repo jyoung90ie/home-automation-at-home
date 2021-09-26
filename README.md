@@ -2,24 +2,22 @@
 
 [![Build Status](https://app.travis-ci.com/jyoung90ie/qub-dissertation.svg?token=xyzLEs9qjL7SuD52KvT6&branch=main)](https://app.travis-ci.com/jyoung90ie/qub-dissertation) [![codecov](https://codecov.io/gh/jyoung90ie/qub-dissertation/branch/main/graph/badge.svg?token=46RL5224IH)](https://codecov.io/gh/jyoung90ie/qub-dissertation)
 
-# Smart Hub
 
-I created this for my MSc Software Development at [Queen's University Belfast](https://www.qub.ac.uk/courses/postgraduate-taught/software-development-msc/) dissertation to demonstrate my learning and understanding throughout the course. 
+This platform was created as the final dissertation project for completion of the MSc Software Development at [Queen's University Belfast](https://www.qub.ac.uk/courses/postgraduate-taught/software-development-msc/). It demonstrates the skills I developed throughout the course.
 
-I chose to develop a smart home automation system which handles the end-to-end communication, from the source devices to the devices/notificaionts that should be triggered when user-defined triggers have been met. This was a complex project which allowed me to advance my understanding of communication protocols (such as [MQTT](https://mqtt.org/)) and the importance of optimising code throughout (e.g. to avoid unneccessary database queries).
+The problem I chose to solve is that of home automation. Smart Hub is a system which handles the end-to-end communication, from hardware devices through to the devices/notificaionts that should be triggered when user-defined triggers have been met. This was a complex project which allowed me to advance my understanding of communication protocols (such as [MQTT](https://mqtt.org/)) and the importance of optimising code throughout (e.g. to avoid unneccessary database queries).
 
 ## Deployed Application
 
-TBC
-
+The application has been deployed on a Raspberry Pi on my home network and is accessible via [Smart Hub](http://smarthub-qub.duckdns.org/). 
 ## Demonstration Data & Accounts
 
 To enable you to test the website functionality, a number of demo accounts, products, and, transactions have been created. You can access this data using the accounts below. 
 
 | Email | Password | Desription |
 | ----- | -------- | ---------- |
-| TBC | TBC | TBC  |
-| TBC | TBC | TBC|
+| `admin-account@smarthub.platform` | `this-is-a-test-account` | Admin account with access to [admin area](http://smarthub-qub.duckdns.org/). This has devices linked. |
+| `demo-account@smarthub.platform` | `another-demo-account` | This account does not have any devices and is not an admin. |
 
 ## UX
 
@@ -31,8 +29,14 @@ Given the application has been designed to help the end-user manage smart home d
 
 As a customer I want to be able to...
 
-- TBC
-- TBC
+- Manage all my devices from one platform
+- Toggle my devices on and off on-demand
+- Create automation routines
+- Be notified when my automations have been triggered
+- View logs of communications from my device
+- Create custom device states that can be used as part of my automations
+- Toggle automations on and off
+- Secure my devices to my own account and ensure they are not accessible by other users
 
 
 ## Features
@@ -47,7 +51,7 @@ The package has been broken into individual apps, the features of which are deta
 
 To capture additional user information, such as home location, I opted to override the default Django user model and create a custom one. This enabled me to store all the necessary user data in one object. It will also make any future user model changes easier to make.
 
-Given the additional data input requirements, I had to specify custom forms in order to capture all the required information. This included overriding Django default forms, for example, the admin forms for adding/modifying user details.
+Given the additional data input requirements, it was necessary to create custom forms to capture the additional information. This included overriding Django default forms, for example, the admin forms for adding/modifying user details.
 
 #### Users
 
@@ -73,37 +77,44 @@ g) **Profile - Change password:** For security, a user must provide their curren
 
 a) **Mixins:**
 
-MakeRequestObjectAvailableInFormMixin
-AddUserToFormMixin
-LimitResultsToUserMixin
-UserHasLinkedDevice
-FormSuccessMessageMixin
+Mixins are a `design pattern` which I have used to provide additional functionality or to override default Django functionality. To implement the mixin functionality they are inherited by the classes that need them.
+
+`MakeRequestObjectAvailableInFormMixin`: the **Request object** is how Django passes data between views using the HTTP request, for example, the user session which identifies the specific user. By making this available in a form view, it enables action messages to be returned, e.g. for successfully creating a new device.
+
+`AddUserToFormMixin`:  this mixin attaches the the **User object** to a specific form instance - this is used once a form has been validated, before it is saved as new object. An example is when creating a new device, it needs to be saved with the user that creates it.
+
+`LimitResultsToUserMixin`: this filters a view's queryset for only results related to the specific user. This secures user objects to only the user that they belong to.
+
+`UserHasLinkedDevice`: this mixin redirects a user from certain views (e.g. adding an event) if they do not have a linked device. This is in place to prevent creation of objects that rely on linked devices.
+
+`FormSuccessMessageMixin`: this adds the ability for forms to return a message on success - each form can specify its own success message. It also handles errors by providing a generic error message.
+
 
 b) **Forms:** 
 
-CustomChoiceField
+`CustomChoiceField`: this overrides the default Django implementation for a HTML selection field. It prevents the default validation against the initial values for the field. This was needed because the initial value is empty, and when the page loads an XML Http Request (XHR) is made through JavaScript to fetch values to populate the list. This is used for form selection based on user input, for example, when a user selects a device for an event response, the metadata field will be updated to include options relevant to that device.
 
 c) **Models:** 
 
-BaseAbstractModel
+`BaseAbstractModel`: this specifies a number of fields and default model ordering. The fields are audit type fields, i.e. when the object was created and when it was last updated. It also adds a more secure unique identifier `uuid`. By making this an abstract class, this means I do not need to repeat myself in each model.
 #### MQTT
 
-There are a number of components that make up this app, which I have outlined below:
+This is responsible for the handling of all MQTT communications for the platform.
 
-a) **Listener:** 
+a) **Listener:** Responsible for listening to MQTT broker and passing communications through to the platform for processing.
 
-b) **Publisher:** 
+b) **Publisher:** Sends `device state` commands to MQTT broker when the user toggles a state or an event is invoked.
 
-c) **Management Command:** 
+c) **Management Command:** Creates a shell command that can be run through the Django command line - using `python -m manage mqtt` which then starts the Smart Hub MQTT `Listener`.
 
-d) **Toggle View:** 
+d) **Toggle View:** This is an endpoint that is used to toggle a device's on/off state. It is invoked through an XHR form submission using JavaScript - from the user's prespective they simple click toggle. This endpoint will only accept `POST` requests to prevent it being accessed manually.
 
-e) **Trigger View:** 
+e) **Trigger View:** This is an endpoint that is used to invoke a user defined `device state`. It is invoked through an XHR form submission using JavaScript - from the user's prespective they simple click toggle. This endpoint will only accept `POST` requests to prevent it being accessed manually.
 
 
 #### Devices
 
-TBC
+This handles the all functionality of user created devices, locations, and states.
 
 a) **CRUD Device:** 
 
@@ -128,7 +139,7 @@ j) **Forms:**
 
 ### Zigbee Devices
 
-TBC
+This app is automatically passed information by the `MQTT app`, it will then determine whether a new `ZigbeeDevice` object should be created or will attach the communication to an existing object - dependent on the outcome of the processing.
 
 a) **ZigbeeDevice:**
 
@@ -142,9 +153,9 @@ d) **Customised Admin:**
 
 #### Events
 
-TBC
+An `Event` is a way to create automation, by attaching `EventTriggers` and `EventResponses`. Events are processed by the `MQTT` app when new communications are received, to determine whether an event has been triggered or not. 
 
-a) **CRUD Event:** 
+a) *CRUD Event:* 
 
 b) **CRUD EventTrigger:** 
 
@@ -159,7 +170,7 @@ The Pages app is used to website pages which are not related to any specific app
 
 #### Notifications
 
-TBC
+If a user wishes to receive a notification when an `Event` has been triggered, they will need to configure notification settings. At present, `Email` and `Pushbullet` notifications are supported.
 
 a) **CRUD Notification:** 
 
@@ -181,22 +192,13 @@ h) **Forms:**
 
 #### Settings
 
-Normally Django settings are contained within a single file, settings.py, within the project folder. However, in the interest of security and trackability, I have created a settings folder. This contains a number of files which are detailed below:
+The platform has been setup with two configurations:
 
 a) **settings.py:** this contains the standard deployment settings. This does not contain any sensitive information - any items that use sensitive information are sourced from `.env` file using Python `os.getenv("VAR_NAME")`.
 
 
 b) **test_settings.py:** this contains the settings required to run `PyTest` locally and on the Travis CI.
 
-### Features to be implemented
-
-- TBC
-- TBC
-
-## Challenges
-
-- TBC
-- TBC
 
 ## Technologies Used
 
@@ -220,11 +222,13 @@ b) **test_settings.py:** this contains the settings required to run `PyTest` loc
 
 - [Docker](https://www.docker.com/)
   - This is a technology which packages up applications into containers and runs them in an isolated container within a chosen operating system, which is seperate from the host operating system.
-  - TBC - confirm why I used Docker
 
 - [Zigbee2MQTT](https://www.zigbee2mqtt.io/)
+  - This is installed on the Raspberry Pi and handles all the communications received by the Zigbee sniffer.
 
 - [Mosquitto](https://mosquitto.org/)
+  - An MQTT broker which is where all Zigbee device communications are published.
+  - Smart Hub connects to this server to listen for communications.
 
 ### Frameworks
 
@@ -268,16 +272,13 @@ In addition to the automated testing, I conducted some manual testing across a n
 |---|------|--------|------|
 | 1 | Website is displayed correctly on multiple browsers | Tested on Chrome, Safari, and Edge | Passed |
 | 2 | Website is responsive and displayed correctly on multiple devices | Tested on Macbook Pro, Windows Laptop, OnePlus 7T, and iPhone | Passed |
-| 3 | Forms do not permit entry of invalid data; invalid entries receive an error message | Attempting to update basket quantity to more than the maximum permitted amount (i.e. > 5) | Passed |
+| 3 | Forms do not permit entry of invalid data; invalid entries receive an error message | Attempting to edit HTML form inputs to create fields that don't exist - should return invalid | Passed |
 | 4 | All links work | Check that all links are work | Passed |
 | 5 | Images, icons, and buttons render correctly | Visual inspection of every page | Passed |
 
 ### Known bugs
 
-#### ADD EVENT TRIGGER FORM 
-
-When using "ADD EVENT TRIGGER" form - it can take a long time for the page to refresh and acknowledge that the new trigger has been added. This is a result of the query stack being called, it is not optimised and is performing custom validation on user inputs.
-
+There are no known bugs at present.
 ## Deployment
 
 ### ENV file
@@ -296,6 +297,8 @@ When using "ADD EVENT TRIGGER" form - it can take a long time for the page to re
 | `MQTT_BASE_TOPIC` | `zigbee2mqtt` |
 | `MQTT_CLIENT_NAME` | `Smart Hub` |
 | `ARCH_IMAGE` | `postgres` | Only set this value if you are using a CPU architecture other than ARM64 (e.g. not a Raspberry Pi)
+| `SOCIAL_GOOGLE_CLIENT_ID` | `` | Follow the sets in [here](https://django-allauth.readthedocs.io/en/latest/providers.html#google) to obtain this value
+| `SOCIAL_GOOGLE_SECRET` | `` | Follow the sets in [here](https://django-allauth.readthedocs.io/en/latest/providers.html#google) to obtain this value
 
 ### Zigbee Communication Sniffing
 
@@ -433,4 +436,5 @@ You will only receive notifications when you have created an `Event` with at lea
 
 ### Acknowledgements
 
-- Dissertation Supervisor - Neil Anderson - for feedback and guidance at various points throughout the project.
+- Dissertation Supervisor
+  - **Neil Anderson** provided guidance and feedback at various points throughout the development process.

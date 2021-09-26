@@ -1,3 +1,7 @@
+os: linux
+
+dist: xenial
+
 language: 
     - python
 
@@ -11,7 +15,6 @@ before_script:
     - pip install docker-compose
 
 script:
-    # - docker-compose run web flake8
     - docker-compose run --rm web pytest . -p no:warnings
 
 after_success:
