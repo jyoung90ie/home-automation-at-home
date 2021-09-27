@@ -197,7 +197,7 @@ The platform has been setup with two configurations:
 a) **settings.py:** this contains the standard deployment settings. This does not contain any sensitive information - any items that use sensitive information are sourced from `.env` file using Python `os.getenv("VAR_NAME")`.
 
 
-b) **test_settings.py:** this contains the settings required to run `PyTest` locally and on the Travis CI.
+b) **test_settings.py:** this contains the settings required to run the test suite.
 
 
 ## Technologies Used
@@ -261,8 +261,8 @@ b) **test_settings.py:** this contains the settings required to run `PyTest` loc
 
 Each app within the platform has a `tests/` folder which contains relevant testings for that specific app. For **coverage report** of overall testing, click the `CodeCov badge` at the top of the readme.
 
-To run testing locally, use the following command:
-  `docker-compose run --rm web python -m pytest .`
+To run testing locally, use the command below. It spins up a Docker container with preconfigured settings to run the test suite.
+  `docker-compose -f docker-compose.ci.yml run --rm pytest`
 
 ### Manual
 
@@ -275,6 +275,7 @@ In addition to the automated testing, I conducted some manual testing across a n
 | 3 | Forms do not permit entry of invalid data; invalid entries receive an error message | Attempting to edit HTML form inputs to create fields that don't exist - should return invalid | Passed |
 | 4 | All links work | Check that all links are work | Passed |
 | 5 | Images, icons, and buttons render correctly | Visual inspection of every page | Passed |
+| 6 | Test Event automation | Create an Event with Triggers, Responses and Notifications, then cause the Event to be triggered and make sure all Responses and Notifications performed as expected. | Passed |
 
 ### Known bugs
 
