@@ -1,39 +1,16 @@
 os: linux
 dist: xenial
 
-language: python
-python: "3.7"
+language: 
+    - python
 
-addons:
-    postgresql: 13
-    apt:
-        update: true
-        packages:
-            - postgresql-13
-            - postgresql-13-postgis-3
+python: 
+    - "3.7"
 
 services:
     - docker
-    - postgresql
-
-env:
-    global:
-        - PGPORT=5433
-
-# from https://alphahydrae.com/2021/02/how-to-run-postgresql-13-on-travis-ci/
-before_install:
-  # Use trust instead of peer authentication:
-  - >-
-    sudo sed -i
-    -e '/local.*peer/s/postgres/all/'
-    -e 's/peer\|md5/trust/g'
-    /etc/postgresql/13/main/pg_hba.conf
-  # Restart the PostgreSQL service:
-  - sudo service postgresql@13-main restart
 
 before_script:
-    - sudo pg_ctlcluster 13 main start
-    - sudo psql -p 5433 -U postgres -c 'create extension postgis;'
     - pip install docker-compose
 
 script:

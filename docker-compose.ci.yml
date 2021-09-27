@@ -1,8 +1,6 @@
 services:
   pytest:
-    build:
-      network: host
-      context: .
-    command: bash -c "wait-for-it localhost:5433 -- pytest . -p no:warnings"
+    build: .
+    command: bash -c "wait-for-it db:5432 -- pytest . -p no:warnings"
     volumes:
       - .:/code
