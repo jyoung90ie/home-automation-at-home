@@ -1,6 +1,8 @@
 services:
   pytest:
-    build: .
-    command: bash -c "wait-for-it localhost:5433 -- pytest . -p no:warnings"
+    build:
+      network: host
+      context: .
+    command: bash -c "wait-for-it localhost:5433 -- docker-compose run --rm pytest"
     volumes:
       - .:/code
