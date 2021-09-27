@@ -23,7 +23,17 @@ services:
     command: 
       - "memcached"
   migration:
+    build: .
     command: bash -c "wait-for-it db:5432 -- python -m manage migrate"
+    depends_on:
+      - db
+    environment:
+      - DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - POSTGRES_DB=$POSTGRES_DB
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
   web:
     build: .
     command: bash -c "wait-for-it db:5432 -- wait-for-it memcached:11211 -- python -m manage runserver 0.0.0.0:8000"
@@ -50,8 +60,23 @@ services:
       - MQTT_BASE_TOPIC=$MQTT_BASE_TOPIC
       - MQTT_CLIENT_NAME=$MQTT_CLIENT_NAME
   mqtt:
+    build: .
     command: bash -c "wait-for-it db:5432 -- wait-for-it memcached:11211 -- python -m manage mqtt"
     depends_on:
       - db
       - memcached
       - migration
+    environment:
+      - DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - POSTGRES_DB=$POSTGRES_DB
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - EMAIL_HOST=$EMAIL_HOST
+      - EMAIL_HOST_USER=$EMAIL_HOST_USER
+      - EMAIL_HOST_PASSWORD=$EMAIL_HOST_PASSWORD
+      - MQTT_QOS=$MQTT_QOS
+      - MQTT_SERVER=$MQTT_SERVER
+      - MQTT_BASE_TOPIC=$MQTT_BASE_TOPIC
+      - MQTT_CLIENT_NAME=$MQTT_CLIENT_NAME
