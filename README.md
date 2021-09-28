@@ -116,38 +116,28 @@ e) **Trigger View:** This is an endpoint that is used to invoke a user defined `
 
 This handles the all functionality of user created devices, locations, and states.
 
-a) **CRUD Device:** 
+a) **CRUD Device:** Users can manage their own `Device` objects. The fields `friendly_name` and `device_identifier` will be used to match against `ZigbeeDevice` objects - if matched, additional functionality will be available.
 
-b) **CRUD DeviceLocation:** 
+b) **CRUD DeviceLocation:** `DeviceLocation` is used to group `Device` objects, it can be used on a room-by-room basis, or which ever grouping the user sees fit.
 
-c) **CRUD DeviceState:** 
+c) **CRUD DeviceState:** `DeviceState` objects are automatically created when a new `ZigbeeDevice` has been detected and created by the `MQTT` module. Only devices that have the field `is_controllable=True` can create `DeviceState` objects.
 
-d) **Device Logs & Export:** 
+d) **Device Logs & Export:** All `linked` devices have access to communication logs, which list all communication since the `ZigbeeDevice` was added to the platform.
 
-e) **Device Metadata:** 
+e) **Device Metadata:**  This is a hidden endpoint that is used in conjunction with JavaScript to create dynamic forms. This returns a JSON object containing all the unique device data fields, based on the `ZigbeeLog` entries.
 
-f) **Device States JSON:** 
-
-g) **Redirects:**
-
-h) **Customised Admin:** 
-
-i) **Mixins:**
-
-j) **Forms:**
+f) **Device States JSON:** This is a hidden endpoint that is used in conjunction with JavaScript to create dynamic forms. This returns a JSON object containing all the `DeviceState` objects created for the specific `Device`.
 
 
 ### Zigbee Devices
 
 This app is automatically passed information by the `MQTT app`, it will then determine whether a new `ZigbeeDevice` object should be created or will attach the communication to an existing object - dependent on the outcome of the processing.
 
-a) **ZigbeeDevice:**
+a) **ZigbeeDevice:** Automatically created by the `MQTT` module which detects new devices and adds them, regardless of whether a user `Device` exists. When it is created, the platform will attempt to link to a user `Device`. If the device `is_controllable` then `DeviceStates` will be automatically created for all default states exposed by the device.
 
-b) **ZigbeeMessage:**
+b) **ZigbeeMessage:** All communications received from the `MQTT` module are recorded as `ZigbeeMessage` objects. When they are saved the platform links them to a `ZigbeeDevice` object using the MQTT topic.
 
-c) **ZigbeeLog:**
-
-d) **Customised Admin:**
+c) **ZigbeeLog:** Everytime a `ZigbeeMessage` object is created, it is broken down into individual data fields and a `ZigbeeLog` object is created for each. This is used to list available device fields.
 
 
 
@@ -155,14 +145,11 @@ d) **Customised Admin:**
 
 An `Event` is a way to create automation, by attaching `EventTriggers` and `EventResponses`. Events are processed by the `MQTT` app when new communications are received, to determine whether an event has been triggered or not. 
 
-a) *CRUD Event:* 
+a) **CRUD Event:** The `Event` object can be thought of as an object used to attach triggers and responses. Users can specify the notification topic and message for each event.
 
-b) **CRUD EventTrigger:** 
+b) **CRUD EventTrigger:** An `EventTrigger` is a condition that a linked device must meet before the `Event` is triggered. Only one `EventTrigger` condition must be met before the `Event` is considered `triggered`.
 
-c) **CRUD EventResponse:** 
-
-d) **Customised Admin:** 
-
+c) **CRUD EventResponse:** `EventResponse` are used to map a `DeviceState` to an `Event`. When an `Event` is `triggered`, all attached `EventResponse` objects will be invoked. This means all device states will be invoked.
 
 #### Pages
 
@@ -172,30 +159,20 @@ The Pages app is used to website pages which are not related to any specific app
 
 If a user wishes to receive a notification when an `Event` has been triggered, they will need to configure notification settings. At present, `Email` and `Pushbullet` notifications are supported.
 
-a) **CRUD Notification:** 
+a) **CRUD NotificationSetting:** `NotificationSetting` objects are are a dynamic object, that specify the settings that should be used for a specific notification, i.e. if a user creates a `Pushbullet` `NotificationSetting` then this object will link to the `Pushbullet` object, which will have the specific fields required for that notification method.
 
-b) **Pushbullet:** 
+b) **Pushbullet:** An object that stores the settings required to use the `Pushbullet API`
 
-c) **Email:** 
+c) **Email:** An object that stores the settings required for email notifications.
 
-d) **Redirects:** 
+d) **Utils:** This contains a custom class for interacting with the `Pushbullet API`. It handles authentication and publishing notifications.
 
-e) **Utils:**
-
-Pushbullet API class
-
-f) **Defines:**
-
-g) **Customised Admin:** 
-
-h) **Forms:**
 
 #### Settings
 
 The platform has been setup with two configurations:
 
 a) **settings.py:** this contains the standard deployment settings. This does not contain any sensitive information - any items that use sensitive information are sourced from `.env` file using Python `os.getenv("VAR_NAME")`.
-
 
 b) **test_settings.py:** this contains the settings required to run the test suite.
 
@@ -263,6 +240,8 @@ Each app within the platform has a `tests/` folder which contains relevant testi
 
 To run testing locally, use the command below. It spins up a Docker container with preconfigured settings to run the test suite.
   `docker-compose -f docker-compose.ci.yml run --rm pytest`
+
+This will create a new folder `htmlcov` with a detailed breakdown of the test results - open `index.html` for an overview. Clicking into each module will provide a more detailed breakdown.
 
 ### Manual
 
@@ -363,6 +342,15 @@ With all of the above in place, we can move on to deployment of the platform.
 
 9. Access admin area using the `superuser` account created in `Step 10`
     - `http://ip-address:8080/admin`
+
+
+### Adding Zigbee devices to the platform
+
+Due to security measures built in to `MQTT` and `Zigbee2mqtt` adding new devices is only possible when the setting `Permit join` is enabled in the `Zigbee2mqtt` settings.
+
+For instructions on how to do this see the Zigbee2mqtt document: [Allowing devices to join](https://www.zigbee2mqtt.io/getting_started/pairing_devices.html).
+
+Once the device is connected to Zigbee2mqtt, Smart Hub will automatically detect it. You can check the logs or the admin area to verify that a `ZigbeeDevice` object has been created.
 
 ## Notification setup
 ### Pushbullet
