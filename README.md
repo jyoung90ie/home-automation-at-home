@@ -332,20 +332,23 @@ With all of the above in place, we can move on to deployment of the platform.
 4. Apply the database migrations
     - `docker-compose run --rm web python -m manage migrate`
 
-5. Create a `superuser` account (for accessing admin areas) - follow the shell prompt
+5. Gather static files and store in a central location:
+    - `docker-compose run --rm web python -m manage collectstatic`
+
+6. Create a `superuser` account (for accessing admin areas) - follow the shell prompt
     - `docker-compose run --rm web python -m manage createsuperuser`
     
-6. Start up the docker containers in `detached mode` (in the background)
+7. Start up the docker containers in `detached mode` (in the background)
     - `docker-compose up -d`
 
-7. To check the logs, for example, for the `web` container - for others replace `web` with the container name:
+8. To check the logs, for example, for the `web` container - for others replace `web` with the container name:
     - `docker-compose logs -f web`
 
-8. Navigate to the Smart Hub interface, replacing `ip-address` with the IP of the Raspberry Pi device
-    - `http://ip-address:8080`
+9. Navigate to the Smart Hub interface, replacing `ip-address` with the IP of the Raspberry Pi device
+    - `http://ip-address:8000`
 
-9. Access admin area using the `superuser` account created in `Step 10`
-    - `http://ip-address:8080/admin`
+10. Access admin area using the `superuser` account created in `Step 6`
+    - `http://ip-address:8000/admin`
 
 
 ### Adding Zigbee devices to the platform
