@@ -8,13 +8,14 @@ from django.db.models.constraints import UniqueConstraint
 from django.urls.base import reverse
 
 from ..models import BaseAbstractModel
+
 # from ..events.models import EventTriggerLog
 from .utils import Pushbullet
 
 if TYPE_CHECKING:
     from ..events.models import EventTrigger, EventTriggerLog
 
-logger = logging.getLogger("mqtt")
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 

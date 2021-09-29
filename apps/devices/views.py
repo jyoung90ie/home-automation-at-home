@@ -25,7 +25,7 @@ from . import forms, models
 from .mixins import (DeviceStateFormMixin, PermitDeviceOwnerOnly,
                      PermitObjectOwnerOnly)
 
-logger = logging.getLogger("mqtt")
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 

@@ -146,7 +146,7 @@ class EventTriggerForm(forms.ModelForm):
                 )
 
                 non_numeric_options = ", ".join(
-                    [trigger.upper() for trigger in NON_NUMERIC_TRIGGER_TYPES]
+                    [str(trigger).upper() for trigger in NON_NUMERIC_TRIGGER_TYPES]
                 )
 
                 self.add_error(

@@ -1,6 +1,5 @@
 # Smart Hub
-
-[![codecov](https://codecov.io/gh/jyoung90ie/qub-dissertation/branch/main/graph/badge.svg?token=46RL5224IH)](https://codecov.io/gh/jyoung90ie/qub-dissertation)
+[![Build Status](https://app.travis-ci.com/jyoung90ie/qub-dissertation.svg?token=xyzLEs9qjL7SuD52KvT6&branch=main)](https://app.travis-ci.com/jyoung90ie/qub-dissertation) [![codecov](https://codecov.io/gh/jyoung90ie/qub-dissertation/branch/main/graph/badge.svg?token=46RL5224IH)](https://codecov.io/gh/jyoung90ie/qub-dissertation)
 
 
 This platform was created as the final dissertation project for completion of the MSc Software Development at [Queen's University Belfast](https://www.qub.ac.uk/courses/postgraduate-taught/software-development-msc/). It demonstrates the skills I developed throughout the course.
@@ -12,7 +11,7 @@ The problem I chose to solve is that of home automation. Smart Hub is a system w
 The application has been deployed on a Raspberry Pi on my home network and is accessible via [Smart Hub](http://smarthub-qub.duckdns.org/). 
 ## Demonstration Data & Accounts
 
-To enable you to test the website functionality, a number of demo accounts, products, and, transactions have been created. You can access this data using the accounts below. 
+To enable you to test the website functionality, a number of demo accounts have been created - one with linked devices and the other without. The account access details are outlined below. 
 
 | Email | Password | Desription |
 | ----- | -------- | ---------- |
@@ -161,7 +160,7 @@ If a user wishes to receive a notification when an `Event` has been triggered, t
 
 a) **CRUD NotificationSetting:** `NotificationSetting` objects are are a dynamic object, that specify the settings that should be used for a specific notification, i.e. if a user creates a `Pushbullet` `NotificationSetting` then this object will link to the `Pushbullet` object, which will have the specific fields required for that notification method.
 
-b) **Pushbullet:** An object that stores the settings required to use the `Pushbullet API`
+b) **Pushbullet:** An object that stores the settings required to use the `Pushbullet API`.
 
 c) **Email:** An object that stores the settings required for email notifications.
 
@@ -242,6 +241,11 @@ To run testing locally, use the command below. It spins up a Docker container wi
   `docker-compose -f docker-compose.ci.yml run --rm pytest`
 
 This will create a new folder `htmlcov` with a detailed breakdown of the test results - open `index.html` for an overview. Clicking into each module will provide a more detailed breakdown.
+
+### Continuous Integration
+
+This repository has been integrated with [Travis CI](https://www.travis-ci.com/) that means everytime a commit is pushed, the entire test suite is re-run to ensure code changes haven't resulted in any failed tests. This also re-calculates the code coverage score at the top of the readme.
+
 
 ### Manual
 
