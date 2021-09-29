@@ -26,4 +26,4 @@ script:
     - docker-compose -f docker-compose.ci.yml run --rm pytest
 
 after_success:
-    - docker-compose run web codecov --token=$CODECOV_TOKEN
+    - docker-compose -f docker-compose.yml run --rm web codecov --token=$CODECOV_TOKEN
